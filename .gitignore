@@ -67,6 +67,10 @@ lerna-debug.log*
 # ==============================================================================
 # Misceláneos / OS Generated Files
 # ==============================================================================
+
+# Documentación y Pruebas locales
+Backend/Shipping/Pruebas/
+
 .DS_Store
 .DS_Store?
 ._*

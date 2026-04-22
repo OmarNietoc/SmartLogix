@@ -38,5 +38,6 @@ public class Route {
     private String status;
 
     @OneToMany(mappedBy = "route", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @Builder.Default
     private List<Shipment> shipments = new ArrayList<>();
 }
