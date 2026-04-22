@@ -36,7 +36,7 @@ public class RouteController {
                 request.getCompanyId(),
                 request.getCarrierId(),
                 request.getOriginAddress(),
-                request.getShipments()
+                request.getShipmentIds()
         );
 
         MessageResponse<Route> response = MessageResponse.<Route>builder()
@@ -88,6 +88,6 @@ public class RouteController {
         private String companyId;
         private String carrierId;
         private String originAddress;
-        private List<Shipment> shipments;
+        private List<String> shipmentIds;
     }
 }

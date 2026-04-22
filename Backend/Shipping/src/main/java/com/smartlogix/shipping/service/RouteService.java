@@ -26,7 +26,7 @@ public class RouteService {
     private final Map<String, ShippingCalculationStrategy> calculationStrategies;
 
     @Transactional
-    public Route createRoute(String companyId, String carrierId, String originAddress, List<Shipment> shipments) {
+    public Route createRoute(String companyId, String carrierId, String originAddress, List<String> shipmentIds) {
         log.info("Creando ruta para la compañía: {}", companyId);
         
         Route route = Route.builder()
@@ -37,9 +37,15 @@ public class RouteService {
                 .status("CREATED")
                 .build();
         
-        // Asociar pedidos a la ruta
+        // Buscar pedidos por ID y asociarlos
+        List<Shipment> shipments = shipmentRepository.findAllById(shipmentIds);
+        if (shipments.size() != shipmentIds.size()) {
+            throw new com.smartlogix.shipping.exception.ShipmentNotFoundException("Algunos de los IDs de envíos proporcionados no existen o son inválidos.");
+        }
+
         for (Shipment shipment : shipments) {
             shipment.setRoute(route);
+            shipment.setDeliveryStatus("ASSIGNED");
             route.getShipments().add(shipment);
         }
 

@@ -1,5 +1,6 @@
 package com.smartlogix.shipping.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -23,6 +24,7 @@ public class Shipment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "route_id")
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "shipments"})
     private Route route;
 
     @Column(name = "customer_name")
