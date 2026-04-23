@@ -1,16 +1,18 @@
 package com.smartlogix.shipping.controller;
 
 import com.smartlogix.shipping.dto.MessageResponse;
+import com.smartlogix.shipping.dto.RouteCreationRequestDTO;
+import com.smartlogix.shipping.dto.RouteDTO;
+import com.smartlogix.shipping.mapper.RouteMapper;
 import com.smartlogix.shipping.model.Route;
-import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.service.RouteService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/smartlogix/shipping/routes")
@@ -18,11 +20,14 @@ import java.util.List;
 public class RouteController {
 
     private final RouteService routeService;
+    private final RouteMapper routeMapper;
 
     @GetMapping
-    public ResponseEntity<MessageResponse<List<Route>>> getAllRoutes() {
-        List<Route> routes = routeService.getAllRoutes();
-        MessageResponse<List<Route>> response = MessageResponse.<List<Route>>builder()
+    public ResponseEntity<MessageResponse<List<RouteDTO>>> getAllRoutes() {
+        List<RouteDTO> routes = routeService.getAllRoutes().stream()
+                .map(routeMapper::toDto)
+                .collect(Collectors.toList());
+        MessageResponse<List<RouteDTO>> response = MessageResponse.<List<RouteDTO>>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Listado de rutas obtenido exitosamente")
                 .data(routes)
@@ -31,7 +36,7 @@ public class RouteController {
     }
 
     @PostMapping
-    public ResponseEntity<MessageResponse<Route>> createRoute(@RequestBody RouteCreationRequest request) {
+    public ResponseEntity<MessageResponse<RouteDTO>> createRoute(@RequestBody RouteCreationRequestDTO request) {
         Route createdRoute = routeService.createRoute(
                 request.getCompanyId(),
                 request.getCarrierId(),
@@ -39,35 +44,35 @@ public class RouteController {
                 request.getShipmentIds()
         );
 
-        MessageResponse<Route> response = MessageResponse.<Route>builder()
+        MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.CREATED.value())
                 .message("Ruta creada exitosamente.")
-                .data(createdRoute)
+                .data(routeMapper.toDto(createdRoute))
                 .build();
 
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MessageResponse<Route>> getRouteById(@PathVariable String id) {
+    public ResponseEntity<MessageResponse<RouteDTO>> getRouteById(@PathVariable String id) {
         Route route = routeService.getRouteById(id);
         
-        MessageResponse<Route> response = MessageResponse.<Route>builder()
+        MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Ruta obtenida exitosamente")
-                .data(route)
+                .data(routeMapper.toDto(route))
                 .build();
 
         return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MessageResponse<Route>> updateRoute(@PathVariable String id, @RequestBody Route routeDetails) {
-        Route updated = routeService.updateRoute(id, routeDetails);
-        MessageResponse<Route> response = MessageResponse.<Route>builder()
+    public ResponseEntity<MessageResponse<RouteDTO>> updateRoute(@PathVariable String id, @RequestBody RouteDTO routeDto) {
+        Route updated = routeService.updateRoute(id, routeMapper.toEntity(routeDto));
+        MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Ruta actualizada exitosamente")
-                .data(updated)
+                .data(routeMapper.toDto(updated))
                 .build();
         return ResponseEntity.ok(response);
     }
@@ -81,13 +86,5 @@ public class RouteController {
                 .data(null)
                 .build();
         return ResponseEntity.ok(response);
-    }
-
-    @Data
-    public static class RouteCreationRequest {
-        private String companyId;
-        private String carrierId;
-        private String originAddress;
-        private List<String> shipmentIds;
     }
 }
