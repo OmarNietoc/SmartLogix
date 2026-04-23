@@ -1,6 +1,8 @@
 package com.smartlogix.shipping.controller;
 
 import com.smartlogix.shipping.dto.MessageResponse;
+import com.smartlogix.shipping.dto.ShipmentDTO;
+import com.smartlogix.shipping.mapper.ShipmentMapper;
 import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.service.ShipmentService;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/smartlogix/shipping/shipments")
@@ -16,11 +19,14 @@ import java.util.List;
 public class ShipmentController {
 
     private final ShipmentService shipmentService;
+    private final ShipmentMapper shipmentMapper;
 
     @GetMapping
-    public ResponseEntity<MessageResponse<List<Shipment>>> getAllShipments() {
-        List<Shipment> shipments = shipmentService.getAllShipments();
-        MessageResponse<List<Shipment>> response = MessageResponse.<List<Shipment>>builder()
+    public ResponseEntity<MessageResponse<List<ShipmentDTO>>> getAllShipments() {
+        List<ShipmentDTO> shipments = shipmentService.getAllShipments().stream()
+                .map(shipmentMapper::toDto)
+                .collect(Collectors.toList());
+        MessageResponse<List<ShipmentDTO>> response = MessageResponse.<List<ShipmentDTO>>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Listado de envíos obtenido")
                 .data(shipments)
@@ -29,34 +35,34 @@ public class ShipmentController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<MessageResponse<Shipment>> getShipmentById(@PathVariable String id) {
+    public ResponseEntity<MessageResponse<ShipmentDTO>> getShipmentById(@PathVariable String id) {
         Shipment shipment = shipmentService.getShipmentById(id);
-        MessageResponse<Shipment> response = MessageResponse.<Shipment>builder()
+        MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Envío obtenido con éxito")
-                .data(shipment)
+                .data(shipmentMapper.toDto(shipment))
                 .build();
         return ResponseEntity.ok(response);
     }
 
     @PostMapping
-    public ResponseEntity<MessageResponse<Shipment>> createShipment(@RequestBody Shipment shipment) {
-        Shipment created = shipmentService.createShipment(shipment);
-        MessageResponse<Shipment> response = MessageResponse.<Shipment>builder()
+    public ResponseEntity<MessageResponse<ShipmentDTO>> createShipment(@RequestBody ShipmentDTO shipmentDto) {
+        Shipment created = shipmentService.createShipment(shipmentMapper.toEntity(shipmentDto));
+        MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.CREATED.value())
                 .message("Envío creado exitosamente")
-                .data(created)
+                .data(shipmentMapper.toDto(created))
                 .build();
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MessageResponse<Shipment>> updateShipment(@PathVariable String id, @RequestBody Shipment shipmentDetails) {
-        Shipment updated = shipmentService.updateShipment(id, shipmentDetails);
-        MessageResponse<Shipment> response = MessageResponse.<Shipment>builder()
+    public ResponseEntity<MessageResponse<ShipmentDTO>> updateShipment(@PathVariable String id, @RequestBody ShipmentDTO shipmentDto) {
+        Shipment updated = shipmentService.updateShipment(id, shipmentMapper.toEntity(shipmentDto));
+        MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Envío actualizado exitosamente")
-                .data(updated)
+                .data(shipmentMapper.toDto(updated))
                 .build();
         return ResponseEntity.ok(response);
     }
