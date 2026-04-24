@@ -1,5 +1,6 @@
 package com.smartlogix.shipping.repository;
 
+import com.smartlogix.shipping.enums.DeliveryStatus;
 import com.smartlogix.shipping.model.Shipment;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,4 +12,5 @@ import java.util.Optional;
 public interface ShipmentRepository extends JpaRepository<Shipment, String> {
     Optional<Shipment> findByTrackingNumber(String trackingNumber);
     List<Shipment> findByRouteId(String routeId);
+    List<Shipment> findByDeliveryStatus(DeliveryStatus deliveryStatus);
 }

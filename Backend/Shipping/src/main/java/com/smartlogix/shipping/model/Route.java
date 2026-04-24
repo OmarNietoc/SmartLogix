@@ -3,6 +3,8 @@ package com.smartlogix.shipping.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.smartlogix.shipping.enums.RouteStatus;
+
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,8 +36,9 @@ public class Route {
     @Column(name = "optimized_path_json", columnDefinition = "TEXT")
     private String optimizedPathJson;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
-    private String status;
+    private RouteStatus status;
 
     @OneToMany(mappedBy = "route", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Builder.Default
