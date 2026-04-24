@@ -1,5 +1,7 @@
 package com.smartlogix.shipping.service;
 
+import com.smartlogix.shipping.enums.DeliveryStatus;
+import com.smartlogix.shipping.enums.RouteStatus;
 import com.smartlogix.shipping.model.Route;
 import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.repository.RouteRepository;
@@ -28,28 +30,35 @@ public class RouteService {
     @Transactional
     public Route createRoute(String companyId, String carrierId, String originAddress, List<String> shipmentIds) {
         log.info("Creando ruta para la compañía: {}", companyId);
-        
+
         Route route = Route.builder()
                 .companyId(companyId)
                 .carrierId(carrierId)
                 .routeDate(LocalDate.now())
                 .originAddress(originAddress)
-                .status("CREATED")
+                .status(RouteStatus.PLANNED)
                 .build();
-        
+
         // Buscar pedidos por ID y asociarlos
         List<Shipment> shipments = shipmentRepository.findAllById(shipmentIds);
         if (shipments.size() != shipmentIds.size()) {
-            throw new com.smartlogix.shipping.exception.ShipmentNotFoundException("Algunos de los IDs de envíos proporcionados no existen o son inválidos.");
+            throw new com.smartlogix.shipping.exception.ShipmentNotFoundException(
+                    "Algunos de los IDs de envíos proporcionados no existen o son inválidos.");
         }
 
         for (Shipment shipment : shipments) {
+            // Regla de negocio: Solo admitir paquetes PENDING y sin ruta asignada
+            if (shipment.getDeliveryStatus() != DeliveryStatus.PENDING || shipment.getRoute() != null) {
+                throw new IllegalStateException(
+                        "El envío con ID " + shipment.getId() + " ya está asignado a otra ruta o no está disponible.");
+            }
             shipment.setRoute(route);
-            shipment.setDeliveryStatus("ASSIGNED");
+            shipment.setDeliveryStatus(DeliveryStatus.ASSIGNED);
             route.getShipments().add(shipment);
         }
 
-        // Determinar qué estrategia usar (DhlStrategy, LocalCarrierStrategy, etc. basado en carrierId)
+        // Determinar qué estrategia usar (DhlStrategy, LocalCarrierStrategy, etc.
+        // basado en carrierId)
         String strategyKey = determineStrategyKey(carrierId);
         ShippingCalculationStrategy strategy = calculationStrategies.get(strategyKey);
 
@@ -61,11 +70,18 @@ public class RouteService {
         // Llamar a la API externa para el path geográfico, protegido con CircuitBreaker
         String pathJson = routingApiService.fetchOptimizedPath(route);
         route.setOptimizedPathJson(pathJson);
-        
+
         return routeRepository.save(route);
     }
 
-    public List<Route> getAllRoutes() {
+    public List<Route> getAllRoutes(String companyId, RouteStatus status) {
+        if (companyId != null && status != null) {
+            return routeRepository.findByCompanyIdAndStatus(companyId, status);
+        } else if (companyId != null) {
+            return routeRepository.findByCompanyId(companyId);
+        } else if (status != null) {
+            return routeRepository.findByStatus(status);
+        }
         return routeRepository.findAll();
     }
 
@@ -75,12 +91,16 @@ public class RouteService {
     }
 
     @Transactional
-    public Route updateRoute(String id, Route updatedDetails) {
+    public Route updateRouteStatus(String id, RouteStatus status) {
         Route existing = getRouteById(id);
-        if (updatedDetails.getStatus() != null) existing.setStatus(updatedDetails.getStatus());
-        if (updatedDetails.getCarrierId() != null) existing.setCarrierId(updatedDetails.getCarrierId());
-        if (updatedDetails.getRouteDate() != null) existing.setRouteDate(updatedDetails.getRouteDate());
-        if (updatedDetails.getOriginAddress() != null) existing.setOriginAddress(updatedDetails.getOriginAddress());
+        existing.setStatus(status);
+
+        if (status == RouteStatus.IN_PROGRESS) {
+            for (Shipment shipment : existing.getShipments()) {
+                shipment.setDeliveryStatus(DeliveryStatus.DISPATCHED);
+                shipmentRepository.save(shipment);
+            }
+        }
 
         return routeRepository.save(existing);
     }
@@ -88,25 +108,25 @@ public class RouteService {
     @Transactional
     public void deleteRoute(String id) {
         Route route = getRouteById(id);
-        
+
         // Orphan Management (Desasignación)
         List<Shipment> shipments = route.getShipments();
         if (shipments != null) {
             for (Shipment shipment : shipments) {
                 shipment.setRoute(null);
-                shipment.setDeliveryStatus("PENDING");
+                shipment.setDeliveryStatus(DeliveryStatus.PENDING);
                 shipmentRepository.save(shipment);
             }
             route.getShipments().clear();
         }
 
         // Soft Delete de la ruta
-        route.setStatus("CANCELLED");
+        route.setStatus(RouteStatus.CANCELLED);
         routeRepository.save(route);
     }
 
     private String determineStrategyKey(String carrierId) {
-        // En una aplicación real esto podría basarse en configuraciones de DB. 
+        // En una aplicación real esto podría basarse en configuraciones de DB.
         if ("DHL".equalsIgnoreCase(carrierId)) {
             return "dhlStrategy";
         }

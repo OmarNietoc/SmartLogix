@@ -1,5 +1,6 @@
 package com.smartlogix.shipping.service;
 
+import com.smartlogix.shipping.enums.DeliveryStatus;
 import com.smartlogix.shipping.exception.ShipmentNotFoundException;
 import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.repository.RouteRepository;
@@ -19,8 +20,16 @@ public class ShipmentService {
     private final ShipmentRepository shipmentRepository;
     private final RouteRepository routeRepository;
 
-    public List<Shipment> getAllShipments() {
+    public List<Shipment> getAllShipments(DeliveryStatus deliveryStatus) {
+        if (deliveryStatus != null) {
+            return shipmentRepository.findByDeliveryStatus(deliveryStatus);
+        }
         return shipmentRepository.findAll();
+    }
+
+    public Shipment getShipmentByTrackingNumber(String trackingNumber) {
+        return shipmentRepository.findByTrackingNumber(trackingNumber)
+                .orElseThrow(() -> new ShipmentNotFoundException("El envío con número de seguimiento " + trackingNumber + " no fue encontrado."));
     }
 
     public Shipment getShipmentById(String id) {
@@ -33,25 +42,21 @@ public class ShipmentService {
         // En caso de que se envíe asociado desde el json, el framework lo intenta poblar.
         // Se asume estado inicial "PENDING" si no se establece.
         if (shipment.getDeliveryStatus() == null) {
-            shipment.setDeliveryStatus("PENDING");
+            shipment.setDeliveryStatus(DeliveryStatus.PENDING);
         }
         return shipmentRepository.save(shipment);
     }
 
     @Transactional
-    public Shipment updateShipment(String id, Shipment updatedDetails) {
+    public Shipment updateShipmentStatus(String id, DeliveryStatus newStatus) {
         Shipment existing = getShipmentById(id);
-
-        if (updatedDetails.getCustomerName() != null) existing.setCustomerName(updatedDetails.getCustomerName());
-        if (updatedDetails.getCustomerEmail() != null) existing.setCustomerEmail(updatedDetails.getCustomerEmail());
-        if (updatedDetails.getShippingAddress() != null) existing.setShippingAddress(updatedDetails.getShippingAddress());
-        if (updatedDetails.getLatitude() != null) existing.setLatitude(updatedDetails.getLatitude());
-        if (updatedDetails.getLongitude() != null) existing.setLongitude(updatedDetails.getLongitude());
-        if (updatedDetails.getDeliveryStatus() != null) existing.setDeliveryStatus(updatedDetails.getDeliveryStatus());
-        if (updatedDetails.getTrackingNumber() != null) existing.setTrackingNumber(updatedDetails.getTrackingNumber());
-        if (updatedDetails.getEstimatedDelivery() != null) existing.setEstimatedDelivery(updatedDetails.getEstimatedDelivery());
-        if (updatedDetails.getActualDelivery() != null) existing.setActualDelivery(updatedDetails.getActualDelivery());
-
+        if (!existing.getDeliveryStatus().canTransitionTo(newStatus)) {
+            throw new IllegalStateException("Transición de estado no válida de " + existing.getDeliveryStatus() + " a " + newStatus);
+        }
+        existing.setDeliveryStatus(newStatus);
+        if (newStatus == DeliveryStatus.DELIVERED) {
+            existing.setActualDelivery(java.time.LocalDateTime.now());
+        }
         return shipmentRepository.save(existing);
     }
 

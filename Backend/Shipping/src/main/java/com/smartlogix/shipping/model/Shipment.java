@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
+import com.smartlogix.shipping.enums.DeliveryStatus;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -45,8 +47,9 @@ public class Shipment {
     @Column(name = "tracking_number", unique = true)
     private String trackingNumber;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "delivery_status")
-    private String deliveryStatus;
+    private DeliveryStatus deliveryStatus;
 
     @Column(name = "estimated_delivery")
     private LocalDateTime estimatedDelivery;

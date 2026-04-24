@@ -3,6 +3,7 @@ package com.smartlogix.shipping.controller;
 import com.smartlogix.shipping.dto.MessageResponse;
 import com.smartlogix.shipping.dto.RouteCreationRequestDTO;
 import com.smartlogix.shipping.dto.RouteDTO;
+import com.smartlogix.shipping.enums.RouteStatus;
 import com.smartlogix.shipping.mapper.RouteMapper;
 import com.smartlogix.shipping.model.Route;
 import com.smartlogix.shipping.service.RouteService;
@@ -23,8 +24,10 @@ public class RouteController {
     private final RouteMapper routeMapper;
 
     @GetMapping
-    public ResponseEntity<MessageResponse<List<RouteDTO>>> getAllRoutes() {
-        List<RouteDTO> routes = routeService.getAllRoutes().stream()
+    public ResponseEntity<MessageResponse<List<RouteDTO>>> getAllRoutes(
+            @RequestParam(required = false) String companyId,
+            @RequestParam(required = false) RouteStatus status) {
+        List<RouteDTO> routes = routeService.getAllRoutes(companyId, status).stream()
                 .map(routeMapper::toDto)
                 .collect(Collectors.toList());
         MessageResponse<List<RouteDTO>> response = MessageResponse.<List<RouteDTO>>builder()
@@ -66,12 +69,12 @@ public class RouteController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<MessageResponse<RouteDTO>> updateRoute(@PathVariable String id, @RequestBody RouteDTO routeDto) {
-        Route updated = routeService.updateRoute(id, routeMapper.toEntity(routeDto));
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<MessageResponse<RouteDTO>> updateRouteStatus(@PathVariable String id, @RequestBody RouteStatus status) {
+        Route updated = routeService.updateRouteStatus(id, status);
         MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
-                .message("Ruta actualizada exitosamente")
+                .message("Estado de ruta actualizado exitosamente")
                 .data(routeMapper.toDto(updated))
                 .build();
         return ResponseEntity.ok(response);
