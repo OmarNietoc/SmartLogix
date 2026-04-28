@@ -1,0 +1,32 @@
+services:
+  postgres-order:
+    image: 'postgres:15-alpine'
+    container_name: pg-order
+    environment:
+      - 'POSTGRES_DB=${DB_NAME:-orderdb}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}'
+      - 'POSTGRES_USER=${DB_USERNAME:-postgres}'
+    ports:
+      - '5433:5432' # Mapeo a puerto diferente para evitar conflictos locales si se levantan varios a la vez, aunque el compose global manejará esto mejor
+    volumes:
+      - order-db-data:/var/lib/postgresql/data
+
+  ms-order:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms-order
+    ports:
+      - '8082:8082'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-order:5432/orderdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - SERVER_PORT=8082
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+      - NOTIFICATION_URL=http://host.docker.internal:8085
+    depends_on:
+      - postgres-order
+
+volumes:
+  order-db-data:

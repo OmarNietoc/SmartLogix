@@ -1,0 +1,31 @@
+services:
+  postgres-inventary:
+    image: 'postgres:15-alpine'
+    container_name: pg-inventary
+    environment:
+      - 'POSTGRES_DB=${DB_NAME:-smartlogix_inventario}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD:-drhiaishna16}'
+      - 'POSTGRES_USER=${DB_USERNAME:-postgres}'
+    ports:
+      - '5432:5432'
+    volumes:
+      - inventary-db-data:/var/lib/postgresql/data
+
+  ms-inventary:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms-inventary
+    ports:
+      - '8081:8081'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-inventary:5432/smartlogix_inventario
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-drhiaishna16}
+      - SERVER_PORT=8081
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-inventary
+
+volumes:
+  inventary-db-data:

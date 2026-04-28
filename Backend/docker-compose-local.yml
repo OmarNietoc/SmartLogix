@@ -1,0 +1,155 @@
+services:
+  # --- Databases ---
+  postgres-shipping:
+    image: 'postgres:15-alpine'
+    container_name: pg-shipping-local
+    environment:
+      POSTGRES_DB: shipping_db
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - pg-shipping-data:/var/lib/postgresql/data
+
+  postgres-inventary:
+    image: 'postgres:15-alpine'
+    container_name: pg-inventary-local
+    environment:
+      POSTGRES_DB: smartlogix_inventario
+      POSTGRES_PASSWORD: drhiaishna16
+      POSTGRES_USER: postgres
+    ports:
+      - '5433:5432'
+    volumes:
+      - pg-inventary-data:/var/lib/postgresql/data
+
+  postgres-order:
+    image: 'postgres:15-alpine'
+    container_name: pg-order-local
+    environment:
+      POSTGRES_DB: orderdb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5434:5432'
+    volumes:
+      - pg-order-data:/var/lib/postgresql/data
+
+  postgres-notification:
+    image: 'postgres:15-alpine'
+    container_name: pg-notification-local
+    environment:
+      POSTGRES_DB: notificationdb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5435:5432'
+    volumes:
+      - pg-notification-data:/var/lib/postgresql/data
+
+  postgres-auth:
+    image: 'postgres:15-alpine'
+    container_name: pg-auth-local
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - '5436:5432'
+    volumes:
+      - pg-auth-data:/var/lib/postgresql/data
+
+  # --- Microservicios ---
+  ms-shipping:
+    build:
+      context: ./shipping
+      dockerfile: Dockerfile
+    container_name: ms-shipping-local
+    ports:
+      - '8084:8084'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-shipping:5432/shipping_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=password
+      - SERVER_PORT=8084
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-shipping
+
+  ms-inventary:
+    build:
+      context: ./inventary
+      dockerfile: Dockerfile
+    container_name: ms-inventary-local
+    ports:
+      - '8081:8081'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-inventary:5432/smartlogix_inventario
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=drhiaishna16
+      - SERVER_PORT=8081
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-inventary
+
+  ms-order:
+    build:
+      context: ./order
+      dockerfile: Dockerfile
+    container_name: ms-order-local
+    ports:
+      - '8082:8082'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-order:5432/orderdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SERVER_PORT=8082
+      # Usamos el nombre del contenedor para la comunicación en la misma red de Docker, 
+      # esto se cambiará por Eureka en la Fase 3.
+      - NOTIFICATION_URL=http://ms-notification-local:8085 
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-order
+      - ms-notification
+
+  ms-notification:
+    build:
+      context: ./notification
+      dockerfile: Dockerfile
+    container_name: ms-notification-local
+    ports:
+      - '8085:8085'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-notification:5432/notificationdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SERVER_PORT=8085
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-notification
+
+  ms-auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    container_name: ms-auth-local
+    ports:
+      - '8086:8086'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-auth:5432/authdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - SERVER_PORT=8086
+      - JWT_SECRET=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c2d6395af
+      - JWT_EXPIRATION=86400000
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-auth
+
+volumes:
+  pg-shipping-data:
+  pg-inventary-data:
+  pg-order-data:
+  pg-notification-data:
+  pg-auth-data:

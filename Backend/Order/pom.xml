@@ -116,7 +116,7 @@
 					</dependency>
 				</dependencies>
 				<configuration>
-					<jvmTarget>1.8</jvmTarget>
+					<jvmTarget>21</jvmTarget>
 					<compilerPlugins>
 						<plugin>jpa</plugin>
 						<plugin>spring</plugin>
@@ -151,6 +151,8 @@
 					</execution>
 				</executions>
 				<configuration>
+					<source>${java.version}</source>
+					<target>${java.version}</target>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>

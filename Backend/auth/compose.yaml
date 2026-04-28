@@ -1,0 +1,33 @@
+services:
+  postgres-auth:
+    image: 'postgres:15-alpine'
+    container_name: pg-auth
+    environment:
+      - 'POSTGRES_DB=${DB_NAME:-authdb}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}'
+      - 'POSTGRES_USER=${DB_USERNAME:-postgres}'
+    ports:
+      - '5436:5432'
+    volumes:
+      - auth-db-data:/var/lib/postgresql/data
+
+  ms-auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms-auth
+    ports:
+      - '8086:8086'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-auth:5432/authdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - SERVER_PORT=8086
+      - JWT_SECRET=${JWT_SECRET:-3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c2d6395af}
+      - JWT_EXPIRATION=86400000
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-auth
+
+volumes:
+  auth-db-data:
