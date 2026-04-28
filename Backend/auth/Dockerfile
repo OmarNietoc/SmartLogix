@@ -22,7 +22,7 @@ USER spring:spring
 COPY --from=builder /app/target/*.jar app.jar
 
 # Exponemos el puerto de la aplicación
-EXPOSE 8082
+EXPOSE 8086
 
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar", "app.jar"]

@@ -1,0 +1,31 @@
+server:
+  port: ${SERVER_PORT:8086}
+
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  application:
+    name: ms-auth
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/authdb}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+
+smartlogix:
+  auth:
+    jwt-secret: ${JWT_SECRET:3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c2d6395af}
+    jwt-expiration: ${JWT_EXPIRATION:86400000}
+
+eureka:
+  client:
+    enabled: false # Se habilitará en la Fase 3
+    service-url:
+      defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}

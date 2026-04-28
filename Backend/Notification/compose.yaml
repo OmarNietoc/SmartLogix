@@ -1,0 +1,31 @@
+services:
+  postgres-notification:
+    image: 'postgres:15-alpine'
+    container_name: pg-notification
+    environment:
+      - 'POSTGRES_DB=${DB_NAME:-notificationdb}'
+      - 'POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}'
+      - 'POSTGRES_USER=${DB_USERNAME:-postgres}'
+    ports:
+      - '5434:5432' # Puerto mapeado diferente para local
+    volumes:
+      - notification-db-data:/var/lib/postgresql/data
+
+  ms-notification:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ms-notification
+    ports:
+      - '8085:8085'
+    environment:
+      - DB_URL=jdbc:postgresql://postgres-notification:5432/notificationdb
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - SERVER_PORT=8085
+      - EUREKA_URI=http://host.docker.internal:8761/eureka/
+    depends_on:
+      - postgres-notification
+
+volumes:
+  notification-db-data:
