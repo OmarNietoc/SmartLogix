@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/orders")
+@RequestMapping("/smartlogix/order/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -36,7 +36,7 @@ public class OrderController {
 
     @PutMapping("/{id}/status")
     public OrderResponse updateOrderStatus(@PathVariable Long id,
-                                           @Valid @RequestBody UpdateOrderStatusRequest request) {
+            @Valid @RequestBody UpdateOrderStatusRequest request) {
         return orderService.updateOrderStatus(id, request);
     }
 }

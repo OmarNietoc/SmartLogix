@@ -24,7 +24,6 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - SERVER_PORT=8082
       - EUREKA_URI=http://host.docker.internal:8761/eureka/
-      - NOTIFICATION_URL=http://host.docker.internal:8085
     depends_on:
       - postgres-order
 

@@ -19,13 +19,10 @@ spring:
         format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
 
-# Esta propiedad se eliminará en la Fase 3 cuando usemos Feign + Eureka
-notification:
-  service:
-    url: ${NOTIFICATION_URL:http://localhost:8085}
+
 
 eureka:
   client:
-    enabled: false # Se habilitará en la Fase 3
+    enabled: true
     service-url:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}

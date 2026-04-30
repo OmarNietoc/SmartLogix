@@ -1,35 +1,13 @@
 package com.smartlogix.order.client;
 
 import com.smartlogix.order.dto.CreateNotificationRequest;
-import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
-@Component
-@RequiredArgsConstructor
-public class NotificationClient {
+@FeignClient(name = "ms-notification", path = "/smartlogix/notification/notifications")
+public interface NotificationClient {
 
-    private final RestTemplate restTemplate;
-
-    @Value("${notification.service.url}")
-    private String notificationServiceUrl;
-
-    public void sendNotification(CreateNotificationRequest request) {
-        try {
-            String url = notificationServiceUrl + "/api/notifications";
-            ResponseEntity<String> response = restTemplate.postForEntity(url, request, String.class);
-
-            System.out.println("==========================================");
-            System.out.println("NOTIFICACIÓN ENVIADA DESDE ORDER SERVICE");
-            System.out.println("Respuesta del notification-service: " + response.getStatusCode());
-            System.out.println("==========================================");
-        } catch (Exception e) {
-            System.out.println("==========================================");
-            System.out.println("ERROR AL ENVIAR NOTIFICACIÓN");
-            System.out.println("Detalle: " + e.getMessage());
-            System.out.println("==========================================");
-        }
-    }
+    @PostMapping
+    void sendNotification(@RequestBody CreateNotificationRequest request);
 }

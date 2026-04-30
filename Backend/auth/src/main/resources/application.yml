@@ -26,6 +26,6 @@ smartlogix:
 
 eureka:
   client:
-    enabled: false # Se habilitará en la Fase 3
+    enabled: true
     service-url:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
