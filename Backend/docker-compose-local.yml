@@ -60,6 +60,19 @@ services:
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
 
+  pg-users-local:
+    image: postgres:15-alpine
+    container_name: pg-users-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: db_users
+    ports:
+      - "5437:5432"
+    volumes:
+      - pg-users-data:/var/lib/postgresql/data
+
   # --- Infraestructura ---
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -165,6 +178,21 @@ services:
       - postgres-notification
       - eureka-server
 
+  ms-users:
+    build:
+      context: ./users
+      dockerfile: Dockerfile
+    container_name: ms-users-local
+    restart: unless-stopped
+    ports:
+      - "8083:8083"
+    env_file:
+      - ./users/.env
+    depends_on:
+      - pg-users-local
+      - eureka-server
+
+
   ms-auth:
     build:
       context: ./auth
@@ -190,4 +218,5 @@ volumes:
   pg-order-data:
   pg-notification-data:
   pg-auth-data:
+  pg-users-data:
   rabbitmq-data:

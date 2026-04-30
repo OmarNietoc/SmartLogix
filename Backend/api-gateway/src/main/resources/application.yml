@@ -17,6 +17,10 @@ spring:
           uri: lb://ms-auth
           predicates:
             - Path=/smartlogix/auth/**
+        - id: ms-users
+          uri: lb://ms-users
+          predicates:
+            - Path=/smartlogix/users/**
         - id: ms-inventary
           uri: lb://ms-inventary
           predicates:
