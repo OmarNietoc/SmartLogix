@@ -69,7 +69,7 @@ lerna-debug.log*
 # ==============================================================================
 
 # Documentación y Pruebas locales
-Backend/Shipping/Pruebas/
+Backend/shipping/Pruebas/
 
 .DS_Store
 .DS_Store?
