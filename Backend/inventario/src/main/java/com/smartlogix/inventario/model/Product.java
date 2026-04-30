@@ -1,47 +1,22 @@
 package com.smartlogix.inventario.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import java.time.LocalDateTime;
+import lombok.*;
+import java.math.BigDecimal;
 
+/** Catálogo de productos de una PYME. companyId es referencia lógica a ms-users. */
 @Entity
-@Table(name = "products") // Nombre exacto de la tabla en SQL
-@Data
+@Table(name = "products")
+@Data @NoArgsConstructor @AllArgsConstructor @Builder
 public class Product {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
-    @Column(unique = true, nullable = false)
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
+    @Column(name = "company_id", nullable = false)
+    private String companyId;
+    @Column(nullable = false, unique = true, length = 50)
     private String sku;
-
-    @Column(nullable = false)
+    @Column(nullable = false, length = 200)
     private String name;
-
-    private String description;
-
-    @Column(name = "category_id")
-    private Integer categoryId;
-
-    @Column(name = "min_stock_level")
-    private Integer minStockLevel;
-
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    // Método para asignar fechas automáticamente antes de guardar
-    @PrePersist
-    protected void onCreate() {
-        createdAt = LocalDateTime.now();
-        updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        updatedAt = LocalDateTime.now();
-    }
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
 }

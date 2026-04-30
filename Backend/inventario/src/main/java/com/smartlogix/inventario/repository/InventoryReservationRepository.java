@@ -1,0 +1,3 @@
+package com.smartlogix.inventario.repository;
+import com.smartlogix.inventario.enums.ReservationStatus; import com.smartlogix.inventario.model.InventoryReservation; import org.springframework.data.jpa.repository.JpaRepository; import org.springframework.stereotype.Repository; import java.util.*;
+@Repository public interface InventoryReservationRepository extends JpaRepository<InventoryReservation, String> { Optional<InventoryReservation> findByOrderIdAndProductIdAndWarehouseIdAndStatus(String orderId, String productId, String warehouseId, ReservationStatus status); List<InventoryReservation> findByOrderId(String orderId); List<InventoryReservation> findByStatus(ReservationStatus status); }
