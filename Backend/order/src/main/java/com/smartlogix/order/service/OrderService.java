@@ -1,6 +1,8 @@
 package com.smartlogix.order.service;
 
-import com.smartlogix.order.client.NotificationClient;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import com.smartlogix.order.config.RabbitMQConfig;
+import com.smartlogix.order.event.OrderEvent;
 import com.smartlogix.order.dto.*;
 import com.smartlogix.order.exception.ResourceNotFoundException;
 import com.smartlogix.order.model.Order;
@@ -19,7 +21,7 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final NotificationClient notificationClient;
+    private final RabbitTemplate rabbitTemplate;
 
     public OrderResponse createOrder(CreateOrderRequest request) {
         Order order = new Order();
@@ -51,14 +53,17 @@ public class OrderService {
 
         Order savedOrder = orderRepository.save(order);
 
-        notificationClient.sendNotification(
-                new CreateNotificationRequest(
-                        savedOrder.getId(),
-                        savedOrder.getCustomerEmail(),
-                        "Pedido creado",
-                        "Tu pedido con ID " + savedOrder.getId() + " fue creado correctamente y quedó en estado PENDIENTE."
-                )
-        );
+        OrderEvent event = OrderEvent.builder()
+                .orderId(savedOrder.getId())
+                .customerEmail(savedOrder.getCustomerEmail())
+                .customerName(savedOrder.getCustomerName())
+                .status(savedOrder.getStatus().name())
+                .subject("Pedido creado")
+                .message("Tu pedido con ID " + savedOrder.getId() + " fue creado correctamente y quedó en estado PENDIENTE.")
+                .eventDate(LocalDateTime.now())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
 
         return mapToResponse(savedOrder);
     }
@@ -85,14 +90,17 @@ public class OrderService {
 
         Order updatedOrder = orderRepository.save(order);
 
-        notificationClient.sendNotification(
-                new CreateNotificationRequest(
-                        updatedOrder.getId(),
-                        updatedOrder.getCustomerEmail(),
-                        "Actualización de pedido",
-                        "Tu pedido con ID " + updatedOrder.getId() + " cambió a estado " + updatedOrder.getStatus() + "."
-                )
-        );
+        OrderEvent event = OrderEvent.builder()
+                .orderId(updatedOrder.getId())
+                .customerEmail(updatedOrder.getCustomerEmail())
+                .customerName(updatedOrder.getCustomerName())
+                .status(updatedOrder.getStatus().name())
+                .subject("Actualización de pedido")
+                .message("Tu pedido con ID " + updatedOrder.getId() + " cambió a estado " + updatedOrder.getStatus() + ".")
+                .eventDate(LocalDateTime.now())
+                .build();
+
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.updated", event);
 
         return mapToResponse(updatedOrder);
     }

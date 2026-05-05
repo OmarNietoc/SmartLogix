@@ -1,3 +1,5 @@
+name: smartlogix-backend
+
 services:
   # --- Databases ---
   postgres-shipping:
