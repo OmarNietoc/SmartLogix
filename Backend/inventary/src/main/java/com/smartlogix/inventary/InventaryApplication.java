@@ -1,13 +1,13 @@
-package com.smartlogix.inventario;
+package com.smartlogix.inventary;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class InventarioApplication {
+public class InventaryApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(InventarioApplication.class, args);
+		SpringApplication.run(InventaryApplication.class, args);
 	}
 
 }
