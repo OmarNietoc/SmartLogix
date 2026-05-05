@@ -1,5 +1,6 @@
-package com.smartlogix.notification.config;
+package com.smartlogix.shipping.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -15,8 +16,9 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "smartlogix.exchange";
-    public static final String QUEUE_ORDER_CREATED = "notification.queue";
-    public static final String QUEUE_ORDER_SHIPPED = "notification.shipped.queue";
+    public static final String QUEUE_NAME = "shipping.queue";
+    public static final String ROUTING_KEY_ORDER_CREATED = "order.created";
+    public static final String ROUTING_KEY_ORDER_SHIPPED = "order.shipped";
 
     @Bean
     public TopicExchange exchange() {
@@ -24,28 +26,18 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue orderCreatedQueue() {
-        return new Queue(QUEUE_ORDER_CREATED, true);
+    public Queue shippingQueue() {
+        return new Queue(QUEUE_NAME, true);
     }
 
     @Bean
-    public Binding orderCreatedBinding(Queue orderCreatedQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(orderCreatedQueue).to(exchange).with("order.created");
+    public Binding shippingBinding(Queue shippingQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(shippingQueue).to(exchange).with(ROUTING_KEY_ORDER_CREATED);
     }
 
     @Bean
-    public Queue orderShippedQueue() {
-        return new Queue(QUEUE_ORDER_SHIPPED, true);
-    }
-
-    @Bean
-    public Binding orderShippedBinding(Queue orderShippedQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(orderShippedQueue).to(exchange).with("order.shipped");
-    }
-
-    @Bean
-    public Jackson2JsonMessageConverter messageConverter() {
-        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
+    public Jackson2JsonMessageConverter messageConverter(ObjectMapper objectMapper) {
+        Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter(objectMapper);
         DefaultJackson2JavaTypeMapper typeMapper = new DefaultJackson2JavaTypeMapper();
         typeMapper.setTrustedPackages("com.smartlogix.*");
         converter.setJavaTypeMapper(typeMapper);

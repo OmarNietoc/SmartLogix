@@ -1,10 +1,6 @@
-package com.smartlogix.notification.event;
+package com.smartlogix.inventary.event;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
+import lombok.*;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -20,4 +16,5 @@ public class OrderEvent {
     private String subject;
     private String message;
     private LocalDateTime eventDate;
+    private List<OrderItemEvent> items;
 }

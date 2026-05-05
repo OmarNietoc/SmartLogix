@@ -1,4 +1,4 @@
-package com.smartlogix.notification.event;
+package com.smartlogix.shipping.event;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -16,8 +16,10 @@ public class OrderEvent {
     private String orderId;
     private String customerEmail;
     private String customerName;
+    private String shippingAddress;
     private String status;
     private String subject;
     private String message;
     private LocalDateTime eventDate;
+    private List<OrderItemEvent> items;
 }

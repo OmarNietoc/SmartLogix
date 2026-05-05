@@ -124,9 +124,14 @@ services:
       - DB_PASSWORD=password
       - SERVER_PORT=8084
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq-local
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
     depends_on:
       - postgres-shipping
       - eureka-server
+      - rabbitmq
 
   ms-inventary:
     build:
@@ -141,9 +146,14 @@ services:
       - DB_PASSWORD=drhiaishna16
       - SERVER_PORT=8081
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq-local
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
     depends_on:
       - postgres-inventary
       - eureka-server
+      - rabbitmq
 
   ms-order:
     build:
@@ -158,10 +168,14 @@ services:
       - DB_PASSWORD=postgres
       - SERVER_PORT=8082
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq-local
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
     depends_on:
       - postgres-order
-      - ms-notification
       - eureka-server
+      - rabbitmq
 
   ms-notification:
     build:
@@ -176,9 +190,19 @@ services:
       - DB_PASSWORD=postgres
       - SERVER_PORT=8085
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
+      - RABBITMQ_HOST=rabbitmq-local
+      - RABBITMQ_PORT=5672
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - SMTP_HOST=${SMTP_HOST:-sandbox.smtp.mailtrap.io}
+      - SMTP_PORT=${SMTP_PORT:-2525}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - MAIL_FROM=${MAIL_FROM:-noreply@smartlogix.cl}
     depends_on:
       - postgres-notification
       - eureka-server
+      - rabbitmq
 
   ms-users:
     build:

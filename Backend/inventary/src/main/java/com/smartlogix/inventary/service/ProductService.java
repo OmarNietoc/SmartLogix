@@ -36,7 +36,11 @@ public class ProductService {
         existing.setCompanyId(product.getCompanyId()); existing.setSku(product.getSku()); existing.setName(product.getName()); existing.setPrice(product.getPrice());
         return productRepository.save(existing);
     }
-    @Transactional public void deleteProduct(String id) { productRepository.delete(getProductById(id)); }
+    @Transactional public void deleteProduct(String id) {
+        Product product = getProductById(id);
+        product.setStatus("INACTIVE");
+        productRepository.save(product);
+    }
     private void validateProduct(Product product) {
         if (product.getCompanyId() == null || product.getCompanyId().isBlank()) throw new IllegalArgumentException("companyId es obligatorio");
         if (product.getSku() == null || product.getSku().isBlank()) throw new IllegalArgumentException("sku es obligatorio");

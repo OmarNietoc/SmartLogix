@@ -5,6 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface NotificationRepository extends JpaRepository<Notification, Long> {
-    List<Notification> findByOrderId(Long orderId);
+public interface NotificationRepository extends JpaRepository<Notification, String> {
+    List<Notification> findByOrderId(String orderId);
 }

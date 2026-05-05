@@ -63,6 +63,10 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.*
+.claude/
+actualizacion.md
+.claudeignore
+CLAUDE.md
 
 # ==============================================================================
 # Misceláneos / OS Generated Files

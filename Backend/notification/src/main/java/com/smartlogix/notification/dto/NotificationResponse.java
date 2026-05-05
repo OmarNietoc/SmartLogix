@@ -5,8 +5,8 @@ import com.smartlogix.notification.model.NotificationStatus;
 import java.time.LocalDateTime;
 
 public record NotificationResponse(
-        Long id,
-        Long orderId,
+        String id,
+        String orderId,
         String recipient,
         String subject,
         String message,

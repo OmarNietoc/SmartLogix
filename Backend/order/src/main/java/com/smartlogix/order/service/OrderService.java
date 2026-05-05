@@ -1,15 +1,16 @@
 package com.smartlogix.order.service;
 
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import com.smartlogix.order.config.RabbitMQConfig;
-import com.smartlogix.order.event.OrderEvent;
 import com.smartlogix.order.dto.*;
+import com.smartlogix.order.event.OrderEvent;
+import com.smartlogix.order.event.OrderItemEvent;
 import com.smartlogix.order.exception.ResourceNotFoundException;
 import com.smartlogix.order.model.Order;
 import com.smartlogix.order.model.OrderItem;
 import com.smartlogix.order.model.OrderStatus;
 import com.smartlogix.order.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -37,30 +38,37 @@ public class OrderService {
         for (OrderItemRequest itemRequest : request.items()) {
             OrderItem item = new OrderItem();
             item.setProductId(itemRequest.productId());
+            item.setWarehouseId(itemRequest.warehouseId());
             item.setProductName(itemRequest.productName());
             item.setQuantity(itemRequest.quantity());
             item.setPrice(itemRequest.price());
             item.setOrder(order);
-
             order.getItems().add(item);
-
-            BigDecimal subtotal = itemRequest.price()
-                    .multiply(BigDecimal.valueOf(itemRequest.quantity()));
-            total = total.add(subtotal);
+            total = total.add(itemRequest.price().multiply(BigDecimal.valueOf(itemRequest.quantity())));
         }
 
         order.setTotal(total);
-
         Order savedOrder = orderRepository.save(order);
+
+        List<OrderItemEvent> itemEvents = savedOrder.getItems().stream()
+                .map(i -> OrderItemEvent.builder()
+                        .productId(i.getProductId())
+                        .warehouseId(i.getWarehouseId())
+                        .productName(i.getProductName())
+                        .quantity(i.getQuantity())
+                        .build())
+                .toList();
 
         OrderEvent event = OrderEvent.builder()
                 .orderId(savedOrder.getId())
                 .customerEmail(savedOrder.getCustomerEmail())
                 .customerName(savedOrder.getCustomerName())
+                .shippingAddress(savedOrder.getShippingAddress())
                 .status(savedOrder.getStatus().name())
                 .subject("Pedido creado")
                 .message("Tu pedido con ID " + savedOrder.getId() + " fue creado correctamente y quedó en estado PENDIENTE.")
                 .eventDate(LocalDateTime.now())
+                .items(itemEvents)
                 .build();
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
@@ -69,25 +77,21 @@ public class OrderService {
     }
 
     public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return orderRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
-    public OrderResponse getOrderById(Long id) {
+    public OrderResponse getOrderById(String id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
         return mapToResponse(order);
     }
 
-    public OrderResponse updateOrderStatus(Long id, UpdateOrderStatusRequest request) {
+    public OrderResponse updateOrderStatus(String id, UpdateOrderStatusRequest request) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
 
         order.setStatus(request.status());
         order.setUpdatedAt(LocalDateTime.now());
-
         Order updatedOrder = orderRepository.save(order);
 
         OrderEvent event = OrderEvent.builder()
@@ -110,10 +114,10 @@ public class OrderService {
                 .map(item -> new OrderItemResponse(
                         item.getId(),
                         item.getProductId(),
+                        item.getWarehouseId(),
                         item.getProductName(),
                         item.getQuantity(),
-                        item.getPrice()
-                ))
+                        item.getPrice()))
                 .toList();
 
         return new OrderResponse(
@@ -125,7 +129,6 @@ public class OrderService {
                 order.getTotal(),
                 order.getCreatedAt(),
                 order.getUpdatedAt(),
-                items
-        );
+                items);
     }
 }

@@ -15,15 +15,22 @@ import java.math.BigDecimal;
 public class OrderItem {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    private Long productId;
+    @Column(name = "product_id", nullable = false)
+    private String productId;
 
+    @Column(name = "warehouse_id", nullable = false)
+    private String warehouseId;
+
+    @Column(name = "product_name", nullable = false)
     private String productName;
 
+    @Column(nullable = false)
     private Integer quantity;
 
+    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
 
     @ManyToOne(fetch = FetchType.LAZY)

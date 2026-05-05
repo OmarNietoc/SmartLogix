@@ -7,11 +7,13 @@ import com.smartlogix.notification.model.Notification;
 import com.smartlogix.notification.model.NotificationStatus;
 import com.smartlogix.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -28,48 +30,28 @@ public class NotificationService {
                 .createdAt(LocalDateTime.now())
                 .build();
 
-        Notification savedNotification = notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        log.info("Notificación enviada a {} para orderId={}", saved.getRecipient(), saved.getOrderId());
 
-        System.out.println("==========================================");
-        System.out.println("NOTIFICACIÓN ENVIADA");
-        System.out.println("Para: " + savedNotification.getRecipient());
-        System.out.println("Asunto: " + savedNotification.getSubject());
-        System.out.println("Mensaje: " + savedNotification.getMessage());
-        System.out.println("Pedido asociado: " + savedNotification.getOrderId());
-        System.out.println("==========================================");
-
-        return mapToResponse(savedNotification);
+        return mapToResponse(saved);
     }
 
     public List<NotificationResponse> getAllNotifications() {
-        return notificationRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+        return notificationRepository.findAll().stream().map(this::mapToResponse).toList();
     }
 
-    public NotificationResponse getNotificationById(Long id) {
+    public NotificationResponse getNotificationById(String id) {
         Notification notification = notificationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Notificación no encontrada con id: " + id));
         return mapToResponse(notification);
     }
 
-    public List<NotificationResponse> getNotificationsByOrderId(Long orderId) {
-        return notificationRepository.findByOrderId(orderId)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
+    public List<NotificationResponse> getNotificationsByOrderId(String orderId) {
+        return notificationRepository.findByOrderId(orderId).stream().map(this::mapToResponse).toList();
     }
 
-    private NotificationResponse mapToResponse(Notification notification) {
-        return new NotificationResponse(
-                notification.getId(),
-                notification.getOrderId(),
-                notification.getRecipient(),
-                notification.getSubject(),
-                notification.getMessage(),
-                notification.getStatus(),
-                notification.getCreatedAt()
-        );
+    private NotificationResponse mapToResponse(Notification n) {
+        return new NotificationResponse(n.getId(), n.getOrderId(), n.getRecipient(),
+                n.getSubject(), n.getMessage(), n.getStatus(), n.getCreatedAt());
     }
 }

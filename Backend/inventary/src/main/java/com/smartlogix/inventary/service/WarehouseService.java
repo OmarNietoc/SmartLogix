@@ -20,6 +20,10 @@ public class WarehouseService {
     public Warehouse getWarehouseById(String id) { return warehouseRepository.findById(id).orElseThrow(() -> new WarehouseNotFoundException("La bodega con ID " + id + " no fue encontrada.")); }
     @Transactional public Warehouse createWarehouse(Warehouse warehouse) { validate(warehouse); log.info("Creando bodega {}", warehouse.getName()); return warehouseRepository.save(warehouse); }
     @Transactional public Warehouse updateWarehouse(String id, Warehouse warehouse) { Warehouse e=getWarehouseById(id); validate(warehouse); e.setCompanyId(warehouse.getCompanyId()); e.setName(warehouse.getName()); e.setLocationAddress(warehouse.getLocationAddress()); e.setType(warehouse.getType()); return warehouseRepository.save(e); }
-    @Transactional public void deleteWarehouse(String id) { warehouseRepository.delete(getWarehouseById(id)); }
+    @Transactional public void deleteWarehouse(String id) {
+        Warehouse warehouse = getWarehouseById(id);
+        warehouse.setStatus("INACTIVE");
+        warehouseRepository.save(warehouse);
+    }
     private void validate(Warehouse warehouse) { if (warehouse.getCompanyId()==null||warehouse.getCompanyId().isBlank()) throw new IllegalArgumentException("companyId es obligatorio"); if (warehouse.getName()==null||warehouse.getName().isBlank()) throw new IllegalArgumentException("name es obligatorio"); if (warehouse.getLocationAddress()==null||warehouse.getLocationAddress().isBlank()) throw new IllegalArgumentException("locationAddress es obligatorio"); if (warehouse.getType()==null) throw new IllegalArgumentException("type es obligatorio"); }
 }

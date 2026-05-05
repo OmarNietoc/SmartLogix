@@ -15,10 +15,11 @@ import java.time.LocalDateTime;
 public class Notification {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private String id;
 
-    private Long orderId;
+    @Column(name = "order_id")
+    private String orderId;
 
     private String recipient;
 
@@ -30,5 +31,6 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
