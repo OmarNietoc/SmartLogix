@@ -1,7 +1,8 @@
 package com.smartlogix.order.exception;
 
+import com.smartlogix.order.dto.MessageResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ProblemDetail;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -10,23 +11,35 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ProblemDetail handleResourceNotFound(ResourceNotFoundException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
-        problemDetail.setTitle("Recurso no encontrado");
-        return problemDetail;
+    public ResponseEntity<MessageResponse<Void>> handleResourceNotFound(ResourceNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                MessageResponse.<Void>builder()
+                        .statusCode(HttpStatus.NOT_FOUND.value())
+                        .message(ex.getMessage())
+                        .data(null)
+                        .build());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, "Datos inválidos");
-        problemDetail.setTitle("Error de validación");
-        return problemDetail;
+    public ResponseEntity<MessageResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
+        String detail = ex.getBindingResult().getFieldErrors().stream()
+                .map(e -> e.getField() + ": " + e.getDefaultMessage())
+                .findFirst().orElse("Datos inválidos");
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(
+                MessageResponse.<Void>builder()
+                        .statusCode(HttpStatus.BAD_REQUEST.value())
+                        .message(detail)
+                        .data(null)
+                        .build());
     }
 
     @ExceptionHandler(Exception.class)
-    public ProblemDetail handleGeneral(Exception ex) {
-        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, ex.getMessage());
-        problemDetail.setTitle("Error interno del servidor");
-        return problemDetail;
+    public ResponseEntity<MessageResponse<Void>> handleGeneral(Exception ex) {
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
+                MessageResponse.<Void>builder()
+                        .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                        .message("Error interno del servidor: " + ex.getMessage())
+                        .data(null)
+                        .build());
     }
 }

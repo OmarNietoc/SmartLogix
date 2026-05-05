@@ -2,10 +2,9 @@ package com.smartlogix.notification.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 
 public record CreateNotificationRequest(
-        @NotNull Long orderId,
+        String orderId,
         @Email @NotBlank String recipient,
         @NotBlank String subject,
         @NotBlank String message

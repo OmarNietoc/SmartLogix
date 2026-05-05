@@ -20,4 +20,7 @@ public class Warehouse {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 50)
     private WarehouseType type;
+    @Builder.Default
+    @Column(nullable = false, length = 20)
+    private String status = "ACTIVE";
 }

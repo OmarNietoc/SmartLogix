@@ -19,4 +19,7 @@ public class Product {
     private String name;
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal price;
+    @Builder.Default
+    @Column(nullable = false, length = 20)
+    private String status = "ACTIVE";
 }

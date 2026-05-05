@@ -1,6 +1,8 @@
 package com.smartlogix.shipping.service;
 
 import com.smartlogix.shipping.enums.DeliveryStatus;
+import com.smartlogix.shipping.event.OrderShippedEvent;
+import com.smartlogix.shipping.event.ShippingEventPublisher;
 import com.smartlogix.shipping.exception.ShipmentNotFoundException;
 import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.repository.RouteRepository;
@@ -19,6 +21,7 @@ public class ShipmentService {
 
     private final ShipmentRepository shipmentRepository;
     private final RouteRepository routeRepository;
+    private final ShippingEventPublisher shippingEventPublisher;
 
     public List<Shipment> getAllShipments(DeliveryStatus deliveryStatus) {
         if (deliveryStatus != null) {
@@ -39,8 +42,6 @@ public class ShipmentService {
 
     @Transactional
     public Shipment createShipment(Shipment shipment) {
-        // En caso de que se envíe asociado desde el json, el framework lo intenta poblar.
-        // Se asume estado inicial "PENDING" si no se establece.
         if (shipment.getDeliveryStatus() == null) {
             shipment.setDeliveryStatus(DeliveryStatus.PENDING);
         }
@@ -57,12 +58,23 @@ public class ShipmentService {
         if (newStatus == DeliveryStatus.DELIVERED) {
             existing.setActualDelivery(java.time.LocalDateTime.now());
         }
-        return shipmentRepository.save(existing);
+        Shipment saved = shipmentRepository.save(existing);
+
+        if (newStatus == DeliveryStatus.DISPATCHED && saved.getCustomerEmail() != null) {
+            shippingEventPublisher.publishOrderShipped(new OrderShippedEvent(
+                    saved.getOrderId(),
+                    saved.getCustomerEmail(),
+                    saved.getTrackingNumber()
+            ));
+        }
+
+        return saved;
     }
 
     @Transactional
     public void deleteShipment(String id) {
         Shipment existing = getShipmentById(id);
-        shipmentRepository.delete(existing);
+        existing.setDeliveryStatus(DeliveryStatus.CANCELLED);
+        shipmentRepository.save(existing);
     }
 }
