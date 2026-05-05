@@ -7,7 +7,7 @@ spring:
   application:
     name: ms-inventary
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartlogix_inventario}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/smartlogix_inventary}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:drhiaishna16}
   jpa:
