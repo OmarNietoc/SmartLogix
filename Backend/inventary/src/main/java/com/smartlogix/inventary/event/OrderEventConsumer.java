@@ -58,7 +58,7 @@ public class OrderEventConsumer {
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_NAME,
                 "order.reservation.confirmed",
-                new ReservationConfirmedEvent(orderId, event.getCustomerEmail(), event.getCustomerName())
+                new ReservationConfirmedEvent(orderId, event.getCustomerEmail(), event.getCustomerName(), event.getShippingAddress())
         );
         log.info("Todos los items reservados para orderId={}. Publicando confirmed.", orderId);
     }

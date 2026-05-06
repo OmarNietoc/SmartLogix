@@ -26,9 +26,11 @@ public class OrderService {
 
     public OrderResponse createOrder(CreateOrderRequest request) {
         Order order = new Order();
+        String shippingAddress = request.street() + ", " + request.commune() + ", "
+                + request.city() + ", " + request.region() + ", Chile";
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
-        order.setShippingAddress(request.shippingAddress());
+        order.setShippingAddress(shippingAddress);
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
