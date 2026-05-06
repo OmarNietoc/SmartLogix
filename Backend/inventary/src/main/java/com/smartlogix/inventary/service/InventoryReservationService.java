@@ -98,6 +98,22 @@ public class InventoryReservationService {
         return reservationRepository.save(reservation);
     }
 
+    @Transactional
+    public void compensateAllForOrder(String orderId) {
+        List<InventoryReservation> toCompensate = reservationRepository.findByOrderId(orderId)
+                .stream()
+                .filter(r -> r.getStatus() == ReservationStatus.RESERVED)
+                .toList();
+        for (InventoryReservation r : toCompensate) {
+            try {
+                compensateReservation(r.getId());
+            } catch (Exception e) {
+                log.error("Error compensando reserva id={} orderId={}: {}", r.getId(), orderId, e.getMessage());
+            }
+        }
+        log.info("Compensadas {}/{} reservas para orderId={}", toCompensate.size(), toCompensate.size(), orderId);
+    }
+
     private void validate(StockReservationRequestDTO req) {
         if (req.getOrderId() == null || req.getOrderId().isBlank()) throw new IllegalArgumentException("orderId es obligatorio");
         if (req.getProductId() == null || req.getProductId().isBlank()) throw new IllegalArgumentException("productId es obligatorio");

@@ -13,22 +13,39 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "smartlogix.exchange";
-    public static final String QUEUE_FAILED = "order.failed.queue";
-    public static final String ROUTING_KEY_RESERVATION_FAILED = "order.reservation.failed";
+    public static final String QUEUE_FAILED     = "order.failed.queue";
+    public static final String QUEUE_CONFIRMED  = "order.confirmed.queue";
+    public static final String QUEUE_SHIPPED    = "order.shipped.queue";
+    public static final String QUEUE_DELIVERED  = "order.delivered.queue";
 
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(EXCHANGE_NAME);
     }
 
-    @Bean
-    public Queue orderFailedQueue() {
-        return new Queue(QUEUE_FAILED, true);
-    }
+    @Bean public Queue orderFailedQueue()    { return new Queue(QUEUE_FAILED,    true); }
+    @Bean public Queue orderConfirmedQueue() { return new Queue(QUEUE_CONFIRMED, true); }
+    @Bean public Queue orderShippedQueue()   { return new Queue(QUEUE_SHIPPED,   true); }
+    @Bean public Queue orderDeliveredQueue() { return new Queue(QUEUE_DELIVERED, true); }
 
     @Bean
     public Binding orderFailedBinding(Queue orderFailedQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(orderFailedQueue).to(exchange).with(ROUTING_KEY_RESERVATION_FAILED);
+        return BindingBuilder.bind(orderFailedQueue).to(exchange).with("order.reservation.failed");
+    }
+
+    @Bean
+    public Binding orderConfirmedBinding(Queue orderConfirmedQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(orderConfirmedQueue).to(exchange).with("order.reservation.confirmed");
+    }
+
+    @Bean
+    public Binding orderShippedBinding(Queue orderShippedQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(orderShippedQueue).to(exchange).with("order.shipped");
+    }
+
+    @Bean
+    public Binding orderDeliveredBinding(Queue orderDeliveredQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(orderDeliveredQueue).to(exchange).with("order.delivered");
     }
 
     @Bean

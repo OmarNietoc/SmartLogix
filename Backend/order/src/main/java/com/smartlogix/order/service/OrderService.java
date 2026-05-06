@@ -29,7 +29,7 @@ public class OrderService {
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
         order.setShippingAddress(request.shippingAddress());
-        order.setStatus(OrderStatus.PENDIENTE);
+        order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
@@ -90,6 +90,9 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
 
+        if (!order.getStatus().canTransitionTo(request.status())) {
+            throw new IllegalStateException("Transición inválida: " + order.getStatus() + " → " + request.status());
+        }
         order.setStatus(request.status());
         order.setUpdatedAt(LocalDateTime.now());
         Order updatedOrder = orderRepository.save(order);

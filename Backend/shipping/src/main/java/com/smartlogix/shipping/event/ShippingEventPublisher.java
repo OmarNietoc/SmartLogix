@@ -14,7 +14,12 @@ public class ShippingEventPublisher {
     private final RabbitTemplate rabbitTemplate;
 
     public void publishOrderShipped(OrderShippedEvent event) {
-        log.info("Publicando order.shipped para orden id={}", event.orderId());
+        log.info("Publicando order.shipped para orderId={}", event.orderId());
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY_ORDER_SHIPPED, event);
+    }
+
+    public void publishOrderDelivered(OrderDeliveredEvent event) {
+        log.info("Publicando order.delivered para orderId={}", event.orderId());
+        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, RabbitMQConfig.ROUTING_KEY_ORDER_DELIVERED, event);
     }
 }

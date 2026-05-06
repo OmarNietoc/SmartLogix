@@ -22,46 +22,57 @@ public class NotificationController {
     @PostMapping
     public ResponseEntity<MessageResponse<NotificationResponse>> createNotification(
             @Valid @RequestBody CreateNotificationRequest request) {
-        NotificationResponse created = notificationService.createNotification(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 MessageResponse.<NotificationResponse>builder()
                         .statusCode(HttpStatus.CREATED.value())
                         .message("Notificación creada exitosamente")
-                        .data(created)
+                        .data(notificationService.createNotification(request))
                         .build());
     }
 
     @GetMapping
     public ResponseEntity<MessageResponse<List<NotificationResponse>>> getAllNotifications() {
-        List<NotificationResponse> notifications = notificationService.getAllNotifications();
-        return ResponseEntity.ok(
-                MessageResponse.<List<NotificationResponse>>builder()
-                        .statusCode(HttpStatus.OK.value())
-                        .message("Listado de notificaciones obtenido exitosamente")
-                        .data(notifications)
-                        .build());
+        return ResponseEntity.ok(MessageResponse.<List<NotificationResponse>>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Listado de notificaciones obtenido exitosamente")
+                .data(notificationService.getAllNotifications())
+                .build());
+    }
+
+    @GetMapping("/unread")
+    public ResponseEntity<MessageResponse<List<NotificationResponse>>> getUnread() {
+        return ResponseEntity.ok(MessageResponse.<List<NotificationResponse>>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Notificaciones no leídas")
+                .data(notificationService.getUnreadInApp())
+                .build());
+    }
+
+    @PatchMapping("/{id}/read")
+    public ResponseEntity<MessageResponse<NotificationResponse>> markAsRead(@PathVariable String id) {
+        return ResponseEntity.ok(MessageResponse.<NotificationResponse>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Notificación marcada como leída")
+                .data(notificationService.markAsRead(id))
+                .build());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse<NotificationResponse>> getNotificationById(@PathVariable String id) {
-        NotificationResponse notification = notificationService.getNotificationById(id);
-        return ResponseEntity.ok(
-                MessageResponse.<NotificationResponse>builder()
-                        .statusCode(HttpStatus.OK.value())
-                        .message("Notificación obtenida exitosamente")
-                        .data(notification)
-                        .build());
+        return ResponseEntity.ok(MessageResponse.<NotificationResponse>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Notificación obtenida exitosamente")
+                .data(notificationService.getNotificationById(id))
+                .build());
     }
 
     @GetMapping("/order/{orderId}")
     public ResponseEntity<MessageResponse<List<NotificationResponse>>> getNotificationsByOrderId(
             @PathVariable String orderId) {
-        List<NotificationResponse> notifications = notificationService.getNotificationsByOrderId(orderId);
-        return ResponseEntity.ok(
-                MessageResponse.<List<NotificationResponse>>builder()
-                        .statusCode(HttpStatus.OK.value())
-                        .message("Notificaciones del pedido obtenidas exitosamente")
-                        .data(notifications)
-                        .build());
+        return ResponseEntity.ok(MessageResponse.<List<NotificationResponse>>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Notificaciones del pedido obtenidas exitosamente")
+                .data(notificationService.getNotificationsByOrderId(orderId))
+                .build());
     }
 }

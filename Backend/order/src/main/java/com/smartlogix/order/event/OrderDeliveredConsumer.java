@@ -13,20 +13,21 @@ import java.time.LocalDateTime;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class ReservationFailedConsumer {
+public class OrderDeliveredConsumer {
 
     private final OrderRepository orderRepository;
 
     @Transactional
-    @RabbitListener(queues = "order.failed.queue")
-    public void handleReservationFailed(ReservationFailedEvent event) {
-        log.warn("Saga compensación recibida: orderId={}, productId={}, reason={}",
-                event.orderId(), event.productId(), event.reason());
+    @RabbitListener(queues = "order.delivered.queue")
+    public void handleOrderDelivered(OrderDeliveredEvent event) {
+        log.info("Entrega confirmada: orderId={}, tracking={}", event.orderId(), event.trackingNumber());
         orderRepository.findById(event.orderId()).ifPresent(order -> {
-            order.setStatus(OrderStatus.REJECTED);
-            order.setUpdatedAt(LocalDateTime.now());
-            orderRepository.save(order);
-            log.info("Order {} → REJECTED (stock insuficiente)", event.orderId());
+            if (order.getStatus().canTransitionTo(OrderStatus.DELIVERED)) {
+                order.setStatus(OrderStatus.DELIVERED);
+                order.setUpdatedAt(LocalDateTime.now());
+                orderRepository.save(order);
+                log.info("Order {} → DELIVERED", event.orderId());
+            }
         });
     }
 }

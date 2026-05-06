@@ -18,7 +18,8 @@ public class RabbitMQConfig {
     public static final String EXCHANGE_NAME = "smartlogix.exchange";
     public static final String QUEUE_NAME = "shipping.queue";
     public static final String ROUTING_KEY_ORDER_CREATED = "order.created";
-    public static final String ROUTING_KEY_ORDER_SHIPPED = "order.shipped";
+    public static final String ROUTING_KEY_ORDER_SHIPPED    = "order.shipped";
+    public static final String ROUTING_KEY_ORDER_DELIVERED  = "order.delivered";
 
     @Bean
     public TopicExchange exchange() {
