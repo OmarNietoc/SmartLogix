@@ -1,6 +1,7 @@
 package com.smartlogix.shipping.service;
 
 import com.smartlogix.shipping.enums.DeliveryStatus;
+import com.smartlogix.shipping.event.OrderDeliveredEvent;
 import com.smartlogix.shipping.event.OrderShippedEvent;
 import com.smartlogix.shipping.event.ShippingEventPublisher;
 import com.smartlogix.shipping.exception.ShipmentNotFoundException;
@@ -65,6 +66,14 @@ public class ShipmentService {
                     saved.getOrderId(),
                     saved.getCustomerEmail(),
                     saved.getTrackingNumber()
+            ));
+        }
+
+        if (newStatus == DeliveryStatus.DELIVERED) {
+            shippingEventPublisher.publishOrderDelivered(new OrderDeliveredEvent(
+                    saved.getOrderId(),
+                    saved.getTrackingNumber(),
+                    saved.getCustomerEmail()
             ));
         }
 

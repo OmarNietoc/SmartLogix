@@ -31,6 +31,13 @@ public class Notification {
     @Enumerated(EnumType.STRING)
     private NotificationStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private NotificationType type = NotificationType.EMAIL;
+
+    @Builder.Default
+    private boolean read = false;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 }
