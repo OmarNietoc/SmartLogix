@@ -29,6 +29,12 @@ routing:
   osrm-base-url: ${OSRM_BASE_URL:http://router.project-osrm.org}
   nominatim-base-url: ${NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
 
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
 eureka:
   client:
     enabled: true
@@ -36,6 +42,10 @@ eureka:
     fetch-registry: true
     service-url:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
 
 resilience4j:
   circuitbreaker:

@@ -38,12 +38,68 @@ spring:
           predicates:
             - Path=/smartlogix/notification/**
 
+        # Rutas proxy para Swagger agregado
+        - id: ms-auth-api-docs
+          uri: lb://ms-auth
+          predicates:
+            - Path=/api-docs/ms-auth
+          filters:
+            - RewritePath=/api-docs/ms-auth, /v3/api-docs
+        - id: ms-order-api-docs
+          uri: lb://ms-order
+          predicates:
+            - Path=/api-docs/ms-order
+          filters:
+            - RewritePath=/api-docs/ms-order, /v3/api-docs
+        - id: ms-inventary-api-docs
+          uri: lb://ms-inventary
+          predicates:
+            - Path=/api-docs/ms-inventary
+          filters:
+            - RewritePath=/api-docs/ms-inventary, /v3/api-docs
+        - id: ms-shipping-api-docs
+          uri: lb://ms-shipping
+          predicates:
+            - Path=/api-docs/ms-shipping
+          filters:
+            - RewritePath=/api-docs/ms-shipping, /v3/api-docs
+        - id: ms-notification-api-docs
+          uri: lb://ms-notification
+          predicates:
+            - Path=/api-docs/ms-notification
+          filters:
+            - RewritePath=/api-docs/ms-notification, /v3/api-docs
+        - id: ms-users-api-docs
+          uri: lb://ms-users
+          predicates:
+            - Path=/api-docs/ms-users
+          filters:
+            - RewritePath=/api-docs/ms-users, /v3/api-docs
+
 eureka:
   client:
     serviceUrl:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 10
+
 springdoc:
   swagger-ui:
+    path: /swagger-ui.html
     urls:
-      - name: Auth Service
-        url: /auth/v3/api-docs
+      - name: ms-auth
+        url: /api-docs/ms-auth
+      - name: ms-order
+        url: /api-docs/ms-order
+      - name: ms-inventary
+        url: /api-docs/ms-inventary
+      - name: ms-shipping
+        url: /api-docs/ms-shipping
+      - name: ms-notification
+        url: /api-docs/ms-notification
+      - name: ms-users
+        url: /api-docs/ms-users
+  api-docs:
+    path: /v3/api-docs
