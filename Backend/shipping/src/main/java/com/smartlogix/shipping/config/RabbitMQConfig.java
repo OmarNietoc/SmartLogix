@@ -16,10 +16,10 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "smartlogix.exchange";
-    public static final String QUEUE_NAME = "shipping.queue";
-    public static final String ROUTING_KEY_ORDER_CREATED = "order.created";
-    public static final String ROUTING_KEY_ORDER_SHIPPED    = "order.shipped";
-    public static final String ROUTING_KEY_ORDER_DELIVERED  = "order.delivered";
+    public static final String CONFIRMED_QUEUE_NAME = "shipping.confirmed.queue";
+    public static final String ROUTING_KEY_RESERVATION_CONFIRMED = "order.reservation.confirmed";
+    public static final String ROUTING_KEY_ORDER_SHIPPED = "order.shipped";
+    public static final String ROUTING_KEY_ORDER_DELIVERED = "order.delivered";
 
     @Bean
     public TopicExchange exchange() {
@@ -27,13 +27,13 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue shippingQueue() {
-        return new Queue(QUEUE_NAME, true);
+    public Queue shippingConfirmedQueue() {
+        return new Queue(CONFIRMED_QUEUE_NAME, true);
     }
 
     @Bean
-    public Binding shippingBinding(Queue shippingQueue, TopicExchange exchange) {
-        return BindingBuilder.bind(shippingQueue).to(exchange).with(ROUTING_KEY_ORDER_CREATED);
+    public Binding shippingConfirmedBinding(Queue shippingConfirmedQueue, TopicExchange exchange) {
+        return BindingBuilder.bind(shippingConfirmedQueue).to(exchange).with(ROUTING_KEY_RESERVATION_CONFIRMED);
     }
 
     @Bean

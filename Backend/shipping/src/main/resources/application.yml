@@ -25,6 +25,10 @@ spring:
     username: ${RABBITMQ_USERNAME:guest}
     password: ${RABBITMQ_PASSWORD:guest}
 
+routing:
+  osrm-base-url: ${OSRM_BASE_URL:http://router.project-osrm.org}
+  nominatim-base-url: ${NOMINATIM_BASE_URL:https://nominatim.openstreetmap.org}
+
 eureka:
   client:
     enabled: true

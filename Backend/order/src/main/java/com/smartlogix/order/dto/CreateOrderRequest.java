@@ -10,7 +10,9 @@ import java.util.List;
 public record CreateOrderRequest(
         @NotBlank String customerName,
         @Email @NotBlank String customerEmail,
-        @NotBlank String shippingAddress,
+        @NotBlank String street,
+        @NotBlank String commune,
+        @NotBlank String city,
+        @NotBlank String region,
         @Valid @NotEmpty List<OrderItemRequest> items
-) {
-}
+) {}

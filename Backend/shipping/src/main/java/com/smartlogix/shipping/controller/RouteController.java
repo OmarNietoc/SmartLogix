@@ -1,12 +1,11 @@
 package com.smartlogix.shipping.controller;
 
-import com.smartlogix.shipping.dto.MessageResponse;
-import com.smartlogix.shipping.dto.RouteCreationRequestDTO;
-import com.smartlogix.shipping.dto.RouteDTO;
+import com.smartlogix.shipping.dto.*;
 import com.smartlogix.shipping.enums.RouteStatus;
 import com.smartlogix.shipping.mapper.RouteMapper;
 import com.smartlogix.shipping.model.Route;
 import com.smartlogix.shipping.service.RouteService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -44,7 +43,8 @@ public class RouteController {
                 request.getCompanyId(),
                 request.getCarrierId(),
                 request.getOriginAddress(),
-                request.getShipmentIds()
+                request.getShipmentIds(),
+                request.isOptimizeRoute()
         );
 
         MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
@@ -56,16 +56,26 @@ public class RouteController {
         return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
+    @PostMapping("/generate-proposal")
+    public ResponseEntity<MessageResponse<RouteProposalResponseDTO>> generateProposal(
+            @Valid @RequestBody RouteProposalRequestDTO request) {
+        RouteProposalResponseDTO proposal = routeService.generateProposal(request);
+        MessageResponse<RouteProposalResponseDTO> response = MessageResponse.<RouteProposalResponseDTO>builder()
+                .statusCode(HttpStatus.OK.value())
+                .message("Propuesta de ruta generada exitosamente.")
+                .data(proposal)
+                .build();
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse<RouteDTO>> getRouteById(@PathVariable String id) {
         Route route = routeService.getRouteById(id);
-        
         MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Ruta obtenida exitosamente")
                 .data(routeMapper.toDto(route))
                 .build();
-
         return ResponseEntity.ok(response);
     }
 
