@@ -10,11 +10,13 @@ public record OrderResponse(
         String id,
         String customerName,
         String customerEmail,
-        String shippingAddress,
+        String street,
+        Integer comunaId,
+        String comunaNombre,
+        String regionNombre,
         OrderStatus status,
         BigDecimal total,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
         List<OrderItemResponse> items
-) {
-}
+) {}
