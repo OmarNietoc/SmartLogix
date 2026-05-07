@@ -3,6 +3,10 @@ package com.smartlogix.inventary.service;
 import com.smartlogix.inventary.dto.StockReservationRequestDTO;
 import com.smartlogix.inventary.enums.MovementType;
 import com.smartlogix.inventary.enums.ReservationStatus;
+<<<<<<< Updated upstream
+=======
+import com.smartlogix.inventary.enums.WarehouseType;
+>>>>>>> Stashed changes
 import com.smartlogix.inventary.exception.InsufficientStockException;
 import com.smartlogix.inventary.exception.InventoryReservationNotFoundException;
 import com.smartlogix.inventary.model.*;
@@ -199,6 +203,10 @@ class InventoryReservationServiceTest {
 
     private Warehouse buildWarehouse(String id) {
         return Warehouse.builder().id(id).companyId("c1").name("Bodega Test")
+<<<<<<< Updated upstream
                 .locationAddress("Calle 1").type(com.smartlogix.inventary.enums.WarehouseType.WAREHOUSE).build();
+=======
+                .locationAddress("Calle 1").type(WarehouseType.WAREHOUSE).build();
+>>>>>>> Stashed changes
     }
 }
