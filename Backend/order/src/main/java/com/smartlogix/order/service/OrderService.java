@@ -5,6 +5,7 @@ import com.smartlogix.order.dto.*;
 import com.smartlogix.order.event.OrderEvent;
 import com.smartlogix.order.event.OrderItemEvent;
 import com.smartlogix.order.exception.ResourceNotFoundException;
+import com.smartlogix.order.mapper.OrderMapper;
 import com.smartlogix.order.model.Order;
 import com.smartlogix.order.model.OrderItem;
 import com.smartlogix.order.model.OrderStatus;
@@ -23,6 +24,7 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final RabbitTemplate rabbitTemplate;
+    private final OrderMapper orderMapper;
 
     public OrderResponse createOrder(CreateOrderRequest request) {
         Order order = new Order();
@@ -75,17 +77,17 @@ public class OrderService {
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
 
-        return mapToResponse(savedOrder);
+        return orderMapper.toDto(savedOrder);
     }
 
     public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream().map(this::mapToResponse).toList();
+        return orderRepository.findAll().stream().map(orderMapper::toDto).toList();
     }
 
     public OrderResponse getOrderById(String id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
-        return mapToResponse(order);
+        return orderMapper.toDto(order);
     }
 
     public OrderResponse updateOrderStatus(String id, UpdateOrderStatusRequest request) {
@@ -111,29 +113,6 @@ public class OrderService {
 
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.updated", event);
 
-        return mapToResponse(updatedOrder);
-    }
-
-    private OrderResponse mapToResponse(Order order) {
-        List<OrderItemResponse> items = order.getItems().stream()
-                .map(item -> new OrderItemResponse(
-                        item.getId(),
-                        item.getProductId(),
-                        item.getWarehouseId(),
-                        item.getProductName(),
-                        item.getQuantity(),
-                        item.getPrice()))
-                .toList();
-
-        return new OrderResponse(
-                order.getId(),
-                order.getCustomerName(),
-                order.getCustomerEmail(),
-                order.getShippingAddress(),
-                order.getStatus(),
-                order.getTotal(),
-                order.getCreatedAt(),
-                order.getUpdatedAt(),
-                items);
+        return orderMapper.toDto(updatedOrder);
     }
 }
