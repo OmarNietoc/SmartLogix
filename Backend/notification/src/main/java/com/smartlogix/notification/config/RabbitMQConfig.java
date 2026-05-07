@@ -20,11 +20,37 @@ public class RabbitMQConfig {
 
     @Bean public TopicExchange exchange() { return new TopicExchange(EXCHANGE_NAME); }
 
-    @Bean public Queue orderCreatedQueue()   { return new Queue(QUEUE_ORDER_CREATED,   true); }
-    @Bean public Queue orderShippedQueue()   { return new Queue(QUEUE_ORDER_SHIPPED,   true); }
-    @Bean public Queue orderConfirmedQueue() { return new Queue(QUEUE_ORDER_CONFIRMED, true); }
-    @Bean public Queue orderRejectedQueue()  { return new Queue(QUEUE_ORDER_REJECTED,  true); }
-    @Bean public Queue orderDeliveredQueue() { return new Queue(QUEUE_ORDER_DELIVERED, true); }
+    @Bean public Queue orderCreatedQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_CREATED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_ORDER_CREATED + ".dlq").build();
+    }
+    @Bean public Queue orderShippedQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_SHIPPED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_ORDER_SHIPPED + ".dlq").build();
+    }
+    @Bean public Queue orderConfirmedQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_CONFIRMED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_ORDER_CONFIRMED + ".dlq").build();
+    }
+    @Bean public Queue orderRejectedQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_REJECTED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_ORDER_REJECTED + ".dlq").build();
+    }
+    @Bean public Queue orderDeliveredQueue() {
+        return QueueBuilder.durable(QUEUE_ORDER_DELIVERED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_ORDER_DELIVERED + ".dlq").build();
+    }
+
+    @Bean public Queue orderCreatedDlq()   { return new Queue(QUEUE_ORDER_CREATED   + ".dlq", true); }
+    @Bean public Queue orderShippedDlq()   { return new Queue(QUEUE_ORDER_SHIPPED   + ".dlq", true); }
+    @Bean public Queue orderConfirmedDlq() { return new Queue(QUEUE_ORDER_CONFIRMED + ".dlq", true); }
+    @Bean public Queue orderRejectedDlq()  { return new Queue(QUEUE_ORDER_REJECTED  + ".dlq", true); }
+    @Bean public Queue orderDeliveredDlq() { return new Queue(QUEUE_ORDER_DELIVERED + ".dlq", true); }
 
     @Bean public Binding orderCreatedBinding(Queue orderCreatedQueue, TopicExchange exchange) {
         return BindingBuilder.bind(orderCreatedQueue).to(exchange).with("order.created");

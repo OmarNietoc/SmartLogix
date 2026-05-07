@@ -1,6 +1,7 @@
 package com.smartlogix.notification.exception;
 
 import com.smartlogix.notification.dto.MessageResponse;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -33,12 +34,22 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<MessageResponse<Void>> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(
+                MessageResponse.<Void>builder()
+                        .statusCode(HttpStatus.CONFLICT.value())
+                        .message("Recurso duplicado o conflicto de datos")
+                        .data(null)
+                        .build());
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<MessageResponse<Void>> handleGeneral(Exception ex) {
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(
                 MessageResponse.<Void>builder()
                         .statusCode(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                        .message("Error interno del servidor: " + ex.getMessage())
+                        .message("Error interno del servidor")
                         .data(null)
                         .build());
     }

@@ -23,10 +23,42 @@ public class RabbitMQConfig {
         return new TopicExchange(EXCHANGE_NAME);
     }
 
-    @Bean public Queue orderFailedQueue()    { return new Queue(QUEUE_FAILED,    true); }
-    @Bean public Queue orderConfirmedQueue() { return new Queue(QUEUE_CONFIRMED, true); }
-    @Bean public Queue orderShippedQueue()   { return new Queue(QUEUE_SHIPPED,   true); }
-    @Bean public Queue orderDeliveredQueue() { return new Queue(QUEUE_DELIVERED, true); }
+    @Bean
+    public Queue orderFailedQueue() {
+        return QueueBuilder.durable(QUEUE_FAILED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_FAILED + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue orderConfirmedQueue() {
+        return QueueBuilder.durable(QUEUE_CONFIRMED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_CONFIRMED + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue orderShippedQueue() {
+        return QueueBuilder.durable(QUEUE_SHIPPED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_SHIPPED + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue orderDeliveredQueue() {
+        return QueueBuilder.durable(QUEUE_DELIVERED)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", QUEUE_DELIVERED + ".dlq")
+                .build();
+    }
+
+    @Bean public Queue orderFailedDlq()    { return new Queue(QUEUE_FAILED    + ".dlq", true); }
+    @Bean public Queue orderConfirmedDlq() { return new Queue(QUEUE_CONFIRMED + ".dlq", true); }
+    @Bean public Queue orderShippedDlq()   { return new Queue(QUEUE_SHIPPED   + ".dlq", true); }
+    @Bean public Queue orderDeliveredDlq() { return new Queue(QUEUE_DELIVERED + ".dlq", true); }
 
     @Bean
     public Binding orderFailedBinding(Queue orderFailedQueue, TopicExchange exchange) {

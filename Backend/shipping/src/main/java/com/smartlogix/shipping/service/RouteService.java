@@ -77,7 +77,7 @@ public class RouteService {
         return routeRepository.save(route);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public RouteProposalResponseDTO generateProposal(RouteProposalRequestDTO request) {
         List<Shipment> shipments = shipmentRepository.findAllById(request.shipmentIds());
         if (shipments.isEmpty()) {

@@ -1,5 +1,6 @@
 package com.smartlogix.notification.service;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public class EmailService {
     @Value("${mail.from:noreply@smartlogix.cl}")
     private String from;
 
+    @CircuitBreaker(name = "emailService", fallbackMethod = "fallbackSendEmail")
     public void sendHtmlEmail(String to, String subject, String templateName, Context ctx) {
         if (to == null || to.isBlank()) {
             log.warn("Email no enviado — destinatario nulo para asunto: {}", subject);
@@ -36,8 +38,13 @@ public class EmailService {
             helper.setText(templateEngine.process("email/" + templateName, ctx), true);
             mailSender.send(message);
             log.info("Email enviado a {} — asunto: {}", to, subject);
-        } catch (MessagingException | RuntimeException e) {
-            log.error("Error al enviar email a {}: {}", to, e.getMessage());
+        } catch (MessagingException e) {
+            throw new RuntimeException("Error preparando email a " + to + ": " + e.getMessage(), e);
         }
+    }
+
+    void fallbackSendEmail(String to, String subject, String templateName, Context ctx, Throwable t) {
+        log.warn("Email no enviado a {} (circuito abierto o fallo SMTP) — asunto: {} — causa: {}",
+                to, subject, t.getMessage());
     }
 }

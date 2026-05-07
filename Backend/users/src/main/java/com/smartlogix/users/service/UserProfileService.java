@@ -9,12 +9,14 @@ import com.smartlogix.users.repository.UserProfileRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import com.smartlogix.users.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class UserProfileService {
 
     private final UserProfileRepository userProfileRepository;
@@ -27,11 +29,11 @@ public class UserProfileService {
 
     public UserProfile createUserProfile(String companyId, UserProfile userProfile, Set<RoleName> roleNames) {
         var company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new RuntimeException("Company not found"));
-        Set<Role> roles = roleNames.stream()
-                .map(rn -> roleRepository.findByName(rn)
-                        .orElseThrow(() -> new RuntimeException("Role not found: " + rn)))
-                .collect(Collectors.toSet());
+                .orElseThrow(() -> new ResourceNotFoundException("Empresa no encontrada con id: " + companyId));
+        Set<Role> roles = roleRepository.findByNameIn(roleNames);
+        if (roles.size() != roleNames.size()) {
+            throw new ResourceNotFoundException("Uno o más roles no encontrados");
+        }
         userProfile.setCompany(company);
         userProfile.setRoles(roles);
         return userProfileRepository.save(userProfile);
@@ -39,11 +41,11 @@ public class UserProfileService {
 
     public UserProfile assignRolesToProfile(String profileId, Set<RoleName> roleNames) {
         UserProfile profile = userProfileRepository.findById(profileId)
-                .orElseThrow(() -> new RuntimeException("UserProfile not found: " + profileId));
-        Set<Role> roles = roleNames.stream()
-                .map(rn -> roleRepository.findByName(rn)
-                        .orElseThrow(() -> new RuntimeException("Role not found: " + rn)))
-                .collect(Collectors.toSet());
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de usuario no encontrado con id: " + profileId));
+        Set<Role> roles = roleRepository.findByNameIn(roleNames);
+        if (roles.size() != roleNames.size()) {
+            throw new ResourceNotFoundException("Uno o más roles no encontrados");
+        }
         profile.setRoles(roles);
         return userProfileRepository.save(profile);
     }

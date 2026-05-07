@@ -54,7 +54,7 @@ public class RouteController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o envíos no disponibles")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<RouteDTO>> createRoute(@RequestBody RouteCreationRequestDTO request) {
+    public ResponseEntity<MessageResponse<RouteDTO>> createRoute(@Valid @RequestBody RouteCreationRequestDTO request) {
         Route createdRoute = routeService.createRoute(
                 request.getCompanyId(),
                 request.getCarrierId(),

@@ -5,6 +5,7 @@ import com.smartlogix.notification.event.OrderShippedEvent;
 import com.smartlogix.notification.service.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 import org.thymeleaf.context.Context;
@@ -18,15 +19,20 @@ public class OrderShippedListener {
 
     @RabbitListener(queues = RabbitMQConfig.QUEUE_ORDER_SHIPPED)
     public void handleOrderShipped(OrderShippedEvent event) {
-        log.info("Notificando envío de orden id={} a {}", event.orderId(), event.customerEmail());
-        Context ctx = new Context();
-        ctx.setVariable("orderId", event.orderId());
-        ctx.setVariable("trackingNumber", event.trackingNumber());
-        emailService.sendHtmlEmail(
-                event.customerEmail(),
-                "Tu pedido está en camino — SmartLogix",
-                "order-shipped",
-                ctx
-        );
+        try {
+            log.info("Notificando envío de orden id={} a {}", event.orderId(), event.customerEmail());
+            Context ctx = new Context();
+            ctx.setVariable("orderId", event.orderId());
+            ctx.setVariable("trackingNumber", event.trackingNumber());
+            emailService.sendHtmlEmail(
+                    event.customerEmail(),
+                    "Tu pedido está en camino — SmartLogix",
+                    "order-shipped",
+                    ctx
+            );
+        } catch (Exception e) {
+            log.error("Error notificando shipped orderId={}: {}", event.orderId(), e.getMessage());
+            throw new AmqpRejectAndDontRequeueException("Error en OrderShippedListener orderId=" + event.orderId(), e);
+        }
     }
 }
