@@ -132,7 +132,11 @@ class OrderServiceTest {
     // ── updateOrderStatus ─────────────────────────────────────────────────────
 
     @Test
+<<<<<<< Updated upstream
     @DisplayName("updateOrderStatus PENDING→CONFIRMED succeeds and publishes event")
+=======
+    @DisplayName("updateOrderStatus PENDING->CONFIRMED succeeds and publishes event")
+>>>>>>> Stashed changes
     void updateOrderStatus_validTransition_savesAndPublishes() {
         Order order = buildSavedOrder("o1", "Juan", "j@j.com", 1, BigDecimal.TEN);
         order.setStatus(OrderStatus.PENDING);
@@ -147,7 +151,11 @@ class OrderServiceTest {
     }
 
     @Test
+<<<<<<< Updated upstream
     @DisplayName("updateOrderStatus throws on invalid transition DELIVERED→CONFIRMED")
+=======
+    @DisplayName("updateOrderStatus throws on invalid transition DELIVERED->CONFIRMED")
+>>>>>>> Stashed changes
     void updateOrderStatus_invalidTransition_throwsIllegalState() {
         Order order = buildSavedOrder("o1", "Juan", "j@j.com", 1, BigDecimal.TEN);
         order.setStatus(OrderStatus.DELIVERED);
@@ -157,7 +165,11 @@ class OrderServiceTest {
         assertThatThrownBy(() ->
                 orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED)))
                 .isInstanceOf(IllegalStateException.class)
+<<<<<<< Updated upstream
                 .hasMessageContaining("Transición inválida");
+=======
+                .hasMessageContaining("DELIVERED");
+>>>>>>> Stashed changes
     }
 
     // ── OrderStatus state machine ─────────────────────────────────────────────
@@ -181,7 +193,11 @@ class OrderServiceTest {
     }
 
     @Test
+<<<<<<< Updated upstream
     @DisplayName("OrderStatus state machine: CONFIRMED→SHIPPED is valid")
+=======
+    @DisplayName("OrderStatus state machine: CONFIRMED->SHIPPED is valid")
+>>>>>>> Stashed changes
     void orderStatus_confirmedToShipped() {
         assertThat(OrderStatus.CONFIRMED.canTransitionTo(OrderStatus.SHIPPED)).isTrue();
         assertThat(OrderStatus.CONFIRMED.canTransitionTo(OrderStatus.DELIVERED)).isFalse();
