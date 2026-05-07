@@ -36,11 +36,7 @@ class NotificationServiceTest {
     @DisplayName("createNotification saves with SENT status and EMAIL type")
     void createNotification_happyPath_savedWithCorrectDefaults() {
         CreateNotificationRequest req = new CreateNotificationRequest(
-<<<<<<< Updated upstream
-                "order-1", "user@email.com", "Pedido creado", "Tu pedido está listo");
-=======
                 "order-1", "user@email.com", "Pedido creado", "Tu pedido esta listo");
->>>>>>> Stashed changes
 
         Notification saved = buildNotification("n1", "order-1", NotificationType.EMAIL, false);
         when(notificationRepository.save(any())).thenReturn(saved);

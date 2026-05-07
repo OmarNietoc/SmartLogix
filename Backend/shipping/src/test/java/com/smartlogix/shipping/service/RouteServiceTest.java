@@ -16,17 +16,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-<<<<<<< Updated upstream
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
-=======
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
->>>>>>> Stashed changes
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -77,11 +70,7 @@ class RouteServiceTest {
     }
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("Strategy: carrierId=LOCAL selects localCarrierStrategy")
-=======
     @DisplayName("Strategy: carrierId non-DHL selects localCarrierStrategy")
->>>>>>> Stashed changes
     void createRoute_localCarrier_usesLocalStrategy() {
         String shipmentId = "s2";
         Shipment shipment = buildPendingShipment(shipmentId);
@@ -97,11 +86,7 @@ class RouteServiceTest {
     }
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("DhlStrategy returns valid JSON with transport_mode air")
-=======
     @DisplayName("DhlStrategy returns JSON with transport_mode air")
->>>>>>> Stashed changes
     void dhlStrategy_calculateRoute_returnsAirMode() {
         Route route = Route.builder().id("r1").carrierId("DHL").build();
         String result = dhlStrategy.calculateRoute(route);
@@ -111,31 +96,19 @@ class RouteServiceTest {
     }
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("LocalCarrierStrategy returns valid JSON with ground transport")
-=======
     @DisplayName("LocalCarrierStrategy returns JSON with transport_mode ground")
->>>>>>> Stashed changes
     void localCarrierStrategy_calculateRoute_returnsGroundMode() {
         Route route = Route.builder().id("r1").carrierId("LOCAL").build();
         String result = localCarrierStrategy.calculateRoute(route);
 
-<<<<<<< Updated upstream
-        assertThat(result).isNotBlank();
-=======
         assertThat(result).contains("ground");
         assertThat(result).contains("local_depot");
->>>>>>> Stashed changes
     }
 
     // ── createRoute validation ────────────────────────────────────────────────
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("createRoute throws when a shipmentId does not exist")
-=======
     @DisplayName("createRoute throws when shipmentId does not exist")
->>>>>>> Stashed changes
     void createRoute_missingShipment_throwsShipmentNotFound() {
         when(shipmentRepository.findAllById(anyList())).thenReturn(List.of());
 
@@ -145,11 +118,7 @@ class RouteServiceTest {
     }
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("createRoute throws when shipment already assigned to a route")
-=======
     @DisplayName("createRoute throws when shipment already assigned to route")
->>>>>>> Stashed changes
     void createRoute_alreadyAssignedShipment_throwsIllegalState() {
         Shipment assigned = buildPendingShipment("s3");
         assigned.setRoute(Route.builder().id("existing-route").build());
@@ -159,11 +128,7 @@ class RouteServiceTest {
         assertThatThrownBy(() ->
                 routeService.createRoute("c1", "DHL", "Origin", List.of("s3"), false))
                 .isInstanceOf(IllegalStateException.class)
-<<<<<<< Updated upstream
-                .hasMessageContaining("ya está asignado");
-=======
                 .hasMessageContaining("s3");
->>>>>>> Stashed changes
     }
 
     // ── getAllRoutes ──────────────────────────────────────────────────────────
@@ -210,11 +175,7 @@ class RouteServiceTest {
         Shipment s = buildPendingShipment("s1");
         s.setDeliveryStatus(DeliveryStatus.ASSIGNED);
         Route route = Route.builder().id("r1").status(RouteStatus.PLANNED)
-<<<<<<< Updated upstream
-                .shipments(new java.util.ArrayList<>(List.of(s))).build();
-=======
                 .shipments(new ArrayList<>(List.of(s))).build();
->>>>>>> Stashed changes
 
         when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
         when(routeRepository.save(any())).thenReturn(route);
@@ -228,20 +189,12 @@ class RouteServiceTest {
     // ── deleteRoute (soft delete) ─────────────────────────────────────────────
 
     @Test
-<<<<<<< Updated upstream
-    @DisplayName("deleteRoute cancels route and sets shipments back to PENDING (soft delete)")
-=======
     @DisplayName("deleteRoute cancels route and releases shipments to PENDING (soft delete)")
->>>>>>> Stashed changes
     void deleteRoute_cancelsRouteAndReleasesShipments() {
         Shipment s = buildPendingShipment("s1");
         s.setDeliveryStatus(DeliveryStatus.ASSIGNED);
         Route route = Route.builder().id("r1").status(RouteStatus.PLANNED)
-<<<<<<< Updated upstream
-                .shipments(new java.util.ArrayList<>(List.of(s))).build();
-=======
                 .shipments(new ArrayList<>(List.of(s))).build();
->>>>>>> Stashed changes
 
         when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
 
@@ -253,20 +206,13 @@ class RouteServiceTest {
         verify(routeRepository, never()).deleteById(any());
     }
 
-<<<<<<< Updated upstream
-    // ── helpers ──────────────────────────────────────────────────────────────
-=======
     // ── helpers ───────────────────────────────────────────────────────────────
->>>>>>> Stashed changes
 
     private Shipment buildPendingShipment(String id) {
         Shipment s = new Shipment();
         s.setId(id);
         s.setDeliveryStatus(DeliveryStatus.PENDING);
-<<<<<<< Updated upstream
-=======
         s.setShippingAddress("Calle Test 123");
->>>>>>> Stashed changes
         return s;
     }
 }
