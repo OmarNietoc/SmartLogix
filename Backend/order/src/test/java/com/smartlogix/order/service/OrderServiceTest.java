@@ -2,6 +2,7 @@ package com.smartlogix.order.service;
 
 import com.smartlogix.order.dto.*;
 import com.smartlogix.order.exception.ResourceNotFoundException;
+import com.smartlogix.order.mapper.OrderMapper;
 import com.smartlogix.order.model.Order;
 import com.smartlogix.order.model.OrderItem;
 import com.smartlogix.order.model.OrderStatus;
@@ -30,6 +31,7 @@ class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
     @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private OrderMapper orderMapper;
 
     @InjectMocks private OrderService orderService;
 
@@ -40,8 +42,11 @@ class OrderServiceTest {
     void createOrder_happyPath_savesAndPublishesEvent() {
         CreateOrderRequest request = buildCreateRequest("Juan", "juan@email.com", 2, BigDecimal.valueOf(1000));
         Order savedOrder = buildSavedOrder("order-1", "Juan", "juan@email.com", 2, BigDecimal.valueOf(1000));
+        OrderResponse expected = buildOrderResponse("order-1", "Juan", "juan@email.com",
+                BigDecimal.valueOf(2000), OrderStatus.PENDING);
 
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
+        when(orderMapper.toDto(savedOrder)).thenReturn(expected);
 
         OrderResponse response = orderService.createOrder(request);
 
@@ -51,6 +56,7 @@ class OrderServiceTest {
         assertThat(response.status()).isEqualTo(OrderStatus.PENDING);
 
         verify(rabbitTemplate).convertAndSend(anyString(), eq("order.created"), any(Object.class));
+        verify(orderMapper).toDto(savedOrder);
     }
 
     @Test
@@ -63,6 +69,8 @@ class OrderServiceTest {
         );
         Order saved = buildSavedOrder("o2", "Ana", "ana@email.com", 1, BigDecimal.TEN);
         when(orderRepository.save(any())).thenReturn(saved);
+        when(orderMapper.toDto(any(Order.class))).thenReturn(
+                buildOrderResponse("o2", "Ana", "ana@email.com", BigDecimal.TEN, OrderStatus.PENDING));
 
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         orderService.createOrder(request);
@@ -81,6 +89,8 @@ class OrderServiceTest {
 
         Order saved = buildSavedOrder("o3", "Carlos", "c@mail.com", 5, BigDecimal.valueOf(400));
         when(orderRepository.save(any())).thenReturn(saved);
+        when(orderMapper.toDto(any(Order.class))).thenReturn(
+                buildOrderResponse("o3", "Carlos", "c@mail.com", BigDecimal.valueOf(400), OrderStatus.PENDING));
 
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
         orderService.createOrder(request);
@@ -94,10 +104,13 @@ class OrderServiceTest {
     @Test
     @DisplayName("getAllOrders returns mapped list")
     void getAllOrders_returnsAllMapped() {
-        when(orderRepository.findAll()).thenReturn(List.of(
-                buildSavedOrder("o1", "A", "a@a.com", 1, BigDecimal.TEN),
-                buildSavedOrder("o2", "B", "b@b.com", 1, BigDecimal.ONE)
-        ));
+        Order o1 = buildSavedOrder("o1", "A", "a@a.com", 1, BigDecimal.TEN);
+        Order o2 = buildSavedOrder("o2", "B", "b@b.com", 1, BigDecimal.ONE);
+        when(orderRepository.findAll()).thenReturn(List.of(o1, o2));
+        when(orderMapper.toDto(o1)).thenReturn(
+                buildOrderResponse("o1", "A", "a@a.com", BigDecimal.TEN, OrderStatus.PENDING));
+        when(orderMapper.toDto(o2)).thenReturn(
+                buildOrderResponse("o2", "B", "b@b.com", BigDecimal.ONE, OrderStatus.PENDING));
 
         List<OrderResponse> result = orderService.getAllOrders();
 
@@ -122,6 +135,8 @@ class OrderServiceTest {
     void getOrderById_found_returnsResponse() {
         Order order = buildSavedOrder("o1", "Juan", "j@j.com", 1, BigDecimal.TEN);
         when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+        when(orderMapper.toDto(order)).thenReturn(
+                buildOrderResponse("o1", "Juan", "j@j.com", BigDecimal.TEN, OrderStatus.PENDING));
 
         OrderResponse response = orderService.getOrderById("o1");
 
@@ -139,6 +154,8 @@ class OrderServiceTest {
 
         when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
         when(orderRepository.save(any())).thenReturn(order);
+        when(orderMapper.toDto(any(Order.class))).thenReturn(
+                buildOrderResponse("o1", "Juan", "j@j.com", BigDecimal.TEN, OrderStatus.CONFIRMED));
 
         orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED));
 
@@ -215,5 +232,11 @@ class OrderServiceTest {
         order.setItems(new ArrayList<>(List.of(item)));
         item.setOrder(order);
         return order;
+    }
+
+    private OrderResponse buildOrderResponse(String id, String name, String email,
+                                              BigDecimal total, OrderStatus status) {
+        return new OrderResponse(id, name, email, "Calle 1, Comm, City, Reg, Chile",
+                status, total, LocalDateTime.now(), LocalDateTime.now(), List.of());
     }
 }

@@ -8,8 +8,10 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring")
 public interface MarketplaceIntegrationMapper {
     @Mapping(source = "company.id", target = "companyId")
+    @Mapping(source = "active", target = "isActive")
     MarketplaceIntegrationDTO toDto(MarketplaceIntegration entity);
 
     @Mapping(source = "companyId", target = "company.id")
+    @Mapping(source = "active", target = "isActive")
     MarketplaceIntegration toEntity(MarketplaceIntegrationDTO dto);
 }

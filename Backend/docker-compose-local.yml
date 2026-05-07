@@ -7,60 +7,85 @@ services:
     container_name: pg-shipping-local
     environment:
       POSTGRES_DB: shipping_db
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: ${SHIPPING_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5432:5432'
     volumes:
       - pg-shipping-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   postgres-inventary:
     image: 'postgres:15-alpine'
     container_name: pg-inventary-local
     environment:
       POSTGRES_DB: smartlogix_inventary
-      POSTGRES_PASSWORD: drhiaishna16
+      POSTGRES_PASSWORD: ${INVENTARY_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5433:5432'
     volumes:
       - pg-inventary-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   postgres-order:
     image: 'postgres:15-alpine'
     container_name: pg-order-local
     environment:
       POSTGRES_DB: orderdb
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${ORDER_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5434:5432'
     volumes:
       - pg-order-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   postgres-notification:
     image: 'postgres:15-alpine'
     container_name: pg-notification-local
     environment:
       POSTGRES_DB: notificationdb
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${NOTIFICATION_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5435:5432'
     volumes:
       - pg-notification-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   postgres-auth:
     image: 'postgres:15-alpine'
     container_name: pg-auth-local
     environment:
       POSTGRES_DB: authdb
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5436:5432'
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   pg-users-local:
     image: postgres:15-alpine
@@ -68,12 +93,17 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: admin
+      POSTGRES_PASSWORD: ${USERS_DB_PASSWORD:-postgres}
       POSTGRES_DB: db_users
     ports:
       - "5437:5432"
     volumes:
       - pg-users-data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
 
   # --- Infraestructura ---
   rabbitmq:
@@ -83,10 +113,16 @@ services:
       - '5672:5672'
       - '15672:15672'
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_USER:-guest}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 256m
+          cpus: '0.25'
+
   eureka-server:
     build:
       context: ./eureka-server
@@ -96,6 +132,11 @@ services:
       - '8761:8761'
     environment:
       - SERVER_PORT=8761
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+          cpus: '0.25'
 
   api-gateway:
     build:
@@ -109,6 +150,11 @@ services:
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
     depends_on:
       - eureka-server
+    deploy:
+      resources:
+        limits:
+          memory: 384m
+          cpus: '0.5'
 
   # --- Microservicios ---
   ms-shipping:
@@ -121,17 +167,22 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://postgres-shipping:5432/shipping_db
       - DB_USERNAME=postgres
-      - DB_PASSWORD=password
+      - DB_PASSWORD=${SHIPPING_DB_PASSWORD:-postgres}
       - SERVER_PORT=8084
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - RABBITMQ_HOST=rabbitmq-local
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
       - postgres-shipping
       - eureka-server
       - rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
   ms-inventary:
     build:
@@ -143,17 +194,22 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://postgres-inventary:5432/smartlogix_inventary
       - DB_USERNAME=postgres
-      - DB_PASSWORD=drhiaishna16
+      - DB_PASSWORD=${INVENTARY_DB_PASSWORD:-postgres}
       - SERVER_PORT=8081
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - RABBITMQ_HOST=rabbitmq-local
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
       - postgres-inventary
       - eureka-server
       - rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
   ms-order:
     build:
@@ -165,17 +221,22 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://postgres-order:5432/orderdb
       - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${ORDER_DB_PASSWORD:-postgres}
       - SERVER_PORT=8082
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - RABBITMQ_HOST=rabbitmq-local
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
       - postgres-order
       - eureka-server
       - rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
   ms-notification:
     build:
@@ -187,13 +248,13 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://postgres-notification:5432/notificationdb
       - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${NOTIFICATION_DB_PASSWORD:-postgres}
       - SERVER_PORT=8085
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - RABBITMQ_HOST=rabbitmq-local
       - RABBITMQ_PORT=5672
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
       - SMTP_HOST=${SMTP_HOST:-sandbox.smtp.mailtrap.io}
       - SMTP_PORT=${SMTP_PORT:-2525}
       - SMTP_USER=${SMTP_USER:-}
@@ -203,6 +264,11 @@ services:
       - postgres-notification
       - eureka-server
       - rabbitmq
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
   ms-users:
     build:
@@ -217,7 +283,11 @@ services:
     depends_on:
       - pg-users-local
       - eureka-server
-
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
   ms-auth:
     build:
@@ -229,14 +299,19 @@ services:
     environment:
       - DB_URL=jdbc:postgresql://postgres-auth:5432/authdb
       - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
+      - DB_PASSWORD=${AUTH_DB_PASSWORD:-postgres}
       - SERVER_PORT=8086
-      - JWT_SECRET=3cfa76ef14937c1c0ea519f8fc057a80fcd04a7420f8e8bcd0a7567c2d6395af
+      - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=86400000
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
     depends_on:
       - postgres-auth
       - eureka-server
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: '0.5'
 
 volumes:
   pg-shipping-data:
