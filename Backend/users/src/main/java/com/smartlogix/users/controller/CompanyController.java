@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class CompanyController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<CompanyDTO>> createCompany(@RequestBody CompanyDTO dto) {
+    public ResponseEntity<MessageResponse<CompanyDTO>> createCompany(@Valid @RequestBody CompanyDTO dto) {
         Company company = companyService.createCompany(companyMapper.toEntity(dto));
         MessageResponse<CompanyDTO> response = MessageResponse.<CompanyDTO>builder()
                 .statusCode(HttpStatus.CREATED.value())

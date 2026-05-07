@@ -52,7 +52,7 @@ SmartLogix/
 │   ├── eureka-server/
 │   ├── api-gateway/
 │   ├── ms-order/
-│   ├── ms-inventary/
+│   ├── ms-inventory/
 │   ├── ms-users/
 │   ├── ms-shipping/
 │   ├── ms-notification/
@@ -71,7 +71,7 @@ Todos los servicios se registran en **Eureka** (`8761`) y son accesibles vía **
 | :--- | :---: | :--- | :--- |
 | `eureka-server` | `8761` | — | Service Discovery |
 | `api-gateway` | `8080` | — | Enrutador y punto de entrada |
-| `ms-inventary` | `8081` | `smartlogix_inventary` | Stock, productos y bodegas |
+| `ms-inventory` | `8081` | `smartlogix_inventory` | Stock, productos y bodegas |
 | `ms-order` | `8082` | `orderdb` | Órdenes de compra |
 | `ms-users` | `8083` | `db_users` | PYMEs, perfiles y transportistas |
 | `ms-shipping` | `8084` | `shipping_db` | Entregas, rutas y flotas |
@@ -96,7 +96,7 @@ Cliente / Frontend
 │              (registro de servicios)                   │
 └───┬───────┬───────┬───────┬───────┬───────┬───────────┘
     │       │       │       │       │       │
-  Order  Inventary Users Shipping Notif.  Auth
+  Order  Inventory Users Shipping Notif.  Auth
   :8082   :8081   :8083   :8084   :8085  :8086
     │       │               │       │
     └───────┴───────────────┴───────┘
@@ -106,7 +106,7 @@ Cliente / Frontend
 ```
 
 **Patrones implementados:**
-- **Saga (Coreografía):** `Order` → `Inventary` → `Shipping` → `Notification` vía RabbitMQ
+- **Saga (Coreografía):** `Order` → `Inventory` → `Shipping` → `Notification` vía RabbitMQ
 - **Database-per-service:** cada microservicio tiene su propia BD PostgreSQL
 - **Soft Delete:** borrado lógico por cambio de estado, sin `DELETE` físico
 - **Strategy:** cálculo de rutas según tipo de transportista (DHL, local)
@@ -170,7 +170,7 @@ JWT_SECRET=<tu-secret-seguro>
 
 # Passwords de bases de datos (por servicio)
 SHIPPING_DB_PASSWORD=<password>
-INVENTARY_DB_PASSWORD=<password>
+INVENTORY_DB_PASSWORD=<password>
 ORDER_DB_PASSWORD=<password>
 NOTIFICATION_DB_PASSWORD=<password>
 AUTH_DB_PASSWORD=<password>
@@ -199,7 +199,7 @@ El **API Gateway agrega todos los servicios en un único Swagger UI**:
 > ### http://localhost:8080/swagger-ui.html
 
 Desde ahí se puede cambiar entre servicios con el selector desplegable:
-`ms-auth` · `ms-order` · `ms-inventary` · `ms-shipping` · `ms-notification` · `ms-users`
+`ms-auth` · `ms-order` · `ms-inventory` · `ms-shipping` · `ms-notification` · `ms-users`
 
 Cada servicio también expone su Swagger de forma independiente:
 
@@ -322,7 +322,7 @@ Los tests se corren por servicio. Requieren Java 21 y Maven instalados localment
 
 ```bash
 # Inventario (10 tests)
-cd Backend/inventary && mvn clean test
+cd Backend/inventory && mvn clean test
 
 # Órdenes (13 tests)
 cd Backend/order && mvn clean test
@@ -341,7 +341,7 @@ cd Backend/users && mvn clean test
 
 ```bash
 cd Backend
-for service in inventary order shipping notification users; do
+for service in inventory order shipping notification users; do
   echo "=== Testing $service ==="
   (cd $service && mvn clean test -q)
 done
@@ -351,7 +351,7 @@ done
 
 | Servicio | Tests | Clases cubiertas |
 | :--- | :---: | :--- |
-| `ms-inventary` | 10 | `InventoryReservationService` |
+| `ms-inventory` | 10 | `InventoryReservationService` |
 | `ms-order` | 13 | `OrderService` |
 | `ms-shipping` | 24 | `ShipmentService`, `RouteService` |
 | `ms-notification` | 13 | `NotificationService`, `OrderEventListener` |

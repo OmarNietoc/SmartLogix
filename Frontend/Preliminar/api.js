@@ -114,7 +114,7 @@
     session: { get: getSession, set: setSession, clear: () => setSession(null) },
 
     async ping() {
-      try { await request('/smartlogix/inventary/products', { method: 'GET' }); return { online: true, mock: false }; }
+      try { await request('/smartlogix/inventory/products', { method: 'GET' }); return { online: true, mock: false }; }
       catch (e) {
         if (e.network) return { online: false, mock: true };
         return { online: true, mock: false };
@@ -163,34 +163,34 @@
     // --- Products ---
     async listProducts(companyId) {
       if (isMock()) return mockDelay([...mockDB.products]);
-      try { return await request(`/smartlogix/inventary/products${companyId ? `?companyId=${companyId}` : ''}`); }
+      try { return await request(`/smartlogix/inventory/products${companyId ? `?companyId=${companyId}` : ''}`); }
       catch (e) { if (e.network) { setMock(true); return mockDelay([...mockDB.products]); } throw e; }
     },
     async createProduct(p) {
       if (isMock()) { const np = { ...p, id: newId('prd') }; mockDB.products.push(np); return mockDelay(np); }
-      try { return await request('/smartlogix/inventary/products', { method: 'POST', body: p }); }
+      try { return await request('/smartlogix/inventory/products', { method: 'POST', body: p }); }
       catch (e) { if (e.network) { setMock(true); return API.createProduct(p); } throw e; }
     },
     async updateProduct(id, p) {
       if (isMock()) { const i = mockDB.products.findIndex(x => x.id === id); if (i >= 0) mockDB.products[i] = { ...mockDB.products[i], ...p }; return mockDelay(mockDB.products[i]); }
-      try { return await request(`/smartlogix/inventary/products/${id}`, { method: 'PUT', body: p }); }
+      try { return await request(`/smartlogix/inventory/products/${id}`, { method: 'PUT', body: p }); }
       catch (e) { if (e.network) { setMock(true); return API.updateProduct(id, p); } throw e; }
     },
     async deleteProduct(id) {
       if (isMock()) { mockDB.products = mockDB.products.filter(x => x.id !== id); return mockDelay({}); }
-      try { return await request(`/smartlogix/inventary/products/${id}`, { method: 'DELETE' }); }
+      try { return await request(`/smartlogix/inventory/products/${id}`, { method: 'DELETE' }); }
       catch (e) { if (e.network) { setMock(true); return API.deleteProduct(id); } throw e; }
     },
 
     // --- Warehouses ---
     async listWarehouses(companyId) {
       if (isMock()) return mockDelay([...mockDB.warehouses]);
-      try { return await request(`/smartlogix/inventary/warehouses${companyId ? `?companyId=${companyId}` : ''}`); }
+      try { return await request(`/smartlogix/inventory/warehouses${companyId ? `?companyId=${companyId}` : ''}`); }
       catch (e) { if (e.network) { setMock(true); return mockDelay([...mockDB.warehouses]); } throw e; }
     },
     async createWarehouse(w) {
       if (isMock()) { const nw = { ...w, id: newId('wh') }; mockDB.warehouses.push(nw); return mockDelay(nw); }
-      try { return await request('/smartlogix/inventary/warehouses', { method: 'POST', body: w }); }
+      try { return await request('/smartlogix/inventory/warehouses', { method: 'POST', body: w }); }
       catch (e) { if (e.network) { setMock(true); return API.createWarehouse(w); } throw e; }
     },
 
@@ -198,7 +198,7 @@
     async listInventory(filters = {}) {
       if (isMock()) return mockDelay([...mockDB.inventory]);
       const q = new URLSearchParams(Object.entries(filters).filter(([_, v]) => v)).toString();
-      try { return await request(`/smartlogix/inventary/stocks${q ? '?' + q : ''}`); }
+      try { return await request(`/smartlogix/inventory/stocks${q ? '?' + q : ''}`); }
       catch (e) { if (e.network) { setMock(true); return mockDelay([...mockDB.inventory]); } throw e; }
     },
     async adjustStock(id, delta, reason) {
@@ -208,7 +208,7 @@
         return mockDelay(mockDB.inventory[i]);
       }
       const path = delta > 0 ? `${id}/increase` : `${id}/decrease`;
-      try { return await request(`/smartlogix/inventary/stocks/${path}`, { method: 'PATCH', body: { quantity: Math.abs(delta), reason } }); }
+      try { return await request(`/smartlogix/inventory/stocks/${path}`, { method: 'PATCH', body: { quantity: Math.abs(delta), reason } }); }
       catch (e) { if (e.network) { setMock(true); return API.adjustStock(id, delta, reason); } throw e; }
     },
 

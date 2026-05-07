@@ -14,6 +14,7 @@ import com.smartlogix.order.repository.ComunaRepository;
 import com.smartlogix.order.repository.OrderRepository;
 import com.smartlogix.order.repository.RegionRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +22,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -86,7 +88,11 @@ public class OrderService {
                 .items(itemEvents)
                 .build();
 
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
+        try {
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.created", event);
+        } catch (Exception e) {
+            log.warn("No se pudo publicar order.created para orderId={}: {}", savedOrder.getId(), e.getMessage());
+        }
 
         return orderMapper.toDto(savedOrder);
     }
@@ -122,7 +128,11 @@ public class OrderService {
                 .eventDate(LocalDateTime.now())
                 .build();
 
-        rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.updated", event);
+        try {
+            rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.updated", event);
+        } catch (Exception e) {
+            log.warn("No se pudo publicar order.updated para orderId={}: {}", updatedOrder.getId(), e.getMessage());
+        }
 
         return orderMapper.toDto(updatedOrder);
     }

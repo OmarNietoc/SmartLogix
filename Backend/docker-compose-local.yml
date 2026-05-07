@@ -19,17 +19,17 @@ services:
           memory: 256m
           cpus: '0.25'
 
-  postgres-inventary:
+  postgres-inventory:
     image: 'postgres:15-alpine'
-    container_name: pg-inventary-local
+    container_name: pg-inventory-local
     environment:
-      POSTGRES_DB: smartlogix_inventary
-      POSTGRES_PASSWORD: ${INVENTARY_DB_PASSWORD:-postgres}
+      POSTGRES_DB: smartlogix_inventory
+      POSTGRES_PASSWORD: ${INVENTORY_DB_PASSWORD:-postgres}
       POSTGRES_USER: postgres
     ports:
       - '5433:5432'
     volumes:
-      - pg-inventary-data:/var/lib/postgresql/data
+      - pg-inventory-data:/var/lib/postgresql/data
     deploy:
       resources:
         limits:
@@ -184,17 +184,17 @@ services:
           memory: 512m
           cpus: '0.5'
 
-  ms-inventary:
+  ms-inventory:
     build:
-      context: ./inventary
+      context: ./inventory
       dockerfile: Dockerfile
-    container_name: ms-inventary-local
+    container_name: ms-inventory-local
     ports:
       - '8081:8081'
     environment:
-      - DB_URL=jdbc:postgresql://postgres-inventary:5432/smartlogix_inventary
+      - DB_URL=jdbc:postgresql://postgres-inventory:5432/smartlogix_inventory
       - DB_USERNAME=postgres
-      - DB_PASSWORD=${INVENTARY_DB_PASSWORD:-postgres}
+      - DB_PASSWORD=${INVENTORY_DB_PASSWORD:-postgres}
       - SERVER_PORT=8081
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - RABBITMQ_HOST=rabbitmq-local
@@ -202,7 +202,7 @@ services:
       - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - postgres-inventary
+      - postgres-inventory
       - eureka-server
       - rabbitmq
     deploy:
@@ -315,7 +315,7 @@ services:
 
 volumes:
   pg-shipping-data:
-  pg-inventary-data:
+  pg-inventory-data:
   pg-order-data:
   pg-notification-data:
   pg-auth-data:

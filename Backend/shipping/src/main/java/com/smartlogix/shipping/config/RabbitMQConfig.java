@@ -1,10 +1,7 @@
 package com.smartlogix.shipping.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.core.*;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.DefaultJackson2JavaTypeMapper;
@@ -28,7 +25,15 @@ public class RabbitMQConfig {
 
     @Bean
     public Queue shippingConfirmedQueue() {
-        return new Queue(CONFIRMED_QUEUE_NAME, true);
+        return QueueBuilder.durable(CONFIRMED_QUEUE_NAME)
+                .withArgument("x-dead-letter-exchange", "")
+                .withArgument("x-dead-letter-routing-key", CONFIRMED_QUEUE_NAME + ".dlq")
+                .build();
+    }
+
+    @Bean
+    public Queue shippingConfirmedDlq() {
+        return new Queue(CONFIRMED_QUEUE_NAME + ".dlq", true);
     }
 
     @Bean

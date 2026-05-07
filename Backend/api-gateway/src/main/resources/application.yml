@@ -21,10 +21,10 @@ spring:
           uri: lb://ms-users
           predicates:
             - Path=/smartlogix/users/**
-        - id: ms-inventary
-          uri: lb://ms-inventary
+        - id: ms-inventory
+          uri: lb://ms-inventory
           predicates:
-            - Path=/smartlogix/inventary/**
+            - Path=/smartlogix/inventory/**
         - id: ms-order
           uri: lb://ms-order
           predicates:
@@ -51,12 +51,12 @@ spring:
             - Path=/api-docs/ms-order
           filters:
             - RewritePath=/api-docs/ms-order, /v3/api-docs
-        - id: ms-inventary-api-docs
-          uri: lb://ms-inventary
+        - id: ms-inventory-api-docs
+          uri: lb://ms-inventory
           predicates:
-            - Path=/api-docs/ms-inventary
+            - Path=/api-docs/ms-inventory
           filters:
-            - RewritePath=/api-docs/ms-inventary, /v3/api-docs
+            - RewritePath=/api-docs/ms-inventory, /v3/api-docs
         - id: ms-shipping-api-docs
           uri: lb://ms-shipping
           predicates:
@@ -93,8 +93,8 @@ springdoc:
         url: /api-docs/ms-auth
       - name: ms-order
         url: /api-docs/ms-order
-      - name: ms-inventary
-        url: /api-docs/ms-inventary
+      - name: ms-inventory
+        url: /api-docs/ms-inventory
       - name: ms-shipping
         url: /api-docs/ms-shipping
       - name: ms-notification

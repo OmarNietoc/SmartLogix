@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class UserProfileController {
     @PostMapping("/company/{companyId}/admin")
     public ResponseEntity<MessageResponse<UserProfileDTO>> createAdminProfile(
             @Parameter(description = "UUID de la empresa") @PathVariable String companyId,
-            @RequestBody UserProfileDTO dto) {
+            @Valid @RequestBody UserProfileDTO dto) {
         UserProfile profile = userProfileService.createAdminProfile(companyId, userProfileMapper.toEntity(dto));
         return new ResponseEntity<>(MessageResponse.<UserProfileDTO>builder()
                 .statusCode(HttpStatus.CREATED.value())
@@ -55,7 +56,7 @@ public class UserProfileController {
     @PostMapping("/company/{companyId}")
     public ResponseEntity<MessageResponse<UserProfileDTO>> createProfile(
             @Parameter(description = "UUID de la empresa") @PathVariable String companyId,
-            @RequestBody UserProfileDTO dto) {
+            @Valid @RequestBody UserProfileDTO dto) {
         Set<RoleName> roleNames = dto.getRoles() == null ? Set.of() :
                 dto.getRoles().stream().map(RoleName::valueOf).collect(Collectors.toSet());
         UserProfile profile = userProfileService.createUserProfile(companyId, userProfileMapper.toEntity(dto), roleNames);

@@ -6,6 +6,7 @@ import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.repository.ShipmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
@@ -34,6 +35,7 @@ public class ReservationConfirmedConsumer {
             log.info("Envío creado tracking={} para orderId={}", shipment.getTrackingNumber(), event.orderId());
         } catch (Exception e) {
             log.error("Error creando envío para orderId={}: {}", event.orderId(), e.getMessage());
+            throw new AmqpRejectAndDontRequeueException("Error creando envío para orderId=" + event.orderId(), e);
         }
     }
 }
