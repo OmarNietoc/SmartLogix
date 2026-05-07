@@ -190,6 +190,51 @@ Todos los endpoints siguen la convención `/smartlogix/{servicio}/{módulo}`.
 
 ---
 
+## Sistema de Roles (`ms-users`)
+
+`ms-users` implementa un catálogo de roles y una tabla join `user_role` entre perfiles y roles.
+
+### Roles disponibles
+
+| Rol | Descripción |
+| :--- | :--- |
+| `ADMIN` | Propietario/administrador de la empresa |
+| `OPERATOR` | Operador logístico |
+| `DRIVER` | Conductor/transportista |
+| `VIEWER` | Acceso solo lectura |
+
+> Los roles se inicializan automáticamente al arrancar el servicio (`DataInitializer`). No se crean por API.
+
+### Endpoints de Roles
+
+| Método | Ruta | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/smartlogix/users/roles` | Lista el catálogo completo de roles |
+| `POST` | `/smartlogix/users/profiles/company/{id}/admin` | Registra empresa — crea perfil con rol `ADMIN` automático |
+| `POST` | `/smartlogix/users/profiles/company/{id}` | Admin crea empleado — roles explícitos en el body |
+| `PUT` | `/smartlogix/users/profiles/{id}/roles` | Actualiza roles de un perfil existente |
+
+### Flujo de negocio
+
+```
+Registro empresa
+  POST /smartlogix/users/companies
+  └─▶ POST /smartlogix/users/profiles/company/{id}/admin
+        body: { authId, firstName, lastName }
+        → rol ADMIN asignado automáticamente
+
+Admin crea empleado
+  POST /smartlogix/users/profiles/company/{id}
+  body: { authId, firstName, lastName, "roles": ["OPERATOR"] }
+  → roles explícitos, validados contra catálogo en BD
+
+Admin reasigna roles
+  PUT /smartlogix/users/profiles/{profileId}/roles
+  body: ["DRIVER", "VIEWER"]
+```
+
+---
+
 ## Pruebas Unitarias
 
 Los tests se corren por servicio. Requieren Java 21 y Maven instalados localmente (no necesitan Docker).
@@ -209,7 +254,7 @@ cd Backend/shipping && mvn clean test
 # Notificaciones (13 tests — NotificationService + OrderEventListener)
 cd Backend/notification && mvn clean test
 
-# Usuarios (9 tests — CompanyService + UserProfileService)
+# Usuarios (11 tests — CompanyService + UserProfileService)
 cd Backend/users && mvn clean test
 ```
 
@@ -231,8 +276,8 @@ done
 | `ms-order` | 12 | `OrderService` |
 | `ms-shipping` | 24 | `ShipmentService`, `RouteService` |
 | `ms-notification` | 13 | `NotificationService`, `OrderEventListener` |
-| `ms-users` | 9 | `CompanyService`, `UserProfileService` |
-| **Total** | **68** | |
+| `ms-users` | 11 | `CompanyService`, `UserProfileService` |
+| **Total** | **70** | |
 
 ---
 
