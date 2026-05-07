@@ -25,7 +25,11 @@ public class Order {
 
     private String customerEmail;
 
-    private String shippingAddress;
+    private String street;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "comuna_id")
+    private Comuna comuna;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;

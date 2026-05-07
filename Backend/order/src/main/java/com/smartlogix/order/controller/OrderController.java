@@ -1,9 +1,6 @@
 package com.smartlogix.order.controller;
 
-import com.smartlogix.order.dto.CreateOrderRequest;
-import com.smartlogix.order.dto.MessageResponse;
-import com.smartlogix.order.dto.OrderResponse;
-import com.smartlogix.order.dto.UpdateOrderStatusRequest;
+import com.smartlogix.order.dto.*;
 import com.smartlogix.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -20,7 +17,7 @@ import java.util.List;
 
 @Tag(name = "Orders", description = "Creación y seguimiento de pedidos de clientes")
 @RestController
-@RequestMapping("/smartlogix/order/orders")
+@RequestMapping("/smartlogix/order")
 @RequiredArgsConstructor
 public class OrderController {
 
@@ -29,9 +26,10 @@ public class OrderController {
     @Operation(summary = "Crear pedido", description = "Crea un nuevo pedido y publica el evento OrderCreated hacia RabbitMQ para iniciar el flujo Saga")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Pedido creado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
+        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos"),
+        @ApiResponse(responseCode = "404", description = "Comuna no encontrada")
     })
-    @PostMapping
+    @PostMapping("/orders")
     public ResponseEntity<MessageResponse<OrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
         OrderResponse created = orderService.createOrder(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(
@@ -47,7 +45,7 @@ public class OrderController {
         @ApiResponse(responseCode = "200", description = "Listado obtenido exitosamente"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
-    @GetMapping
+    @GetMapping("/orders")
     public ResponseEntity<MessageResponse<List<OrderResponse>>> getAllOrders() {
         List<OrderResponse> orders = orderService.getAllOrders();
         return ResponseEntity.ok(
@@ -63,7 +61,7 @@ public class OrderController {
         @ApiResponse(responseCode = "200", description = "Pedido obtenido exitosamente"),
         @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
-    @GetMapping("/{id}")
+    @GetMapping("/orders/{id}")
     public ResponseEntity<MessageResponse<OrderResponse>> getOrderById(
             @Parameter(description = "UUID del pedido") @PathVariable String id) {
         OrderResponse order = orderService.getOrderById(id);
@@ -81,7 +79,7 @@ public class OrderController {
         @ApiResponse(responseCode = "400", description = "Transición de estado inválida"),
         @ApiResponse(responseCode = "404", description = "Pedido no encontrado")
     })
-    @PutMapping("/{id}/status")
+    @PutMapping("/orders/{id}/status")
     public ResponseEntity<MessageResponse<OrderResponse>> updateOrderStatus(
             @Parameter(description = "UUID del pedido") @PathVariable String id,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
@@ -91,6 +89,37 @@ public class OrderController {
                         .statusCode(HttpStatus.OK.value())
                         .message("Estado del pedido actualizado exitosamente")
                         .data(updated)
+                        .build());
+    }
+
+    @Operation(summary = "Listar regiones", description = "Retorna todas las regiones de Chile para poblar selectores en el frontend")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Regiones obtenidas exitosamente")
+    })
+    @GetMapping("/regiones")
+    public ResponseEntity<MessageResponse<List<RegionResponse>>> getAllRegiones() {
+        List<RegionResponse> regiones = orderService.getAllRegiones();
+        return ResponseEntity.ok(
+                MessageResponse.<List<RegionResponse>>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Regiones obtenidas exitosamente")
+                        .data(regiones)
+                        .build());
+    }
+
+    @Operation(summary = "Listar comunas por región", description = "Retorna las comunas de una región específica para poblar selectores en el frontend")
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Comunas obtenidas exitosamente")
+    })
+    @GetMapping("/comunas")
+    public ResponseEntity<MessageResponse<List<ComunaResponse>>> getComunasByRegion(
+            @Parameter(description = "ID de la región") @RequestParam Integer regionId) {
+        List<ComunaResponse> comunas = orderService.getComunasByRegion(regionId);
+        return ResponseEntity.ok(
+                MessageResponse.<List<ComunaResponse>>builder()
+                        .statusCode(HttpStatus.OK.value())
+                        .message("Comunas obtenidas exitosamente")
+                        .data(comunas)
                         .build());
     }
 }

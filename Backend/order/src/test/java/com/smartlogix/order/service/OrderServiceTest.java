@@ -3,10 +3,10 @@ package com.smartlogix.order.service;
 import com.smartlogix.order.dto.*;
 import com.smartlogix.order.exception.ResourceNotFoundException;
 import com.smartlogix.order.mapper.OrderMapper;
-import com.smartlogix.order.model.Order;
-import com.smartlogix.order.model.OrderItem;
-import com.smartlogix.order.model.OrderStatus;
+import com.smartlogix.order.model.*;
+import com.smartlogix.order.repository.ComunaRepository;
 import com.smartlogix.order.repository.OrderRepository;
+import com.smartlogix.order.repository.RegionRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +30,8 @@ import static org.mockito.Mockito.*;
 class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
+    @Mock private ComunaRepository comunaRepository;
+    @Mock private RegionRepository regionRepository;
     @Mock private RabbitTemplate rabbitTemplate;
     @Mock private OrderMapper orderMapper;
 
@@ -40,11 +42,13 @@ class OrderServiceTest {
     @Test
     @DisplayName("createOrder saves order and publishes RabbitMQ event")
     void createOrder_happyPath_savesAndPublishesEvent() {
+        Comuna comuna = buildDefaultComuna();
         CreateOrderRequest request = buildCreateRequest("Juan", "juan@email.com", 2, BigDecimal.valueOf(1000));
         Order savedOrder = buildSavedOrder("order-1", "Juan", "juan@email.com", 2, BigDecimal.valueOf(1000));
         OrderResponse expected = buildOrderResponse("order-1", "Juan", "juan@email.com",
                 BigDecimal.valueOf(2000), OrderStatus.PENDING);
 
+        when(comunaRepository.findById(13123)).thenReturn(Optional.of(comuna));
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(orderMapper.toDto(savedOrder)).thenReturn(expected);
 
@@ -60,14 +64,16 @@ class OrderServiceTest {
     }
 
     @Test
-    @DisplayName("createOrder builds full shipping address from parts")
-    void createOrder_buildsShippingAddressFromParts() {
+    @DisplayName("createOrder sets street and commune on order")
+    void createOrder_setsStreetAndCommune() {
+        Comuna comuna = buildDefaultComuna();
         CreateOrderRequest request = new CreateOrderRequest(
-                "Ana", "ana@email.com",
-                "Calle 1", "Providencia", "Santiago", "RM",
+                "Ana", "ana@email.com", "Calle 1", 13123,
                 List.of(new OrderItemRequest("p1", "w1", "Producto", 1, BigDecimal.TEN))
         );
         Order saved = buildSavedOrder("o2", "Ana", "ana@email.com", 1, BigDecimal.TEN);
+
+        when(comunaRepository.findById(13123)).thenReturn(Optional.of(comuna));
         when(orderRepository.save(any())).thenReturn(saved);
         when(orderMapper.toDto(any(Order.class))).thenReturn(
                 buildOrderResponse("o2", "Ana", "ana@email.com", BigDecimal.TEN, OrderStatus.PENDING));
@@ -76,7 +82,8 @@ class OrderServiceTest {
         orderService.createOrder(request);
         verify(orderRepository).save(captor.capture());
 
-        assertThat(captor.getValue().getShippingAddress()).contains("Calle 1", "Providencia", "Chile");
+        assertThat(captor.getValue().getStreet()).isEqualTo("Calle 1");
+        assertThat(captor.getValue().getComuna().getNombre()).isEqualTo("Providencia");
     }
 
     @Test
@@ -85,9 +92,11 @@ class OrderServiceTest {
         OrderItemRequest item1 = new OrderItemRequest("p1", "w1", "A", 3, BigDecimal.valueOf(100));
         OrderItemRequest item2 = new OrderItemRequest("p2", "w1", "B", 2, BigDecimal.valueOf(50));
         CreateOrderRequest request = new CreateOrderRequest(
-                "Carlos", "c@mail.com", "St", "Comm", "City", "Reg", List.of(item1, item2));
+                "Carlos", "c@mail.com", "St", 13123, List.of(item1, item2));
 
         Order saved = buildSavedOrder("o3", "Carlos", "c@mail.com", 5, BigDecimal.valueOf(400));
+
+        when(comunaRepository.findById(13123)).thenReturn(Optional.of(buildDefaultComuna()));
         when(orderRepository.save(any())).thenReturn(saved);
         when(orderMapper.toDto(any(Order.class))).thenReturn(
                 buildOrderResponse("o3", "Carlos", "c@mail.com", BigDecimal.valueOf(400), OrderStatus.PENDING));
@@ -97,6 +106,20 @@ class OrderServiceTest {
         verify(orderRepository).save(captor.capture());
 
         assertThat(captor.getValue().getTotal()).isEqualByComparingTo(BigDecimal.valueOf(400));
+    }
+
+    @Test
+    @DisplayName("createOrder throws ResourceNotFoundException when comunaId not found")
+    void createOrder_invalidComunaId_throwsException() {
+        CreateOrderRequest request = new CreateOrderRequest(
+                "Test", "t@t.com", "Calle", 99999,
+                List.of(new OrderItemRequest("p1", "w1", "P", 1, BigDecimal.TEN)));
+
+        when(comunaRepository.findById(99999)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderService.createOrder(request))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("99999");
     }
 
     // ── getAllOrders ──────────────────────────────────────────────────────────
@@ -207,7 +230,7 @@ class OrderServiceTest {
     // ── helpers ───────────────────────────────────────────────────────────────
 
     private CreateOrderRequest buildCreateRequest(String name, String email, int qty, BigDecimal price) {
-        return new CreateOrderRequest(name, email, "Calle 1", "Comm", "City", "Reg",
+        return new CreateOrderRequest(name, email, "Calle 1", 13123,
                 List.of(new OrderItemRequest("p1", "w1", "Producto", qty, price)));
     }
 
@@ -224,7 +247,8 @@ class OrderServiceTest {
         order.setId(id);
         order.setCustomerName(name);
         order.setCustomerEmail(email);
-        order.setShippingAddress("Calle 1, Comm, City, Reg, Chile");
+        order.setStreet("Calle 1");
+        order.setComuna(buildDefaultComuna());
         order.setStatus(OrderStatus.PENDING);
         order.setTotal(pricePerUnit.multiply(BigDecimal.valueOf(qty)));
         order.setCreatedAt(LocalDateTime.now());
@@ -236,7 +260,14 @@ class OrderServiceTest {
 
     private OrderResponse buildOrderResponse(String id, String name, String email,
                                               BigDecimal total, OrderStatus status) {
-        return new OrderResponse(id, name, email, "Calle 1, Comm, City, Reg, Chile",
+        return new OrderResponse(id, name, email, "Calle 1", 13123,
+                "Providencia", "Región Metropolitana de Santiago",
                 status, total, LocalDateTime.now(), LocalDateTime.now(), List.of());
+    }
+
+    private Comuna buildDefaultComuna() {
+        Pais pais = Pais.builder().id(1).nombre("Chile").build();
+        Region region = Region.builder().id(13).nombre("Región Metropolitana de Santiago").pais(pais).build();
+        return Comuna.builder().id(13123).nombre("Providencia").region(region).build();
     }
 }

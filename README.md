@@ -1,23 +1,28 @@
 # SmartLogix — Plataforma SaaS de Logística
 
-Backend de microservicios para gestión logística de PYMEs. Construido con Java 21 + Spring Boot 3.2.5, orquestado con Docker Compose.
+Plataforma fullstack para gestión logística de PYMEs. Backend de microservicios con Java 21 + Spring Boot 3.2.5, orquestado con Docker Compose. Frontend en desarrollo.
 
 ---
 
 ## Tabla de Contenidos
 
 - [Stack Tecnológico](#stack-tecnológico)
+- [Estructura del Repositorio](#estructura-del-repositorio)
 - [Mapa de Microservicios](#mapa-de-microservicios)
 - [Arquitectura](#arquitectura)
 - [Inicio Rápido](#inicio-rápido)
 - [Variables de Entorno](#variables-de-entorno)
 - [Documentación API (Swagger)](#documentación-api-swagger)
+- [Sistema de Roles (ms-users)](#sistema-de-roles-ms-users)
+- [Direcciones Geográficas (ms-order)](#direcciones-geográficas-ms-order)
 - [Pruebas Unitarias](#pruebas-unitarias)
 - [Convenciones de Código](#convenciones-de-código)
 
 ---
 
 ## Stack Tecnológico
+
+### Backend
 
 | Tecnología | Versión | Uso |
 | :--- | :--- | :--- |
@@ -32,6 +37,29 @@ Backend de microservicios para gestión logística de PYMEs. Construido con Java
 | Lombok | — | Reducción de boilerplate |
 | Docker | — | Contenedores |
 | springdoc-openapi | 2.5.0 | Documentación Swagger |
+
+### Frontend
+
+> En desarrollo — se agregará a este repositorio bajo `Frontend/`.
+
+---
+
+## Estructura del Repositorio
+
+```
+SmartLogix/
+├── Backend/          ← microservicios Java
+│   ├── eureka-server/
+│   ├── api-gateway/
+│   ├── ms-order/
+│   ├── ms-inventary/
+│   ├── ms-users/
+│   ├── ms-shipping/
+│   ├── ms-notification/
+│   ├── ms-auth/
+│   └── docker-compose-local.yml
+└── Frontend/         ← en desarrollo
+```
 
 ---
 
@@ -235,6 +263,57 @@ Admin reasigna roles
 
 ---
 
+## Direcciones Geográficas (`ms-order`)
+
+Las órdenes creadas desde el frontend usan un modelo de dirección estructurado en vez de texto libre, compuesto por una calle y una referencia a la comuna oficial chilena.
+
+### Modelo de datos
+
+```
+Pais (1)
+ └── Region (16 regiones de Chile)
+       └── Comuna (346 comunas)
+             └── Order.street (texto libre: "Av. Providencia 1234")
+```
+
+Las tablas `pais`, `region` y `comuna` se pueblan automáticamente al **primer arranque del contenedor** mediante `data.sql` con `INSERT ... ON CONFLICT DO NOTHING` — idempotente en arranques sucesivos.
+
+### Endpoints para selectores del frontend
+
+| Método | Ruta | Descripción |
+| :--- | :--- | :--- |
+| `GET` | `/smartlogix/order/regiones` | Lista las 16 regiones de Chile |
+| `GET` | `/smartlogix/order/comunas?regionId={id}` | Lista las comunas de una región |
+
+### Crear orden (POST /smartlogix/order/orders)
+
+El campo `shippingAddress` de texto libre fue reemplazado por:
+
+```json
+{
+  "customerName": "Juan Pérez",
+  "customerEmail": "juan@example.com",
+  "street": "Av. Providencia 1234",
+  "comunaId": 13123,
+  "items": [...]
+}
+```
+
+La respuesta incluye los campos desglosados:
+
+```json
+{
+  "street": "Av. Providencia 1234",
+  "comunaId": 13123,
+  "comunaNombre": "Providencia",
+  "regionNombre": "Región Metropolitana de Santiago"
+}
+```
+
+> Los eventos internos de RabbitMQ (`OrderEvent.shippingAddress`) siguen usando una cadena derivada con el formato `"{calle}, {comuna}, {región}, Chile"`, compatible con la geocodificación Nominatim usada por `ms-shipping`.
+
+---
+
 ## Pruebas Unitarias
 
 Los tests se corren por servicio. Requieren Java 21 y Maven instalados localmente (no necesitan Docker).
@@ -245,7 +324,7 @@ Los tests se corren por servicio. Requieren Java 21 y Maven instalados localment
 # Inventario (10 tests)
 cd Backend/inventary && mvn clean test
 
-# Órdenes (12 tests)
+# Órdenes (13 tests)
 cd Backend/order && mvn clean test
 
 # Envíos (24 tests — ShipmentService + RouteService)
@@ -273,11 +352,11 @@ done
 | Servicio | Tests | Clases cubiertas |
 | :--- | :---: | :--- |
 | `ms-inventary` | 10 | `InventoryReservationService` |
-| `ms-order` | 12 | `OrderService` |
+| `ms-order` | 13 | `OrderService` |
 | `ms-shipping` | 24 | `ShipmentService`, `RouteService` |
 | `ms-notification` | 13 | `NotificationService`, `OrderEventListener` |
 | `ms-users` | 11 | `CompanyService`, `UserProfileService` |
-| **Total** | **70** | |
+| **Total** | **71** | |
 
 ---
 
@@ -287,7 +366,8 @@ done
 | :--- | :--- |
 | **Rutas API** | `/smartlogix/{servicio}/{módulo}` — nunca `/api/...` |
 | **Respuestas HTTP** | Siempre `MessageResponse<T>` con `statusCode`, `message`, `data` |
-| **IDs** | UUID (`String`) en todas las entidades — nunca `Long` o `Integer` |
+| **IDs de entidades de negocio** | UUID (`String`) — nunca `Long` o `Integer` |
+| **IDs de tablas de referencia** | Integer con ID natural (ej. comunas/regiones usan IDs oficiales SINIM) |
 | **Borrado** | Soft delete por cambio de estado — prohibido `repository.delete()` |
 | **Mapeo DTOs** | Solo MapStruct `@Mapper(componentModel = "spring")` — prohibido mapeo manual |
 | **Cascade** | Solo `PERSIST` y `MERGE` — prohibido `ALL` y `REMOVE` |

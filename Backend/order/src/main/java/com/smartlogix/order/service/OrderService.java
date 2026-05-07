@@ -6,10 +6,13 @@ import com.smartlogix.order.event.OrderEvent;
 import com.smartlogix.order.event.OrderItemEvent;
 import com.smartlogix.order.exception.ResourceNotFoundException;
 import com.smartlogix.order.mapper.OrderMapper;
+import com.smartlogix.order.model.Comuna;
 import com.smartlogix.order.model.Order;
 import com.smartlogix.order.model.OrderItem;
 import com.smartlogix.order.model.OrderStatus;
+import com.smartlogix.order.repository.ComunaRepository;
 import com.smartlogix.order.repository.OrderRepository;
+import com.smartlogix.order.repository.RegionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
@@ -23,16 +26,20 @@ import java.util.List;
 public class OrderService {
 
     private final OrderRepository orderRepository;
+    private final ComunaRepository comunaRepository;
+    private final RegionRepository regionRepository;
     private final RabbitTemplate rabbitTemplate;
     private final OrderMapper orderMapper;
 
     public OrderResponse createOrder(CreateOrderRequest request) {
+        Comuna comuna = comunaRepository.findById(request.comunaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Comuna no encontrada con id: " + request.comunaId()));
+
         Order order = new Order();
-        String shippingAddress = request.street() + ", " + request.commune() + ", "
-                + request.city() + ", " + request.region() + ", Chile";
         order.setCustomerName(request.customerName());
         order.setCustomerEmail(request.customerEmail());
-        order.setShippingAddress(shippingAddress);
+        order.setStreet(request.street());
+        order.setComuna(comuna);
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
@@ -54,6 +61,10 @@ public class OrderService {
         order.setTotal(total);
         Order savedOrder = orderRepository.save(order);
 
+        String fullAddress = savedOrder.getStreet() + ", " +
+                comuna.getNombre() + ", " +
+                comuna.getRegion().getNombre() + ", Chile";
+
         List<OrderItemEvent> itemEvents = savedOrder.getItems().stream()
                 .map(i -> OrderItemEvent.builder()
                         .productId(i.getProductId())
@@ -67,7 +78,7 @@ public class OrderService {
                 .orderId(savedOrder.getId())
                 .customerEmail(savedOrder.getCustomerEmail())
                 .customerName(savedOrder.getCustomerName())
-                .shippingAddress(savedOrder.getShippingAddress())
+                .shippingAddress(fullAddress)
                 .status(savedOrder.getStatus().name())
                 .subject("Pedido creado")
                 .message("Tu pedido con ID " + savedOrder.getId() + " fue creado correctamente y quedó en estado PENDIENTE.")
@@ -114,5 +125,17 @@ public class OrderService {
         rabbitTemplate.convertAndSend(RabbitMQConfig.EXCHANGE_NAME, "order.updated", event);
 
         return orderMapper.toDto(updatedOrder);
+    }
+
+    public List<RegionResponse> getAllRegiones() {
+        return regionRepository.findAll().stream()
+                .map(r -> new RegionResponse(r.getId(), r.getNombre()))
+                .toList();
+    }
+
+    public List<ComunaResponse> getComunasByRegion(Integer regionId) {
+        return comunaRepository.findByRegionId(regionId).stream()
+                .map(c -> new ComunaResponse(c.getId(), c.getNombre(), regionId))
+                .toList();
     }
 }
