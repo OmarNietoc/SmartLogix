@@ -39,6 +39,7 @@ public class OrderEventConsumer {
                         .productId(item.getProductId())
                         .warehouseId(item.getWarehouseId())
                         .quantity(item.getQuantity())
+                        .companyId(event.getCompanyId())
                         .build();
                 try {
                     reservationService.reserveStock(req);
@@ -52,7 +53,7 @@ public class OrderEventConsumer {
                                 RabbitMQConfig.EXCHANGE_NAME,
                                 "order.reservation.failed",
                                 new ReservationFailedEvent(orderId, item.getProductId(), e.getMessage(),
-                                        event.getCustomerEmail(), event.getCustomerName())
+                                        event.getCustomerEmail(), event.getCustomerName(), event.getCompanyId())
                         );
                     } catch (Exception mqEx) {
                         log.error("No se pudo publicar ReservationFailedEvent para orderId={}: {}", orderId, mqEx.getMessage());
@@ -64,7 +65,7 @@ public class OrderEventConsumer {
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.EXCHANGE_NAME,
                     "order.reservation.confirmed",
-                    new ReservationConfirmedEvent(orderId, event.getCustomerEmail(), event.getCustomerName(), event.getShippingAddress())
+                    new ReservationConfirmedEvent(orderId, event.getCustomerEmail(), event.getCustomerName(), event.getShippingAddress(), event.getCompanyId())
             );
             log.info("Todos los items reservados para orderId={}. Publicando confirmed.", orderId);
         } catch (Exception e) {

@@ -56,4 +56,7 @@ public class Shipment {
 
     @Column(name = "actual_delivery")
     private LocalDateTime actualDelivery;
+
+    @Column(name = "company_id", nullable = false)
+    private String companyId;
 }

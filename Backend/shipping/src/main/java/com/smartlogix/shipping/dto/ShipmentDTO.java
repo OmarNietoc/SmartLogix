@@ -25,4 +25,5 @@ public class ShipmentDTO {
     private String deliveryStatus;
     private LocalDateTime estimatedDelivery;
     private LocalDateTime actualDelivery;
+    private String companyId;
 }

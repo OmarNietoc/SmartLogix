@@ -72,7 +72,7 @@ const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
         <BarChart3 className="heading-icon" />
         <div>
           <h1>Inicia sesión</h1>
-          <p>Usuarios demo: admin, operador o conductor con contraseña demo1234.</p>
+          <p>Ingresa tus credenciales corporativas para acceder a la plataforma.</p>
         </div>
       </div>
 
@@ -125,7 +125,7 @@ const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
         <ShieldCheck className="heading-icon" />
         <div>
           <h1>Crear cuenta</h1>
-          <p>Registro demo mientras ms-auth no expone endpoints implementados.</p>
+          <p>Registra tu empresa para comenzar a operar.</p>
         </div>
       </div>
 

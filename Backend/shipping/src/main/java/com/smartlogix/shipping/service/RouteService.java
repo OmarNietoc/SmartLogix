@@ -115,14 +115,18 @@ public class RouteService {
         return routeRepository.findAll();
     }
 
-    public Route getRouteById(String id) {
-        return routeRepository.findById(id)
+    public Route getRouteById(String id, String companyId) {
+        Route route = routeRepository.findById(id)
                 .orElseThrow(() -> new RouteNotFoundException("La ruta con ID " + id + " no fue encontrada."));
+        if (!route.getCompanyId().equals(companyId)) {
+            throw new RouteNotFoundException("La ruta con ID " + id + " no fue encontrada.");
+        }
+        return route;
     }
 
     @Transactional
-    public Route updateRouteStatus(String id, RouteStatus status) {
-        Route existing = getRouteById(id);
+    public Route updateRouteStatus(String id, RouteStatus status, String companyId) {
+        Route existing = getRouteById(id, companyId);
         existing.setStatus(status);
 
         if (status == RouteStatus.IN_PROGRESS) {
@@ -136,8 +140,8 @@ public class RouteService {
     }
 
     @Transactional
-    public void deleteRoute(String id) {
-        Route route = getRouteById(id);
+    public void deleteRoute(String id, String companyId) {
+        Route route = getRouteById(id, companyId);
 
         List<Shipment> shipments = route.getShipments();
         if (shipments != null) {

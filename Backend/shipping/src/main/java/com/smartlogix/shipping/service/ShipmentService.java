@@ -24,21 +24,29 @@ public class ShipmentService {
     private final RouteRepository routeRepository;
     private final ShippingEventPublisher shippingEventPublisher;
 
-    public List<Shipment> getAllShipments(DeliveryStatus deliveryStatus) {
+    public List<Shipment> getAllShipments(String companyId, DeliveryStatus deliveryStatus) {
         if (deliveryStatus != null) {
-            return shipmentRepository.findByDeliveryStatus(deliveryStatus);
+            return shipmentRepository.findByCompanyIdAndDeliveryStatus(companyId, deliveryStatus);
         }
-        return shipmentRepository.findAll();
+        return shipmentRepository.findByCompanyId(companyId);
     }
 
-    public Shipment getShipmentByTrackingNumber(String trackingNumber) {
-        return shipmentRepository.findByTrackingNumber(trackingNumber)
+    public Shipment getShipmentByTrackingNumber(String trackingNumber, String companyId) {
+        Shipment shipment = shipmentRepository.findByTrackingNumber(trackingNumber)
                 .orElseThrow(() -> new ShipmentNotFoundException("El envío con número de seguimiento " + trackingNumber + " no fue encontrado."));
+        if (!shipment.getCompanyId().equals(companyId)) {
+            throw new ShipmentNotFoundException("El envío con número de seguimiento " + trackingNumber + " no fue encontrado.");
+        }
+        return shipment;
     }
 
-    public Shipment getShipmentById(String id) {
-        return shipmentRepository.findById(id)
+    public Shipment getShipmentById(String id, String companyId) {
+        Shipment shipment = shipmentRepository.findById(id)
                 .orElseThrow(() -> new ShipmentNotFoundException("El envío con ID " + id + " no fue encontrado."));
+        if (!shipment.getCompanyId().equals(companyId)) {
+            throw new ShipmentNotFoundException("El envío con ID " + id + " no fue encontrado.");
+        }
+        return shipment;
     }
 
     @Transactional
@@ -50,8 +58,8 @@ public class ShipmentService {
     }
 
     @Transactional
-    public Shipment updateShipmentStatus(String id, DeliveryStatus newStatus) {
-        Shipment existing = getShipmentById(id);
+    public Shipment updateShipmentStatus(String id, DeliveryStatus newStatus, String companyId) {
+        Shipment existing = getShipmentById(id, companyId);
         if (!existing.getDeliveryStatus().canTransitionTo(newStatus)) {
             throw new IllegalStateException("Transición de estado no válida de " + existing.getDeliveryStatus() + " a " + newStatus);
         }
@@ -81,8 +89,8 @@ public class ShipmentService {
     }
 
     @Transactional
-    public void deleteShipment(String id) {
-        Shipment existing = getShipmentById(id);
+    public void deleteShipment(String id, String companyId) {
+        Shipment existing = getShipmentById(id, companyId);
         existing.setDeliveryStatus(DeliveryStatus.CANCELLED);
         shipmentRepository.save(existing);
     }

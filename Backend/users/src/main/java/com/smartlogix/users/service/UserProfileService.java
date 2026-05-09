@@ -34,6 +34,9 @@ public class UserProfileService {
         if (roles.size() != roleNames.size()) {
             throw new ResourceNotFoundException("Uno o más roles no encontrados");
         }
+        if (userProfileRepository.existsByAuthId(userProfile.getAuthId())) {
+            throw new IllegalArgumentException("Ya existe un usuario con este correo electrónico");
+        }
         userProfile.setCompany(company);
         userProfile.setRoles(roles);
         return userProfileRepository.save(userProfile);

@@ -37,22 +37,32 @@ spring:
           uri: lb://ms-users
           predicates:
             - Path=/smartlogix/users/**
+          filters:
+            - AuthenticationFilter
         - id: ms-inventory
           uri: lb://ms-inventory
           predicates:
             - Path=/smartlogix/inventory/**
+          filters:
+            - AuthenticationFilter
         - id: ms-order
           uri: lb://ms-order
           predicates:
             - Path=/smartlogix/order/**
+          filters:
+            - AuthenticationFilter
         - id: ms-shipping
           uri: lb://ms-shipping
           predicates:
             - Path=/smartlogix/shipping/**
+          filters:
+            - AuthenticationFilter
         - id: ms-notification
           uri: lb://ms-notification
           predicates:
             - Path=/smartlogix/notification/**
+          filters:
+            - AuthenticationFilter
 
         # Rutas proxy para Swagger agregado
         - id: ms-auth-api-docs

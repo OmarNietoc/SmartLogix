@@ -33,7 +33,7 @@ public class OrderService {
     private final RabbitTemplate rabbitTemplate;
     private final OrderMapper orderMapper;
 
-    public OrderResponse createOrder(CreateOrderRequest request) {
+    public OrderResponse createOrder(CreateOrderRequest request, String companyId) {
         Comuna comuna = comunaRepository.findById(request.comunaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Comuna no encontrada con id: " + request.comunaId()));
 
@@ -43,6 +43,7 @@ public class OrderService {
         order.setStreet(request.street());
         order.setComuna(comuna);
         order.setStatus(OrderStatus.PENDING);
+        order.setCompanyId(companyId);
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
 
@@ -86,6 +87,7 @@ public class OrderService {
                 .message("Tu pedido con ID " + savedOrder.getId() + " fue creado correctamente y quedó en estado PENDIENTE.")
                 .eventDate(LocalDateTime.now())
                 .items(itemEvents)
+                .companyId(companyId)
                 .build();
 
         try {
@@ -97,19 +99,25 @@ public class OrderService {
         return orderMapper.toDto(savedOrder);
     }
 
-    public List<OrderResponse> getAllOrders() {
-        return orderRepository.findAll().stream().map(orderMapper::toDto).toList();
+    public List<OrderResponse> getAllOrders(String companyId) {
+        return orderRepository.findByCompanyId(companyId).stream().map(orderMapper::toDto).toList();
     }
 
-    public OrderResponse getOrderById(String id) {
+    public OrderResponse getOrderById(String id, String companyId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
+        if (!order.getCompanyId().equals(companyId)) {
+            throw new ResourceNotFoundException("Pedido no encontrado con id: " + id);
+        }
         return orderMapper.toDto(order);
     }
 
-    public OrderResponse updateOrderStatus(String id, UpdateOrderStatusRequest request) {
+    public OrderResponse updateOrderStatus(String id, UpdateOrderStatusRequest request, String companyId) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido no encontrado con id: " + id));
+        if (!order.getCompanyId().equals(companyId)) {
+            throw new ResourceNotFoundException("Pedido no encontrado con id: " + id);
+        }
 
         if (!order.getStatus().canTransitionTo(request.status())) {
             throw new IllegalStateException("Transición inválida: " + order.getStatus() + " → " + request.status());
@@ -126,6 +134,7 @@ public class OrderService {
                 .subject("Actualización de pedido")
                 .message("Tu pedido con ID " + updatedOrder.getId() + " cambió a estado " + updatedOrder.getStatus() + ".")
                 .eventDate(LocalDateTime.now())
+                .companyId(companyId)
                 .build();
 
         try {

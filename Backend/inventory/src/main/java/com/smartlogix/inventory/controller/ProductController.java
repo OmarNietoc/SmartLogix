@@ -32,7 +32,7 @@ public class ProductController {
     })
     @GetMapping
     public ResponseEntity<MessageResponse<List<ProductDTO>>> getAllProducts(
-            @Parameter(description = "UUID de la empresa") @RequestParam(required = false) String companyId) {
+            @Parameter(description = "UUID de la empresa") @RequestHeader("X-Company-Id") String companyId) {
         List<ProductDTO> data = productService.getAllProducts(companyId).stream()
                 .map(productMapper::toDto).collect(Collectors.toList());
         return ResponseEntity.ok(MessageResponse.<List<ProductDTO>>builder()

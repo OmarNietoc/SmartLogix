@@ -60,26 +60,25 @@ export const validateRegister = (data: {
   return null;
 };
 
+import { request } from './api';
+
 export const authService = {
   login: async (email: string, password: string) => {
     const validationError = validateLogin(email, password);
     if (validationError) throw new Error(validationError);
 
-    await new Promise((resolve) => setTimeout(resolve, 350));
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const user = demoUsers.find((candidate) => candidate.email === normalizedEmail);
-    if (!user || user.password !== password) {
-      throw new Error('Correo o contraseña incorrectos.');
-    }
+    const response = await request<{ token: string, email: string, companyId: string }>('/smartlogix/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+    });
 
     return {
-      token: `mock-jwt-token-${user.role.toLowerCase()}`,
+      token: response.token,
       user: {
-        name: user.name,
-        email: user.email,
-        companyName: user.companyName,
-        role: user.role,
+        email: response.email,
+        companyId: response.companyId,
+        role: 'ADMIN', // Rol por defecto temporal
+        name: response.email.split('@')[0],
       },
     };
   },
@@ -95,20 +94,24 @@ export const authService = {
     const validationError = validateRegister(data);
     if (validationError) throw new Error(validationError);
 
-    await new Promise((resolve) => setTimeout(resolve, 350));
-
-    const normalizedEmail = data.email.trim().toLowerCase();
-    if (demoUsers.some((user) => user.email === normalizedEmail)) {
-      throw new Error('Ya existe un usuario demo con ese correo.');
-    }
+    const response = await request<{ token: string, email: string, companyId: string }>('/smartlogix/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        email: data.email.trim().toLowerCase(),
+        contactEmail: data.email.trim().toLowerCase(),
+        phone: '123456789'
+      }),
+    });
 
     return {
-      token: 'mock-jwt-token-admin',
+      token: response.token,
       user: {
-        name: `${data.firstName.trim()} ${data.lastName.trim()}`,
-        email: normalizedEmail,
-        companyName: data.companyName.trim(),
+        email: response.email,
+        companyId: response.companyId,
         role: 'ADMIN',
+        name: `${data.firstName.trim()} ${data.lastName.trim()}`,
+        companyName: data.companyName.trim(),
       },
     };
   },

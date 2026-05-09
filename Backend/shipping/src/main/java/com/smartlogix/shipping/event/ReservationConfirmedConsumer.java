@@ -30,6 +30,7 @@ public class ReservationConfirmedConsumer {
                     .shippingAddress(event.shippingAddress() != null ? event.shippingAddress() : "Pendiente de asignación")
                     .trackingNumber("SL-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase())
                     .deliveryStatus(DeliveryStatus.PENDING)
+                    .companyId(event.companyId())
                     .build();
             shipmentRepository.save(shipment);
             log.info("Envío creado tracking={} para orderId={}", shipment.getTrackingNumber(), event.orderId());

@@ -36,8 +36,9 @@ public class ShipmentController {
     })
     @GetMapping
     public ResponseEntity<MessageResponse<List<ShipmentDTO>>> getAllShipments(
+            @RequestHeader("X-Company-Id") String companyId,
             @Parameter(description = "Estado de entrega (PENDING, IN_TRANSIT, DELIVERED, FAILED)") @RequestParam(required = false) DeliveryStatus deliveryStatus) {
-        List<ShipmentDTO> shipments = shipmentService.getAllShipments(deliveryStatus).stream()
+        List<ShipmentDTO> shipments = shipmentService.getAllShipments(companyId, deliveryStatus).stream()
                 .map(shipmentMapper::toDto)
                 .collect(Collectors.toList());
         MessageResponse<List<ShipmentDTO>> response = MessageResponse.<List<ShipmentDTO>>builder()
@@ -55,8 +56,9 @@ public class ShipmentController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse<ShipmentDTO>> getShipmentById(
-            @Parameter(description = "UUID del envío") @PathVariable String id) {
-        Shipment shipment = shipmentService.getShipmentById(id);
+            @Parameter(description = "UUID del envío") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Shipment shipment = shipmentService.getShipmentById(id, companyId);
         MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Envío obtenido con éxito")
@@ -72,8 +74,9 @@ public class ShipmentController {
     })
     @GetMapping("/tracking/{tracking_number}")
     public ResponseEntity<MessageResponse<ShipmentDTO>> getShipmentByTrackingNumber(
-            @Parameter(description = "Número de tracking del envío", example = "TRK-20240506-001") @PathVariable("tracking_number") String trackingNumber) {
-        Shipment shipment = shipmentService.getShipmentByTrackingNumber(trackingNumber);
+            @Parameter(description = "Número de tracking del envío", example = "TRK-20240506-001") @PathVariable("tracking_number") String trackingNumber,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Shipment shipment = shipmentService.getShipmentByTrackingNumber(trackingNumber, companyId);
         MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Envío obtenido con éxito")
@@ -88,7 +91,10 @@ public class ShipmentController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<ShipmentDTO>> createShipment(@Valid @RequestBody ShipmentDTO shipmentDto) {
+    public ResponseEntity<MessageResponse<ShipmentDTO>> createShipment(
+            @Valid @RequestBody ShipmentDTO shipmentDto,
+            @RequestHeader("X-Company-Id") String companyId) {
+        shipmentDto.setCompanyId(companyId);
         Shipment created = shipmentService.createShipment(shipmentMapper.toEntity(shipmentDto));
         MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.CREATED.value())
@@ -106,8 +112,9 @@ public class ShipmentController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<MessageResponse<ShipmentDTO>> updateShipmentStatus(
             @Parameter(description = "UUID del envío") @PathVariable String id,
-            @RequestBody DeliveryStatus status) {
-        Shipment updated = shipmentService.updateShipmentStatus(id, status);
+            @RequestBody DeliveryStatus status,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Shipment updated = shipmentService.updateShipmentStatus(id, status, companyId);
         MessageResponse<ShipmentDTO> response = MessageResponse.<ShipmentDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Estado de envío actualizado exitosamente")
@@ -123,8 +130,9 @@ public class ShipmentController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse<Void>> deleteShipment(
-            @Parameter(description = "UUID del envío") @PathVariable String id) {
-        shipmentService.deleteShipment(id);
+            @Parameter(description = "UUID del envío") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        shipmentService.deleteShipment(id, companyId);
         MessageResponse<Void> response = MessageResponse.<Void>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Envío eliminado exitosamente")

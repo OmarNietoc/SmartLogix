@@ -35,7 +35,7 @@ public class RouteController {
     })
     @GetMapping
     public ResponseEntity<MessageResponse<List<RouteDTO>>> getAllRoutes(
-            @Parameter(description = "UUID de la empresa") @RequestParam(required = false) String companyId,
+            @RequestHeader("X-Company-Id") String companyId,
             @Parameter(description = "Estado de la ruta (PENDING, IN_PROGRESS, COMPLETED, CANCELLED)") @RequestParam(required = false) RouteStatus status) {
         List<RouteDTO> routes = routeService.getAllRoutes(companyId, status).stream()
                 .map(routeMapper::toDto)
@@ -54,9 +54,11 @@ public class RouteController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o envíos no disponibles")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<RouteDTO>> createRoute(@Valid @RequestBody RouteCreationRequestDTO request) {
+    public ResponseEntity<MessageResponse<RouteDTO>> createRoute(
+            @Valid @RequestBody RouteCreationRequestDTO request,
+            @RequestHeader("X-Company-Id") String companyId) {
         Route createdRoute = routeService.createRoute(
-                request.getCompanyId(),
+                companyId,
                 request.getCarrierId(),
                 request.getOriginAddress(),
                 request.getShipmentIds(),
@@ -96,8 +98,9 @@ public class RouteController {
     })
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse<RouteDTO>> getRouteById(
-            @Parameter(description = "UUID de la ruta") @PathVariable String id) {
-        Route route = routeService.getRouteById(id);
+            @Parameter(description = "UUID de la ruta") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Route route = routeService.getRouteById(id, companyId);
         MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Ruta obtenida exitosamente")
@@ -114,8 +117,9 @@ public class RouteController {
     @PatchMapping("/{id}/status")
     public ResponseEntity<MessageResponse<RouteDTO>> updateRouteStatus(
             @Parameter(description = "UUID de la ruta") @PathVariable String id,
-            @RequestBody RouteStatus status) {
-        Route updated = routeService.updateRouteStatus(id, status);
+            @RequestBody RouteStatus status,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Route updated = routeService.updateRouteStatus(id, status, companyId);
         MessageResponse<RouteDTO> response = MessageResponse.<RouteDTO>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Estado de ruta actualizado exitosamente")
@@ -131,8 +135,9 @@ public class RouteController {
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse<Void>> deleteRoute(
-            @Parameter(description = "UUID de la ruta") @PathVariable String id) {
-        routeService.deleteRoute(id);
+            @Parameter(description = "UUID de la ruta") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        routeService.deleteRoute(id, companyId);
         MessageResponse<Void> response = MessageResponse.<Void>builder()
                 .statusCode(HttpStatus.OK.value())
                 .message("Ruta cancelada exitosamente y envíos liberados")
