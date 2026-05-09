@@ -13,12 +13,12 @@ public class GatewaySecurityConfig {
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
+                .cors(org.springframework.security.config.Customizer.withDefaults())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .authorizeExchange(exchanges -> exchanges
-                        .anyExchange().permitAll()  // Fase 7: agregar JwtAuthenticationFilter aquí
-                )
+                        .anyExchange().permitAll())
                 .build();
     }
 }

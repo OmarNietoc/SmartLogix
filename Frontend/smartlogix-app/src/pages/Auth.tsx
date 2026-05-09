@@ -1,8 +1,9 @@
-/* global React, Icons, useAuth, useToast */
-const { useState } = React;
+import React, { useState } from 'react';
+import { useAuthStore } from '../store/useAuthStore';
 
-function AuthScreen() {
-  const [mode, setMode] = useState('login');
+export const Auth: React.FC = () => {
+  const [mode, setMode] = useState<'login' | 'register'>('login');
+
   return (
     <div className="auth-shell">
       <aside className="auth-side">
@@ -26,21 +27,29 @@ function AuthScreen() {
       </div>
     </div>
   );
-}
+};
 
-function LoginForm({ onSwitch }) {
-  const { login } = useAuth();
-  const toast = useToast();
+const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
+  const { setSession } = useAuthStore();
   const [email, setEmail] = useState('admin@smartlogix.cl');
   const [password, setPassword] = useState('demo1234');
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
 
-  const submit = async (e) => {
-    e.preventDefault(); setErr(''); setLoading(true);
-    try { await login({ email, password }); toast('Sesión iniciada', 'success'); }
-    catch (e) { setErr(e.message); }
-    finally { setLoading(false); }
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); 
+    setErr(''); 
+    setLoading(true);
+    try {
+      // Simulación de login - fase 7 usará JWT real
+      await new Promise(r => setTimeout(r, 1000));
+      if (!email.includes('@')) throw new Error('Credenciales inválidas');
+      setSession('mock-jwt-token', { name: 'Admin', email, companyName: 'SmartLogix' });
+    } catch (error: any) { 
+      setErr(error.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -71,21 +80,28 @@ function LoginForm({ onSwitch }) {
       </div>
     </form>
   );
-}
+};
 
-function RegisterForm({ onSwitch }) {
-  const { register } = useAuth();
-  const toast = useToast();
+const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
+  const { setSession } = useAuthStore();
   const [data, setData] = useState({ companyName: '', taxId: '', firstName: '', lastName: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState('');
-  const set = (k, v) => setData(d => ({ ...d, [k]: v }));
+  
+  const set = (k: string, v: string) => setData(d => ({ ...d, [k]: v }));
 
-  const submit = async (e) => {
-    e.preventDefault(); setErr(''); setLoading(true);
-    try { await register(data); toast('Cuenta creada', 'success'); }
-    catch (e) { setErr(e.message); }
-    finally { setLoading(false); }
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault(); 
+    setErr(''); 
+    setLoading(true);
+    try { 
+      await new Promise(r => setTimeout(r, 1000));
+      setSession('mock-jwt-token', { name: `${data.firstName} ${data.lastName}`, email: data.email, companyName: data.companyName });
+    } catch (error: any) { 
+      setErr(error.message); 
+    } finally { 
+      setLoading(false); 
+    }
   };
 
   return (
@@ -131,6 +147,4 @@ function RegisterForm({ onSwitch }) {
       </button>
     </form>
   );
-}
-
-window.AuthScreen = AuthScreen;
+};
