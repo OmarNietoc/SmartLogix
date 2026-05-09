@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/users"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("USERS_DATABASE_URL")
+}
+
+model Company {
+  id           String        @id
+  taxId        String        @unique @map("tax_id")
+  name         String
+  contactEmail String        @map("contact_email")
+  phone        String?
+  users        UserProfile[]
+
+  @@map("companies")
+}
+
+model UserProfile {
+  id        String     @id
+  authId    String     @unique @map("auth_id")
+  companyId String     @map("company_id")
+  firstName String     @map("first_name")
+  lastName  String     @map("last_name")
+  company   Company    @relation(fields: [companyId], references: [id])
+  roles     UserRole[]
+
+  @@map("user_profiles")
+}
+
+model Role {
+  id    String     @id
+  name  String     @unique
+  users UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  userId String      @map("user_id")
+  roleId String      @map("role_id")
+  user   UserProfile @relation(fields: [userId], references: [id])
+  role   Role        @relation(fields: [roleId], references: [id])
+
+  @@id([userId, roleId])
+  @@map("user_role")
+}

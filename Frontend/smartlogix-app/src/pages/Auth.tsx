@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { BarChart3, Boxes, Route, ShieldCheck, Truck } from 'lucide-react';
+import { authService } from '../services/authService';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const Auth: React.FC = () => {
@@ -56,9 +57,8 @@ const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
     setErr('');
     setLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 450));
-      if (!email.includes('@') || password.length < 6) throw new Error('Credenciales inválidas');
-      setSession('mock-jwt-token', { name: 'Admin', email, companyName: 'SmartLogix' });
+      const session = await authService.login(email, password);
+      setSession(session.token, session.user);
     } catch (error) {
       setErr(error instanceof Error ? error.message : 'No se pudo iniciar sesión');
     } finally {
@@ -67,12 +67,12 @@ const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   };
 
   return (
-    <form className="auth-form" onSubmit={submit}>
+    <form className="auth-form" onSubmit={submit} noValidate>
       <div className="form-heading">
         <BarChart3 className="heading-icon" />
         <div>
           <h1>Inicia sesión</h1>
-          <p>Usa la demo para revisar el panel completo.</p>
+          <p>Usuarios demo: admin, operador o conductor con contraseña demo1234.</p>
         </div>
       </div>
 
@@ -87,11 +87,11 @@ const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
       </div>
       <div className="field">
         <label>Contraseña</label>
-        <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
       </div>
       {err && <div className="field-error">{err}</div>}
       <button type="submit" className="btn btn-primary full" disabled={loading}>
-        {loading ? 'Ingresando...' : 'Continuar'}
+        {loading ? 'Validando...' : 'Continuar'}
       </button>
     </form>
   );
@@ -101,28 +101,31 @@ const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const { setSession } = useAuthStore();
   const [data, setData] = useState({ companyName: '', taxId: '', firstName: '', lastName: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState('');
 
   const set = (key: keyof typeof data, value: string) => setData((current) => ({ ...current, [key]: value }));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErr('');
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 450));
-    setSession('mock-jwt-token', {
-      name: `${data.firstName} ${data.lastName}`.trim(),
-      email: data.email,
-      companyName: data.companyName,
-    });
-    setLoading(false);
+    try {
+      const session = await authService.register(data);
+      setSession(session.token, session.user);
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'No se pudo crear la cuenta');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <form className="auth-form" onSubmit={submit}>
+    <form className="auth-form" onSubmit={submit} noValidate>
       <div className="form-heading">
         <ShieldCheck className="heading-icon" />
         <div>
           <h1>Crear cuenta</h1>
-          <p>Registro demo mientras ms-auth no expone endpoints públicos.</p>
+          <p>Registro demo mientras ms-auth no expone endpoints implementados.</p>
         </div>
       </div>
 
@@ -155,8 +158,9 @@ const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
       </div>
       <div className="field">
         <label>Contraseña</label>
-        <input className="input" type="password" value={data.password} onChange={(e) => set('password', e.target.value)} required minLength={6} />
+        <input className="input" type="password" value={data.password} onChange={(e) => set('password', e.target.value)} required minLength={8} />
       </div>
+      {err && <div className="field-error">{err}</div>}
       <button type="submit" className="btn btn-primary full" disabled={loading}>
         {loading ? 'Creando...' : 'Crear cuenta'}
       </button>
