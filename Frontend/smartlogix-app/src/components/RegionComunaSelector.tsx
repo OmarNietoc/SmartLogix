@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { orderService, type Region, type Comuna } from '../services/orderService';
+import { orderService, type Comuna, type Region } from '../services/orderService';
 
 interface RegionComunaSelectorProps {
   onComunaChange: (comunaId: number | null) => void;
@@ -31,16 +31,16 @@ export const RegionComunaSelector: React.FC<RegionComunaSelectorProps> = ({ onCo
   }, []);
 
   const handleRegionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const rId = e.target.value ? Number(e.target.value) : '';
-    setSelectedRegionId(rId);
-    // Limpiar comuna seleccionada
+    const regionId = e.target.value ? Number(e.target.value) : '';
+    setSelectedRegionId(regionId);
     setSelectedComunaId('');
     onComunaChange(null);
     setComunas([]);
+    setError(null);
 
-    if (rId) {
+    if (regionId) {
       setIsLoadingComunas(true);
-      orderService.getComunas(rId)
+      orderService.getComunas(regionId)
         .then(setComunas)
         .catch(() => setError('Error al cargar comunas'))
         .finally(() => setIsLoadingComunas(false));
@@ -48,13 +48,13 @@ export const RegionComunaSelector: React.FC<RegionComunaSelectorProps> = ({ onCo
   };
 
   const handleComunaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const cId = e.target.value ? Number(e.target.value) : '';
-    setSelectedComunaId(cId);
-    onComunaChange(cId === '' ? null : cId);
+    const comunaId = e.target.value ? Number(e.target.value) : '';
+    setSelectedComunaId(comunaId);
+    onComunaChange(comunaId === '' ? null : comunaId);
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+    <div className="form-grid two">
       <div className="field">
         <label htmlFor="region-select">Región</label>
         <select
@@ -65,8 +65,8 @@ export const RegionComunaSelector: React.FC<RegionComunaSelectorProps> = ({ onCo
           disabled={isLoadingRegiones || isLoadingComunas}
         >
           <option value="">{isLoadingRegiones ? 'Cargando regiones...' : 'Seleccione región'}</option>
-          {regiones.map((r) => (
-            <option key={r.id} value={r.id}>{r.nombre}</option>
+          {regiones.map((region) => (
+            <option key={region.id} value={region.id}>{region.nombre}</option>
           ))}
         </select>
       </div>
@@ -81,13 +81,13 @@ export const RegionComunaSelector: React.FC<RegionComunaSelectorProps> = ({ onCo
           disabled={!selectedRegionId || isLoadingComunas}
         >
           <option value="">{isLoadingComunas ? 'Cargando comunas...' : 'Seleccione comuna'}</option>
-          {comunas.map((c) => (
-            <option key={c.id} value={c.id}>{c.nombre}</option>
+          {comunas.map((comuna) => (
+            <option key={comuna.id} value={comuna.id}>{comuna.nombre}</option>
           ))}
         </select>
       </div>
-      
-      {error && <p className="field-error" style={{ gridColumn: 'span 2' }}>{error}</p>}
+
+      {error && <p className="field-error wide">{error}</p>}
     </div>
   );
 };
