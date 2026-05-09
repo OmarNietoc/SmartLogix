@@ -30,8 +30,10 @@ public class OrderController {
         @ApiResponse(responseCode = "404", description = "Comuna no encontrada")
     })
     @PostMapping("/orders")
-    public ResponseEntity<MessageResponse<OrderResponse>> createOrder(@Valid @RequestBody CreateOrderRequest request) {
-        OrderResponse created = orderService.createOrder(request);
+    public ResponseEntity<MessageResponse<OrderResponse>> createOrder(
+            @Valid @RequestBody CreateOrderRequest request,
+            @RequestHeader("X-Company-Id") String companyId) {
+        OrderResponse created = orderService.createOrder(request, companyId);
         return ResponseEntity.status(HttpStatus.CREATED).body(
                 MessageResponse.<OrderResponse>builder()
                         .statusCode(HttpStatus.CREATED.value())
@@ -46,8 +48,9 @@ public class OrderController {
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
     })
     @GetMapping("/orders")
-    public ResponseEntity<MessageResponse<List<OrderResponse>>> getAllOrders() {
-        List<OrderResponse> orders = orderService.getAllOrders();
+    public ResponseEntity<MessageResponse<List<OrderResponse>>> getAllOrders(
+            @RequestHeader("X-Company-Id") String companyId) {
+        List<OrderResponse> orders = orderService.getAllOrders(companyId);
         return ResponseEntity.ok(
                 MessageResponse.<List<OrderResponse>>builder()
                         .statusCode(HttpStatus.OK.value())
@@ -63,8 +66,9 @@ public class OrderController {
     })
     @GetMapping("/orders/{id}")
     public ResponseEntity<MessageResponse<OrderResponse>> getOrderById(
-            @Parameter(description = "UUID del pedido") @PathVariable String id) {
-        OrderResponse order = orderService.getOrderById(id);
+            @Parameter(description = "UUID del pedido") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        OrderResponse order = orderService.getOrderById(id, companyId);
         return ResponseEntity.ok(
                 MessageResponse.<OrderResponse>builder()
                         .statusCode(HttpStatus.OK.value())
@@ -82,8 +86,9 @@ public class OrderController {
     @PutMapping("/orders/{id}/status")
     public ResponseEntity<MessageResponse<OrderResponse>> updateOrderStatus(
             @Parameter(description = "UUID del pedido") @PathVariable String id,
-            @Valid @RequestBody UpdateOrderStatusRequest request) {
-        OrderResponse updated = orderService.updateOrderStatus(id, request);
+            @Valid @RequestBody UpdateOrderStatusRequest request,
+            @RequestHeader("X-Company-Id") String companyId) {
+        OrderResponse updated = orderService.updateOrderStatus(id, request, companyId);
         return ResponseEntity.ok(
                 MessageResponse.<OrderResponse>builder()
                         .statusCode(HttpStatus.OK.value())

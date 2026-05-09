@@ -3,38 +3,36 @@ server:
   forward-headers-strategy: framework
 
 spring:
-  config:
-    import: optional:file:.env[.properties]
   application:
     name: ms-auth
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/authdb}
+    url: ${DB_URL:jdbc:postgresql://localhost:5436/authdb}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
+    show-sql: true
     properties:
       hibernate:
+        format_sql: true
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-smartlogix:
-  auth:
-    jwt-secret: ${JWT_SECRET}
-    jwt-expiration: ${JWT_EXPIRATION:86400000}
 
 eureka:
   client:
-    enabled: true
     service-url:
       defaultZone: ${EUREKA_URI:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
     lease-renewal-interval-in-seconds: 5
     lease-expiration-duration-in-seconds: 10
-springdoc:
-  api-docs:
-    path: /v3/api-docs
-  swagger-ui:
-    path: /swagger-ui.html
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+logging:
+  level:
+    org.springframework.security: DEBUG
+    com.smartlogix.auth_service: DEBUG

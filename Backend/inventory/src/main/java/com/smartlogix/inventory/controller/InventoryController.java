@@ -39,7 +39,7 @@ public class InventoryController {
     })
     @GetMapping
     public ResponseEntity<MessageResponse<List<InventoryDTO>>> getAllInventory(
-            @Parameter(description = "UUID de la empresa") @RequestParam(required = false) String companyId,
+            @Parameter(description = "UUID de la empresa") @RequestHeader("X-Company-Id") String companyId,
             @Parameter(description = "UUID del producto") @RequestParam(required = false) String productId,
             @Parameter(description = "UUID de la bodega") @RequestParam(required = false) String warehouseId) {
         List<InventoryDTO> data = inventoryService.getAllInventory(companyId, productId, warehouseId).stream()

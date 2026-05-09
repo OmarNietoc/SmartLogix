@@ -53,9 +53,9 @@ public class UserProfileController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o rol inexistente"),
         @ApiResponse(responseCode = "404", description = "Empresa no encontrada")
     })
-    @PostMapping("/company/{companyId}")
+    @PostMapping("/company")
     public ResponseEntity<MessageResponse<UserProfileDTO>> createProfile(
-            @Parameter(description = "UUID de la empresa") @PathVariable String companyId,
+            @RequestHeader("X-Company-Id") String companyId,
             @Valid @RequestBody UserProfileDTO dto) {
         Set<RoleName> roleNames = dto.getRoles() == null ? Set.of() :
                 dto.getRoles().stream().map(RoleName::valueOf).collect(Collectors.toSet());
@@ -90,9 +90,9 @@ public class UserProfileController {
         @ApiResponse(responseCode = "200", description = "Listado obtenido exitosamente"),
         @ApiResponse(responseCode = "404", description = "Empresa no encontrada")
     })
-    @GetMapping("/company/{companyId}")
+    @GetMapping("/company")
     public ResponseEntity<MessageResponse<List<UserProfileDTO>>> getProfilesByCompanyId(
-            @Parameter(description = "UUID de la empresa") @PathVariable String companyId) {
+            @RequestHeader("X-Company-Id") String companyId) {
         List<UserProfileDTO> profiles = userProfileService.getProfilesByCompanyId(companyId).stream()
                 .map(userProfileMapper::toDto)
                 .collect(Collectors.toList());

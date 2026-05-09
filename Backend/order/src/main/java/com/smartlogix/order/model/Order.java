@@ -43,4 +43,7 @@ public class Order {
     @OneToMany(mappedBy = "order", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
+
+    @Column(name = "company_id", nullable = false)
+    private String companyId;
 }

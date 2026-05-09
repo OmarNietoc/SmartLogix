@@ -17,6 +17,9 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
 
     public Company createCompany(Company company) {
+        if (companyRepository.existsByTaxId(company.getTaxId())) {
+            throw new IllegalArgumentException("Ya existe una empresa registrada con el RUT: " + company.getTaxId());
+        }
         return companyRepository.save(company);
     }
 

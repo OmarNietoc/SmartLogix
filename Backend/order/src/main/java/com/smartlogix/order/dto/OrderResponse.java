@@ -18,5 +18,6 @@ public record OrderResponse(
         BigDecimal total,
         LocalDateTime createdAt,
         LocalDateTime updatedAt,
-        List<OrderItemResponse> items
+        List<OrderItemResponse> items,
+        String companyId
 ) {}

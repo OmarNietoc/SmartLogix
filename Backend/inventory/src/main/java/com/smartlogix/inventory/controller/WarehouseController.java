@@ -33,7 +33,7 @@ public class WarehouseController {
     })
     @GetMapping
     public ResponseEntity<MessageResponse<List<WarehouseDTO>>> getAllWarehouses(
-            @Parameter(description = "UUID de la empresa") @RequestParam(required = false) String companyId,
+            @Parameter(description = "UUID de la empresa") @RequestHeader("X-Company-Id") String companyId,
             @Parameter(description = "Tipo de bodega (MAIN, SECONDARY, TRANSIT)") @RequestParam(required = false) WarehouseType type) {
         List<WarehouseDTO> data = warehouseService.getAllWarehouses(companyId, type).stream()
                 .map(warehouseMapper::toDto).collect(Collectors.toList());

@@ -40,6 +40,10 @@ public class InventoryReservationService {
         validate(req);
         Inventory inventory = inventoryService.getInventoryByProductAndWarehouse(req.getProductId(), req.getWarehouseId());
 
+        if (inventory.getProduct() != null && !inventory.getProduct().getCompanyId().equals(req.getCompanyId())) {
+            throw new IllegalArgumentException("Violación de Multi-Tenancy: El producto no pertenece a la empresa del pedido.");
+        }
+
         var existing = reservationRepository.findByOrderIdAndProductIdAndWarehouseIdAndStatus(
                 req.getOrderId(), req.getProductId(), req.getWarehouseId(), ReservationStatus.RESERVED);
         if (existing.isPresent()) return existing.get();
@@ -119,5 +123,6 @@ public class InventoryReservationService {
         if (req.getProductId() == null || req.getProductId().isBlank()) throw new IllegalArgumentException("productId es obligatorio");
         if (req.getWarehouseId() == null || req.getWarehouseId().isBlank()) throw new IllegalArgumentException("warehouseId es obligatorio");
         if (req.getQuantity() == null || req.getQuantity() <= 0) throw new IllegalArgumentException("quantity debe ser mayor a cero");
+        if (req.getCompanyId() == null || req.getCompanyId().isBlank()) throw new IllegalArgumentException("companyId es obligatorio");
     }
 }

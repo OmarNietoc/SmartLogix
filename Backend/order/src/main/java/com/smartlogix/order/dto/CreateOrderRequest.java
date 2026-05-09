@@ -13,5 +13,6 @@ public record CreateOrderRequest(
         @Email @NotBlank String customerEmail,
         @NotBlank String street,
         @NotNull Integer comunaId,
-        @Valid @NotEmpty List<OrderItemRequest> items
+        @Valid @NotEmpty List<OrderItemRequest> items,
+        String companyId
 ) {}

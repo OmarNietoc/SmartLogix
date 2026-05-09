@@ -22,4 +22,5 @@ public class OrderEvent {
     private String message;
     private LocalDateTime eventDate;
     private List<OrderItemEvent> items;
+    private String companyId;
 }
