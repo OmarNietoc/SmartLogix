@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { BarChart3, Boxes, Route, ShieldCheck, Truck } from 'lucide-react';
 import { useAuthStore } from '../store/useAuthStore';
 
 export const Auth: React.FC = () => {
@@ -11,23 +12,37 @@ export const Auth: React.FC = () => {
           <div className="brand-mark">SL</div>
           <span>SmartLogix</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 16, position: 'relative', zIndex: 1 }}>
-          <h2>Tu operación logística, bajo control.</h2>
-          <p>Gestiona inventario multi-bodega, órdenes, rutas y entregas en tiempo real desde una sola consola.</p>
-          <div style={{ display: 'flex', gap: 24, marginTop: 16, color: 'var(--text-secondary)', fontSize: 13 }}>
-            <div><div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em' }}>4.2k</div>órdenes / mes</div>
-            <div><div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em' }}>98.7%</div>entregas a tiempo</div>
-            <div><div style={{ fontSize: 22, fontWeight: 600, color: 'var(--text)', letterSpacing: '-0.02em' }}>12</div>integraciones</div>
+
+        <section className="auth-copy">
+          <h1>Control logístico para operar sin puntos ciegos.</h1>
+          <p>Centraliza órdenes, stock, bodegas, rutas y entregas en una consola pensada para equipos operativos.</p>
+          <div className="auth-metrics">
+            <Metric icon={<Boxes />} label="Inventario" value="Multi-bodega" />
+            <Metric icon={<Route />} label="Rutas" value="OSRM" />
+            <Metric icon={<ShieldCheck />} label="Saga" value="RabbitMQ" />
           </div>
+        </section>
+
+        <div className="auth-foot">
+          <Truck className="ico" />
+          API Gateway en http://localhost:8080
         </div>
-        <div style={{ fontSize: 12, color: 'var(--text-tertiary)', position: 'relative', zIndex: 1 }}>© 2026 SmartLogix · Versión 2.4</div>
       </aside>
-      <div className="auth-form-wrap">
+
+      <main className="auth-form-wrap">
         {mode === 'login' ? <LoginForm onSwitch={() => setMode('register')} /> : <RegisterForm onSwitch={() => setMode('login')} />}
-      </div>
+      </main>
     </div>
   );
 };
+
+const Metric = ({ icon, label, value }: { icon: React.ReactElement<{ className?: string }>; label: string; value: string }) => (
+  <div className="auth-metric">
+    {React.cloneElement(icon, { className: 'ico' })}
+    <span>{label}</span>
+    <strong>{value}</strong>
+  </div>
+);
 
 const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const { setSession } = useAuthStore();
@@ -37,47 +52,47 @@ const LoginForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const [err, setErr] = useState('');
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    setErr(''); 
+    e.preventDefault();
+    setErr('');
     setLoading(true);
     try {
-      // Simulación de login - fase 7 usará JWT real
-      await new Promise(r => setTimeout(r, 1000));
-      if (!email.includes('@')) throw new Error('Credenciales inválidas');
+      await new Promise((resolve) => setTimeout(resolve, 450));
+      if (!email.includes('@') || password.length < 6) throw new Error('Credenciales inválidas');
       setSession('mock-jwt-token', { name: 'Admin', email, companyName: 'SmartLogix' });
-    } catch (error: any) { 
-      setErr(error.message); 
-    } finally { 
-      setLoading(false); 
+    } catch (error) {
+      setErr(error instanceof Error ? error.message : 'No se pudo iniciar sesión');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <form className="auth-form" onSubmit={submit}>
-      <div>
-        <h1>Inicia sesión</h1>
-        <p className="sub">Bienvenido de vuelta a tu panel de operaciones.</p>
+      <div className="form-heading">
+        <BarChart3 className="heading-icon" />
+        <div>
+          <h1>Inicia sesión</h1>
+          <p>Usa la demo para revisar el panel completo.</p>
+        </div>
       </div>
-      <div className="auth-toggle">
+
+      <div className="segmented">
         <button type="button" className="active">Iniciar sesión</button>
         <button type="button" onClick={onSwitch}>Crear cuenta</button>
       </div>
+
       <div className="field">
         <label>Correo electrónico</label>
-        <input className="input" type="email" value={email} onChange={e => setEmail(e.target.value)} required autoFocus />
+        <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoFocus />
       </div>
       <div className="field">
         <label>Contraseña</label>
-        <input className="input" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
+        <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
       </div>
       {err && <div className="field-error">{err}</div>}
-      <button type="submit" className="btn btn-accent" disabled={loading} style={{ justifyContent: 'center', padding: '8px 12px' }}>
-        {loading ? 'Ingresando…' : 'Continuar'}
+      <button type="submit" className="btn btn-primary full" disabled={loading}>
+        {loading ? 'Ingresando...' : 'Continuar'}
       </button>
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12 }}>
-        <a href="#">¿Olvidaste tu contraseña?</a>
-        <span style={{ color: 'var(--text-tertiary)' }}>SSO próximamente</span>
-      </div>
     </form>
   );
 };
@@ -86,64 +101,64 @@ const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
   const { setSession } = useAuthStore();
   const [data, setData] = useState({ companyName: '', taxId: '', firstName: '', lastName: '', email: '', password: '' });
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState('');
-  
-  const set = (k: string, v: string) => setData(d => ({ ...d, [k]: v }));
+
+  const set = (key: keyof typeof data, value: string) => setData((current) => ({ ...current, [key]: value }));
 
   const submit = async (e: React.FormEvent) => {
-    e.preventDefault(); 
-    setErr(''); 
+    e.preventDefault();
     setLoading(true);
-    try { 
-      await new Promise(r => setTimeout(r, 1000));
-      setSession('mock-jwt-token', { name: `${data.firstName} ${data.lastName}`, email: data.email, companyName: data.companyName });
-    } catch (error: any) { 
-      setErr(error.message); 
-    } finally { 
-      setLoading(false); 
-    }
+    await new Promise((resolve) => setTimeout(resolve, 450));
+    setSession('mock-jwt-token', {
+      name: `${data.firstName} ${data.lastName}`.trim(),
+      email: data.email,
+      companyName: data.companyName,
+    });
+    setLoading(false);
   };
 
   return (
     <form className="auth-form" onSubmit={submit}>
-      <div>
-        <h1>Crear cuenta</h1>
-        <p className="sub">Empieza a gestionar tu logística en minutos.</p>
+      <div className="form-heading">
+        <ShieldCheck className="heading-icon" />
+        <div>
+          <h1>Crear cuenta</h1>
+          <p>Registro demo mientras ms-auth no expone endpoints públicos.</p>
+        </div>
       </div>
-      <div className="auth-toggle">
+
+      <div className="segmented">
         <button type="button" onClick={onSwitch}>Iniciar sesión</button>
         <button type="button" className="active">Crear cuenta</button>
       </div>
+
       <div className="field">
-        <label>Nombre de la empresa</label>
-        <input className="input" value={data.companyName} onChange={e => set('companyName', e.target.value)} required placeholder="Logística Andina S.A." />
+        <label>Empresa</label>
+        <input className="input" value={data.companyName} onChange={(e) => set('companyName', e.target.value)} required placeholder="Logística Andina S.A." />
       </div>
       <div className="field">
         <label>RUT empresa</label>
-        <input className="input" value={data.taxId} onChange={e => set('taxId', e.target.value)} required placeholder="76.123.456-7" />
+        <input className="input" value={data.taxId} onChange={(e) => set('taxId', e.target.value)} required placeholder="76.123.456-7" />
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="form-grid two">
         <div className="field">
           <label>Nombre</label>
-          <input className="input" value={data.firstName} onChange={e => set('firstName', e.target.value)} required />
+          <input className="input" value={data.firstName} onChange={(e) => set('firstName', e.target.value)} required />
         </div>
         <div className="field">
           <label>Apellido</label>
-          <input className="input" value={data.lastName} onChange={e => set('lastName', e.target.value)} required />
+          <input className="input" value={data.lastName} onChange={(e) => set('lastName', e.target.value)} required />
         </div>
       </div>
       <div className="field">
         <label>Correo corporativo</label>
-        <input className="input" type="email" value={data.email} onChange={e => set('email', e.target.value)} required />
+        <input className="input" type="email" value={data.email} onChange={(e) => set('email', e.target.value)} required />
       </div>
       <div className="field">
         <label>Contraseña</label>
-        <input className="input" type="password" value={data.password} onChange={e => set('password', e.target.value)} required minLength={6} />
-        <span className="hint">Mínimo 6 caracteres.</span>
+        <input className="input" type="password" value={data.password} onChange={(e) => set('password', e.target.value)} required minLength={6} />
       </div>
-      {err && <div className="field-error">{err}</div>}
-      <button type="submit" className="btn btn-accent" disabled={loading} style={{ justifyContent: 'center', padding: '8px 12px' }}>
-        {loading ? 'Creando…' : 'Crear cuenta y continuar'}
+      <button type="submit" className="btn btn-primary full" disabled={loading}>
+        {loading ? 'Creando...' : 'Crear cuenta'}
       </button>
     </form>
   );
