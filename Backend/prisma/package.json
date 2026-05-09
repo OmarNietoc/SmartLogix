@@ -1,0 +1,16 @@
+{
+  "name": "smartlogix-prisma-seed",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prisma:generate": "prisma generate --schema users/schema.prisma && prisma generate --schema inventory/schema.prisma",
+    "seed": "node seed.mjs",
+    "seed:all": "npm run prisma:generate && npm run seed"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.19.0"
+  },
+  "devDependencies": {
+    "prisma": "^6.19.0"
+  }
+}

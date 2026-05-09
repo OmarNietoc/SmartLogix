@@ -12,6 +12,7 @@ import {
   Search,
   Truck,
   Warehouse,
+  X,
 } from 'lucide-react';
 import { Auth } from './pages/Auth';
 import { CreateOrder } from './pages/CreateOrder';
@@ -314,11 +315,16 @@ const StockView = ({ stock }: { stock: Inventory[] }) => (
   />
 );
 
-const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => (
+const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => {
+  const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+
+  return (
+    <>
   <DataPanel
     title="Envíos"
     searchPlaceholder="Buscar tracking, cliente o dirección"
     rows={shipments}
+    onRowClick={setSelectedShipment}
     columns={[
       { header: 'Tracking', render: (shipment) => <StrongCell title={shipment.trackingNumber || shortId(shipment.id)} subtitle={shipment.customerName} /> },
       { header: 'Dirección', render: (shipment) => shipment.shippingAddress },
@@ -327,7 +333,10 @@ const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => (
       { header: 'Ruta', render: (shipment) => shortId(shipment.routeId) },
     ]}
   />
-);
+      {selectedShipment && <ShipmentModal shipment={selectedShipment} onClose={() => setSelectedShipment(null)} />}
+    </>
+  );
+};
 
 const RoutesView = ({ routes }: { routes: Route[] }) => (
   <DataPanel
@@ -350,12 +359,13 @@ interface Column<T> {
   render: (row: T) => React.ReactNode;
 }
 
-const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, emptyAction }: {
+const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, emptyAction, onRowClick }: {
   title: string;
   rows: T[];
   columns: Column<T>[];
   searchPlaceholder: string;
   emptyAction?: React.ReactNode;
+  onRowClick?: (row: T) => void;
 }) => {
   const [query, setQuery] = useState('');
   const filteredRows = useMemo(() => {
@@ -378,7 +388,7 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
           </thead>
           <tbody>
             {filteredRows.map((row, index) => (
-              <tr key={index}>
+              <tr key={index} className={onRowClick ? 'clickable-row' : ''} onClick={() => onRowClick?.(row)}>
                 {columns.map((column) => <td className={column.align === 'right' ? 'right' : ''} key={column.header}>{column.render(row)}</td>)}
               </tr>
             ))}
@@ -387,6 +397,62 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
         {!filteredRows.length && <EmptyState text={query ? 'Sin resultados para la búsqueda.' : 'No hay datos disponibles para este módulo.'} action={emptyAction} />}
       </div>
     </section>
+  );
+};
+
+const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () => void }) => {
+  const destination = shipment.shippingAddress || 'Dirección no disponible';
+  const mapUrl = shipment.latitude && shipment.longitude
+    ? `https://maps.google.com/maps?q=${shipment.latitude},${shipment.longitude}&z=15&output=embed`
+    : `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
+
+  return (
+    <div className="modal-backdrop" onClick={onClose}>
+      <article className="shipment-modal" onClick={(event) => event.stopPropagation()}>
+        <header className="modal-head">
+          <div>
+            <span className="eyebrow">Detalle de envío</span>
+            <h2>{shipment.trackingNumber || shortId(shipment.id)}</h2>
+          </div>
+          <button className="btn btn-icon" onClick={onClose} aria-label="Cerrar detalle">
+            <X className="ico" />
+          </button>
+        </header>
+
+        <div className="shipment-detail-grid">
+          <section className="shipment-facts">
+            <StatusBadge value={shipment.deliveryStatus} />
+            <dl className="detail-list">
+              <dt>Cliente</dt>
+              <dd>{shipment.customerName || 'Sin cliente'}</dd>
+              <dt>Email</dt>
+              <dd>{shipment.customerEmail || 'Sin email'}</dd>
+              <dt>Dirección validada</dt>
+              <dd>{destination}</dd>
+              <dt>Orden</dt>
+              <dd>{shortId(shipment.orderId)}</dd>
+              <dt>Ruta</dt>
+              <dd>{shortId(shipment.routeId)}</dd>
+              <dt>Entrega estimada</dt>
+              <dd>{formatDate(shipment.estimatedDelivery)}</dd>
+              <dt>Entrega real</dt>
+              <dd>{formatDate(shipment.actualDelivery)}</dd>
+              <dt>Coordenadas</dt>
+              <dd>{shipment.latitude && shipment.longitude ? `${shipment.latitude}, ${shipment.longitude}` : 'Mapa por dirección'}</dd>
+            </dl>
+          </section>
+
+          <section className="map-panel">
+            <iframe
+              title={`Mapa de entrega ${shipment.trackingNumber || shipment.id}`}
+              src={mapUrl}
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </section>
+        </div>
+      </article>
+    </div>
   );
 };
 

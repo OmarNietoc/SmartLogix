@@ -79,6 +79,8 @@ export interface Shipment {
   customerName: string;
   customerEmail: string;
   shippingAddress: string;
+  latitude?: number;
+  longitude?: number;
   trackingNumber: string;
   deliveryStatus: string;
   estimatedDelivery?: string;
@@ -93,6 +95,14 @@ export interface Route {
   originAddress: string;
   status: string;
   shipments?: Shipment[];
+}
+
+export interface CreateRoutePayload {
+  companyId: string;
+  carrierId: string;
+  originAddress: string;
+  shipmentIds: string[];
+  optimizeRoute: boolean;
 }
 
 export const smartlogixService = {
@@ -112,4 +122,8 @@ export const smartlogixService = {
   getInventory: () => request<Inventory[]>('/smartlogix/inventory/stocks'),
   getShipments: () => request<Shipment[]>('/smartlogix/shipping/shipments'),
   getRoutes: () => request<Route[]>('/smartlogix/shipping/routes'),
+  createRoute: (payload: CreateRoutePayload) => request<Route>('/smartlogix/shipping/routes', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
 };

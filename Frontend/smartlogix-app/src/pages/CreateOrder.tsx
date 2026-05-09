@@ -97,6 +97,12 @@ export const CreateOrder: React.FC<{ onBack: () => void; onCreated?: () => void 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const destinationError = validateDestination(street, comunaId);
+    if (destinationError) {
+      setMessage({ type: 'error', text: destinationError });
+      return;
+    }
+
     if (!comunaId) {
       setMessage({ type: 'error', text: 'Debes seleccionar una comuna.' });
       return;
@@ -113,8 +119,10 @@ export const CreateOrder: React.FC<{ onBack: () => void; onCreated?: () => void 
     const payload: CreateOrderPayload = { customerName, customerEmail, street, comunaId, items };
 
     try {
-      await smartlogixService.createOrder(payload);
-      setMessage({ type: 'success', text: 'Orden creada. El flujo Saga continuará con inventario, envío y notificación.' });
+      const createdOrder = await smartlogixService.createOrder(payload);
+      setMessage({ type: 'success', text: 'Orden creada. Generando envío y ruta automática...' });
+      await createAutomaticRoute(createdOrder.id);
+      setMessage({ type: 'success', text: 'Orden creada. El envío quedó asociado a una ruta automática.' });
       onCreated?.();
       setTimeout(() => onBack(), 900);
     } catch (err) {
@@ -161,6 +169,7 @@ export const CreateOrder: React.FC<{ onBack: () => void; onCreated?: () => void 
             <div className="field">
               <label>Dirección</label>
               <input required className="input" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Av. Providencia 1234" />
+              <span className="hint">Debe incluir calle y numeración. Región y comuna se validan contra el catálogo oficial.</span>
             </div>
             <RegionComunaSelector onComunaChange={setComunaId} />
           </section>
@@ -278,3 +287,35 @@ const formatMoney = (value: number) => new Intl.NumberFormat('es-CL', {
   currency: 'CLP',
   maximumFractionDigits: 0,
 }).format(value);
+
+const validateDestination = (street: string, comunaId: number | null) => {
+  const normalizedStreet = street.trim();
+  if (!normalizedStreet) return 'Ingresa una dirección de entrega.';
+  if (normalizedStreet.length < 6) return 'La dirección debe incluir calle y numeración.';
+  if (!/\d/.test(normalizedStreet)) return 'La dirección debe incluir numeración para ubicar la entrega.';
+  if (!comunaId) return 'Selecciona una región y comuna válida.';
+  return null;
+};
+
+const createAutomaticRoute = async (orderId: string) => {
+  const shipment = await waitForShipment(orderId);
+  if (!shipment || shipment.routeId || shipment.deliveryStatus !== 'PENDING') return;
+
+  await smartlogixService.createRoute({
+    companyId: 'smartlogix-demo',
+    carrierId: 'LOCAL',
+    originAddress: 'Bodega Central Santiago, Av. Las Condes 1234, Las Condes, Región Metropolitana, Chile',
+    shipmentIds: [shipment.id],
+    optimizeRoute: true,
+  });
+};
+
+const waitForShipment = async (orderId: string) => {
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    const shipments = await smartlogixService.getShipments();
+    const shipment = shipments.find((candidate) => candidate.orderId === orderId);
+    if (shipment) return shipment;
+    await new Promise((resolve) => setTimeout(resolve, 900));
+  }
+  return null;
+};
