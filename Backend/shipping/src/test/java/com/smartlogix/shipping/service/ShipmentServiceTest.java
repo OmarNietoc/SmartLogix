@@ -22,6 +22,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class ShipmentServiceTest {
+    private static final String COMPANY_ID = "c1";
 
     @Mock private ShipmentRepository shipmentRepository;
     @Mock private RouteRepository routeRepository;
@@ -34,26 +35,26 @@ class ShipmentServiceTest {
     @Test
     @DisplayName("getAllShipments without filter returns all")
     void getAllShipments_noFilter_returnsAll() {
-        when(shipmentRepository.findAll()).thenReturn(List.of(buildShipment("s1"), buildShipment("s2")));
+        when(shipmentRepository.findByCompanyId(COMPANY_ID)).thenReturn(List.of(buildShipment("s1"), buildShipment("s2")));
 
-        List<Shipment> result = shipmentService.getAllShipments(null);
+        List<Shipment> result = shipmentService.getAllShipments(COMPANY_ID, null);
 
         assertThat(result).hasSize(2);
-        verify(shipmentRepository).findAll();
-        verify(shipmentRepository, never()).findByDeliveryStatus(any());
+        verify(shipmentRepository).findByCompanyId(COMPANY_ID);
+        verify(shipmentRepository, never()).findByCompanyIdAndDeliveryStatus(anyString(), any());
     }
 
     @Test
     @DisplayName("getAllShipments with filter delegates to filtered query")
     void getAllShipments_withFilter_callsFilteredQuery() {
-        when(shipmentRepository.findByDeliveryStatus(DeliveryStatus.PENDING))
+        when(shipmentRepository.findByCompanyIdAndDeliveryStatus(COMPANY_ID, DeliveryStatus.PENDING))
                 .thenReturn(List.of(buildShipment("s1")));
 
-        List<Shipment> result = shipmentService.getAllShipments(DeliveryStatus.PENDING);
+        List<Shipment> result = shipmentService.getAllShipments(COMPANY_ID, DeliveryStatus.PENDING);
 
         assertThat(result).hasSize(1);
-        verify(shipmentRepository).findByDeliveryStatus(DeliveryStatus.PENDING);
-        verify(shipmentRepository, never()).findAll();
+        verify(shipmentRepository).findByCompanyIdAndDeliveryStatus(COMPANY_ID, DeliveryStatus.PENDING);
+        verify(shipmentRepository, never()).findByCompanyId(anyString());
     }
 
     // ── getShipmentById ───────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ class ShipmentServiceTest {
         Shipment shipment = buildShipment("s1");
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
 
-        Shipment result = shipmentService.getShipmentById("s1");
+        Shipment result = shipmentService.getShipmentById("s1", COMPANY_ID);
 
         assertThat(result.getId()).isEqualTo("s1");
     }
@@ -74,7 +75,7 @@ class ShipmentServiceTest {
     void getShipmentById_notFound_throws() {
         when(shipmentRepository.findById("bad")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> shipmentService.getShipmentById("bad"))
+        assertThatThrownBy(() -> shipmentService.getShipmentById("bad", COMPANY_ID))
                 .isInstanceOf(ShipmentNotFoundException.class)
                 .hasMessageContaining("bad");
     }
@@ -86,7 +87,7 @@ class ShipmentServiceTest {
     void getShipmentByTrackingNumber_notFound_throws() {
         when(shipmentRepository.findByTrackingNumber("TRK-999")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> shipmentService.getShipmentByTrackingNumber("TRK-999"))
+        assertThatThrownBy(() -> shipmentService.getShipmentByTrackingNumber("TRK-999", COMPANY_ID))
                 .isInstanceOf(ShipmentNotFoundException.class)
                 .hasMessageContaining("TRK-999");
     }
@@ -128,7 +129,7 @@ class ShipmentServiceTest {
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
         when(shipmentRepository.save(any())).thenReturn(shipment);
 
-        Shipment result = shipmentService.updateShipmentStatus("s1", DeliveryStatus.ASSIGNED);
+        Shipment result = shipmentService.updateShipmentStatus("s1", DeliveryStatus.ASSIGNED, COMPANY_ID);
 
         assertThat(result.getDeliveryStatus()).isEqualTo(DeliveryStatus.ASSIGNED);
         verify(shipmentRepository).save(shipment);
@@ -145,7 +146,7 @@ class ShipmentServiceTest {
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
         when(shipmentRepository.save(any())).thenReturn(shipment);
 
-        shipmentService.updateShipmentStatus("s1", DeliveryStatus.DISPATCHED);
+        shipmentService.updateShipmentStatus("s1", DeliveryStatus.DISPATCHED, COMPANY_ID);
 
         verify(shippingEventPublisher).publishOrderShipped(any());
         verify(shippingEventPublisher, never()).publishOrderDelivered(any());
@@ -160,7 +161,7 @@ class ShipmentServiceTest {
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
         when(shipmentRepository.save(any())).thenReturn(shipment);
 
-        shipmentService.updateShipmentStatus("s1", DeliveryStatus.DELIVERED);
+        shipmentService.updateShipmentStatus("s1", DeliveryStatus.DELIVERED, COMPANY_ID);
 
         assertThat(shipment.getActualDelivery()).isNotNull();
         verify(shippingEventPublisher).publishOrderDelivered(any());
@@ -173,7 +174,7 @@ class ShipmentServiceTest {
         shipment.setDeliveryStatus(DeliveryStatus.DELIVERED);
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
 
-        assertThatThrownBy(() -> shipmentService.updateShipmentStatus("s1", DeliveryStatus.PENDING))
+        assertThatThrownBy(() -> shipmentService.updateShipmentStatus("s1", DeliveryStatus.PENDING, COMPANY_ID))
                 .isInstanceOf(IllegalStateException.class);
     }
 
@@ -187,7 +188,7 @@ class ShipmentServiceTest {
         when(shipmentRepository.findById("s1")).thenReturn(Optional.of(shipment));
         when(shipmentRepository.save(any())).thenReturn(shipment);
 
-        shipmentService.deleteShipment("s1");
+        shipmentService.deleteShipment("s1", COMPANY_ID);
 
         assertThat(shipment.getDeliveryStatus()).isEqualTo(DeliveryStatus.CANCELLED);
         verify(shipmentRepository).save(shipment);
@@ -198,6 +199,7 @@ class ShipmentServiceTest {
     private Shipment buildShipment(String id) {
         return Shipment.builder()
                 .id(id)
+                .companyId(COMPANY_ID)
                 .orderId("order-" + id)
                 .shippingAddress("Calle 1, Santiago, Chile")
                 .deliveryStatus(DeliveryStatus.PENDING)

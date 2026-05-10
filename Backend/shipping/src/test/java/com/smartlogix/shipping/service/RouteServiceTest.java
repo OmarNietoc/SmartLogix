@@ -30,6 +30,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class RouteServiceTest {
+    private static final String COMPANY_ID = "c1";
 
     @Mock private RouteRepository routeRepository;
     @Mock private ShipmentRepository shipmentRepository;
@@ -57,13 +58,13 @@ class RouteServiceTest {
     void createRoute_dhlCarrier_usesDhlStrategy() {
         String shipmentId = "s1";
         Shipment shipment = buildPendingShipment(shipmentId);
-        Route saved = Route.builder().id("r1").companyId("c1").status(RouteStatus.PLANNED).build();
+        Route saved = Route.builder().id("r1").companyId(COMPANY_ID).status(RouteStatus.PLANNED).build();
 
         when(shipmentRepository.findAllById(List.of(shipmentId))).thenReturn(List.of(shipment));
         when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn("{\"source\":\"osrm\"}");
         when(routeRepository.save(any())).thenReturn(saved);
 
-        Route result = routeService.createRoute("c1", "DHL", "Origin St 1", List.of(shipmentId), true);
+        Route result = routeService.createRoute(COMPANY_ID, "DHL", "Origin St 1", List.of(shipmentId), true);
 
         assertThat(result).isNotNull();
         verify(routingApiService).fetchOptimizedPath(any(), any());
@@ -74,13 +75,13 @@ class RouteServiceTest {
     void createRoute_localCarrier_usesLocalStrategy() {
         String shipmentId = "s2";
         Shipment shipment = buildPendingShipment(shipmentId);
-        Route saved = Route.builder().id("r2").companyId("c1").status(RouteStatus.PLANNED).build();
+        Route saved = Route.builder().id("r2").companyId(COMPANY_ID).status(RouteStatus.PLANNED).build();
 
         when(shipmentRepository.findAllById(List.of(shipmentId))).thenReturn(List.of(shipment));
         when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn("{\"source\":\"osrm\"}");
         when(routeRepository.save(any())).thenReturn(saved);
 
-        Route result = routeService.createRoute("c1", "CORREOS", "Origin St 1", List.of(shipmentId), true);
+        Route result = routeService.createRoute(COMPANY_ID, "CORREOS", "Origin St 1", List.of(shipmentId), true);
 
         assertThat(result).isNotNull();
     }
@@ -113,7 +114,7 @@ class RouteServiceTest {
         when(shipmentRepository.findAllById(anyList())).thenReturn(List.of());
 
         assertThatThrownBy(() ->
-                routeService.createRoute("c1", "DHL", "Origin", List.of("nonexistent"), false))
+                routeService.createRoute(COMPANY_ID, "DHL", "Origin", List.of("nonexistent"), false))
                 .isInstanceOf(ShipmentNotFoundException.class);
     }
 
@@ -126,7 +127,7 @@ class RouteServiceTest {
         when(shipmentRepository.findAllById(List.of("s3"))).thenReturn(List.of(assigned));
 
         assertThatThrownBy(() ->
-                routeService.createRoute("c1", "DHL", "Origin", List.of("s3"), false))
+                routeService.createRoute(COMPANY_ID, "DHL", "Origin", List.of("s3"), false))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("s3");
     }
@@ -146,13 +147,13 @@ class RouteServiceTest {
     @Test
     @DisplayName("getAllRoutes filters by companyId and status")
     void getAllRoutes_withBothFilters_callsFilteredQuery() {
-        when(routeRepository.findByCompanyIdAndStatus("c1", RouteStatus.PLANNED))
+        when(routeRepository.findByCompanyIdAndStatus(COMPANY_ID, RouteStatus.PLANNED))
                 .thenReturn(List.of(Route.builder().id("r1").build()));
 
-        List<Route> routes = routeService.getAllRoutes("c1", RouteStatus.PLANNED);
+        List<Route> routes = routeService.getAllRoutes(COMPANY_ID, RouteStatus.PLANNED);
 
         assertThat(routes).hasSize(1);
-        verify(routeRepository).findByCompanyIdAndStatus("c1", RouteStatus.PLANNED);
+        verify(routeRepository).findByCompanyIdAndStatus(COMPANY_ID, RouteStatus.PLANNED);
     }
 
     // ── getRouteById ─────────────────────────────────────────────────────────
@@ -162,7 +163,7 @@ class RouteServiceTest {
     void getRouteById_notFound_throwsException() {
         when(routeRepository.findById("bad-id")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> routeService.getRouteById("bad-id"))
+        assertThatThrownBy(() -> routeService.getRouteById("bad-id", COMPANY_ID))
                 .isInstanceOf(RouteNotFoundException.class)
                 .hasMessageContaining("bad-id");
     }
@@ -174,13 +175,13 @@ class RouteServiceTest {
     void updateRouteStatus_inProgress_dispatchesShipments() {
         Shipment s = buildPendingShipment("s1");
         s.setDeliveryStatus(DeliveryStatus.ASSIGNED);
-        Route route = Route.builder().id("r1").status(RouteStatus.PLANNED)
+        Route route = Route.builder().id("r1").companyId(COMPANY_ID).status(RouteStatus.PLANNED)
                 .shipments(new ArrayList<>(List.of(s))).build();
 
         when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
         when(routeRepository.save(any())).thenReturn(route);
 
-        routeService.updateRouteStatus("r1", RouteStatus.IN_PROGRESS);
+        routeService.updateRouteStatus("r1", RouteStatus.IN_PROGRESS, COMPANY_ID);
 
         assertThat(s.getDeliveryStatus()).isEqualTo(DeliveryStatus.DISPATCHED);
         verify(shipmentRepository).save(s);
@@ -193,12 +194,12 @@ class RouteServiceTest {
     void deleteRoute_cancelsRouteAndReleasesShipments() {
         Shipment s = buildPendingShipment("s1");
         s.setDeliveryStatus(DeliveryStatus.ASSIGNED);
-        Route route = Route.builder().id("r1").status(RouteStatus.PLANNED)
+        Route route = Route.builder().id("r1").companyId(COMPANY_ID).status(RouteStatus.PLANNED)
                 .shipments(new ArrayList<>(List.of(s))).build();
 
         when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
 
-        routeService.deleteRoute("r1");
+        routeService.deleteRoute("r1", COMPANY_ID);
 
         assertThat(route.getStatus()).isEqualTo(RouteStatus.CANCELLED);
         assertThat(s.getDeliveryStatus()).isEqualTo(DeliveryStatus.PENDING);
@@ -211,6 +212,7 @@ class RouteServiceTest {
     private Shipment buildPendingShipment(String id) {
         Shipment s = new Shipment();
         s.setId(id);
+        s.setCompanyId(COMPANY_ID);
         s.setDeliveryStatus(DeliveryStatus.PENDING);
         s.setShippingAddress("Calle Test 123");
         return s;

@@ -28,6 +28,7 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class OrderServiceTest {
+    private static final String COMPANY_ID = "c1";
 
     @Mock private OrderRepository orderRepository;
     @Mock private ComunaRepository comunaRepository;
@@ -52,7 +53,7 @@ class OrderServiceTest {
         when(orderRepository.save(any(Order.class))).thenReturn(savedOrder);
         when(orderMapper.toDto(savedOrder)).thenReturn(expected);
 
-        OrderResponse response = orderService.createOrder(request);
+        OrderResponse response = orderService.createOrder(request, COMPANY_ID);
 
         assertThat(response.id()).isEqualTo("order-1");
         assertThat(response.customerName()).isEqualTo("Juan");
@@ -69,7 +70,7 @@ class OrderServiceTest {
         Comuna comuna = buildDefaultComuna();
         CreateOrderRequest request = new CreateOrderRequest(
                 "Ana", "ana@email.com", "Calle 1", 13123,
-                List.of(new OrderItemRequest("p1", "w1", "Producto", 1, BigDecimal.TEN))
+                List.of(new OrderItemRequest("p1", "w1", "Producto", 1, BigDecimal.TEN)), COMPANY_ID
         );
         Order saved = buildSavedOrder("o2", "Ana", "ana@email.com", 1, BigDecimal.TEN);
 
@@ -79,7 +80,7 @@ class OrderServiceTest {
                 buildOrderResponse("o2", "Ana", "ana@email.com", BigDecimal.TEN, OrderStatus.PENDING));
 
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-        orderService.createOrder(request);
+        orderService.createOrder(request, COMPANY_ID);
         verify(orderRepository).save(captor.capture());
 
         assertThat(captor.getValue().getStreet()).isEqualTo("Calle 1");
@@ -92,7 +93,7 @@ class OrderServiceTest {
         OrderItemRequest item1 = new OrderItemRequest("p1", "w1", "A", 3, BigDecimal.valueOf(100));
         OrderItemRequest item2 = new OrderItemRequest("p2", "w1", "B", 2, BigDecimal.valueOf(50));
         CreateOrderRequest request = new CreateOrderRequest(
-                "Carlos", "c@mail.com", "St", 13123, List.of(item1, item2));
+                "Carlos", "c@mail.com", "St", 13123, List.of(item1, item2), COMPANY_ID);
 
         Order saved = buildSavedOrder("o3", "Carlos", "c@mail.com", 5, BigDecimal.valueOf(400));
 
@@ -102,7 +103,7 @@ class OrderServiceTest {
                 buildOrderResponse("o3", "Carlos", "c@mail.com", BigDecimal.valueOf(400), OrderStatus.PENDING));
 
         ArgumentCaptor<Order> captor = ArgumentCaptor.forClass(Order.class);
-        orderService.createOrder(request);
+        orderService.createOrder(request, COMPANY_ID);
         verify(orderRepository).save(captor.capture());
 
         assertThat(captor.getValue().getTotal()).isEqualByComparingTo(BigDecimal.valueOf(400));
@@ -113,11 +114,11 @@ class OrderServiceTest {
     void createOrder_invalidComunaId_throwsException() {
         CreateOrderRequest request = new CreateOrderRequest(
                 "Test", "t@t.com", "Calle", 99999,
-                List.of(new OrderItemRequest("p1", "w1", "P", 1, BigDecimal.TEN)));
+                List.of(new OrderItemRequest("p1", "w1", "P", 1, BigDecimal.TEN)), COMPANY_ID);
 
         when(comunaRepository.findById(99999)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> orderService.createOrder(request))
+        assertThatThrownBy(() -> orderService.createOrder(request, COMPANY_ID))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("99999");
     }
@@ -129,13 +130,13 @@ class OrderServiceTest {
     void getAllOrders_returnsAllMapped() {
         Order o1 = buildSavedOrder("o1", "A", "a@a.com", 1, BigDecimal.TEN);
         Order o2 = buildSavedOrder("o2", "B", "b@b.com", 1, BigDecimal.ONE);
-        when(orderRepository.findAll()).thenReturn(List.of(o1, o2));
+        when(orderRepository.findByCompanyId(COMPANY_ID)).thenReturn(List.of(o1, o2));
         when(orderMapper.toDto(o1)).thenReturn(
                 buildOrderResponse("o1", "A", "a@a.com", BigDecimal.TEN, OrderStatus.PENDING));
         when(orderMapper.toDto(o2)).thenReturn(
                 buildOrderResponse("o2", "B", "b@b.com", BigDecimal.ONE, OrderStatus.PENDING));
 
-        List<OrderResponse> result = orderService.getAllOrders();
+        List<OrderResponse> result = orderService.getAllOrders(COMPANY_ID);
 
         assertThat(result).hasSize(2);
         assertThat(result.get(0).id()).isEqualTo("o1");
@@ -148,7 +149,7 @@ class OrderServiceTest {
     void getOrderById_notFound_throwsException() {
         when(orderRepository.findById("bad")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> orderService.getOrderById("bad"))
+        assertThatThrownBy(() -> orderService.getOrderById("bad", COMPANY_ID))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("bad");
     }
@@ -161,7 +162,7 @@ class OrderServiceTest {
         when(orderMapper.toDto(order)).thenReturn(
                 buildOrderResponse("o1", "Juan", "j@j.com", BigDecimal.TEN, OrderStatus.PENDING));
 
-        OrderResponse response = orderService.getOrderById("o1");
+        OrderResponse response = orderService.getOrderById("o1", COMPANY_ID);
 
         assertThat(response.id()).isEqualTo("o1");
         assertThat(response.customerEmail()).isEqualTo("j@j.com");
@@ -180,7 +181,7 @@ class OrderServiceTest {
         when(orderMapper.toDto(any(Order.class))).thenReturn(
                 buildOrderResponse("o1", "Juan", "j@j.com", BigDecimal.TEN, OrderStatus.CONFIRMED));
 
-        orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED));
+        orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED), COMPANY_ID);
 
         assertThat(order.getStatus()).isEqualTo(OrderStatus.CONFIRMED);
         verify(rabbitTemplate).convertAndSend(anyString(), eq("order.updated"), any(Object.class));
@@ -195,7 +196,7 @@ class OrderServiceTest {
         when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
 
         assertThatThrownBy(() ->
-                orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED)))
+                orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED), COMPANY_ID))
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("DELIVERED");
     }
@@ -231,7 +232,7 @@ class OrderServiceTest {
 
     private CreateOrderRequest buildCreateRequest(String name, String email, int qty, BigDecimal price) {
         return new CreateOrderRequest(name, email, "Calle 1", 13123,
-                List.of(new OrderItemRequest("p1", "w1", "Producto", qty, price)));
+                List.of(new OrderItemRequest("p1", "w1", "Producto", qty, price)), COMPANY_ID);
     }
 
     private Order buildSavedOrder(String id, String name, String email, int qty, BigDecimal pricePerUnit) {
@@ -247,6 +248,7 @@ class OrderServiceTest {
         order.setId(id);
         order.setCustomerName(name);
         order.setCustomerEmail(email);
+        order.setCompanyId(COMPANY_ID);
         order.setStreet("Calle 1");
         order.setComuna(buildDefaultComuna());
         order.setStatus(OrderStatus.PENDING);
@@ -262,7 +264,7 @@ class OrderServiceTest {
                                               BigDecimal total, OrderStatus status) {
         return new OrderResponse(id, name, email, "Calle 1", 13123,
                 "Providencia", "Región Metropolitana de Santiago",
-                status, total, LocalDateTime.now(), LocalDateTime.now(), List.of());
+                status, total, LocalDateTime.now(), LocalDateTime.now(), List.of(), COMPANY_ID);
     }
 
     private Comuna buildDefaultComuna() {

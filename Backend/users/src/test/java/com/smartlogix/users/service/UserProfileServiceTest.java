@@ -41,13 +41,13 @@ class UserProfileServiceTest {
         Role adminRole = buildRole(RoleName.ADMIN);
 
         when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
-        when(roleRepository.findByName(RoleName.ADMIN)).thenReturn(Optional.of(adminRole));
+        when(roleRepository.findByNameIn(Set.of(RoleName.ADMIN))).thenReturn(Set.of(adminRole));
         when(userProfileRepository.save(profile)).thenReturn(profile);
 
         UserProfile result = userProfileService.createAdminProfile("c1", profile);
 
         assertThat(result.getRoles()).containsExactly(adminRole);
-        verify(roleRepository).findByName(RoleName.ADMIN);
+        verify(roleRepository).findByNameIn(Set.of(RoleName.ADMIN));
         verify(userProfileRepository).save(profile);
     }
 
@@ -61,7 +61,7 @@ class UserProfileServiceTest {
         Role operatorRole = buildRole(RoleName.OPERATOR);
 
         when(companyRepository.findById("c1")).thenReturn(Optional.of(company));
-        when(roleRepository.findByName(RoleName.OPERATOR)).thenReturn(Optional.of(operatorRole));
+        when(roleRepository.findByNameIn(Set.of(RoleName.OPERATOR))).thenReturn(Set.of(operatorRole));
         when(userProfileRepository.save(profile)).thenReturn(profile);
 
         UserProfile result = userProfileService.createUserProfile("c1", profile, Set.of(RoleName.OPERATOR));
@@ -78,18 +78,18 @@ class UserProfileServiceTest {
 
         assertThatThrownBy(() -> userProfileService.createUserProfile("bad", buildProfile("p1"), Set.of(RoleName.ADMIN)))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Company not found");
+                .hasMessageContaining("Empresa no encontrada");
     }
 
     @Test
     @DisplayName("createUserProfile throws when role not found in repository")
     void createUserProfile_invalidRole_throwsException() {
         when(companyRepository.findById("c1")).thenReturn(Optional.of(buildCompany("c1")));
-        when(roleRepository.findByName(RoleName.DRIVER)).thenReturn(Optional.empty());
+        when(roleRepository.findByNameIn(Set.of(RoleName.DRIVER))).thenReturn(Set.of());
 
         assertThatThrownBy(() -> userProfileService.createUserProfile("c1", buildProfile("p1"), Set.of(RoleName.DRIVER)))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Role not found");
+                .hasMessageContaining("roles no encontrados");
     }
 
     // ── getProfilesByCompanyId ────────────────────────────────────────────────
