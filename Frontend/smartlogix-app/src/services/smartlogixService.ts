@@ -51,6 +51,12 @@ export interface Product {
   status: string;
 }
 
+export interface ProductPayload {
+  sku: string;
+  name: string;
+  price: number;
+}
+
 export interface Warehouse {
   id: string;
   companyId?: string;
@@ -58,6 +64,12 @@ export interface Warehouse {
   locationAddress: string;
   type: string;
   status: string;
+}
+
+export interface WarehousePayload {
+  name: string;
+  locationAddress: string;
+  type: string;
 }
 
 export interface Inventory {
@@ -118,7 +130,23 @@ export const smartlogixService = {
     body: JSON.stringify({ status }),
   }),
   getProducts: () => request<Product[]>('/smartlogix/inventory/products'),
+  createProduct: (payload: ProductPayload) => request<Product>('/smartlogix/inventory/products', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  updateProduct: (id: string, payload: ProductPayload) => request<Product>(`/smartlogix/inventory/products/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
   getWarehouses: () => request<Warehouse[]>('/smartlogix/inventory/warehouses'),
+  createWarehouse: (payload: WarehousePayload) => request<Warehouse>('/smartlogix/inventory/warehouses', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  updateWarehouse: (id: string, payload: WarehousePayload) => request<Warehouse>(`/smartlogix/inventory/warehouses/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  }),
   getInventory: () => request<Inventory[]>('/smartlogix/inventory/stocks'),
   getShipments: () => request<Shipment[]>('/smartlogix/shipping/shipments'),
   getRoutes: () => request<Route[]>('/smartlogix/shipping/routes'),

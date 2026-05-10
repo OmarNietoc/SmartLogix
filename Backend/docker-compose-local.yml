@@ -13,6 +13,11 @@ services:
       - '5432:5432'
     volumes:
       - pg-shipping-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d shipping_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -30,6 +35,11 @@ services:
       - '5433:5432'
     volumes:
       - pg-inventory-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d smartlogix_inventory"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -47,6 +57,11 @@ services:
       - '5434:5432'
     volumes:
       - pg-order-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d orderdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -64,6 +79,11 @@ services:
       - '5435:5432'
     volumes:
       - pg-notification-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d notificationdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -81,6 +101,11 @@ services:
       - '5436:5432'
     volumes:
       - pg-auth-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d authdb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -99,6 +124,11 @@ services:
       - "5437:5432"
     volumes:
       - pg-users-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_users"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     deploy:
       resources:
         limits:
@@ -117,10 +147,16 @@ services:
       - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASS:-guest}
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 20s
+      start_period: 60s
+      retries: 30
     deploy:
       resources:
         limits:
-          memory: 256m
+          memory: 768m
           cpus: '0.25'
 
   eureka-server:
@@ -132,6 +168,12 @@ services:
       - '8761:8761'
     environment:
       - SERVER_PORT=8761
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8761 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      start_period: 90s
+      retries: 30
     deploy:
       resources:
         limits:
@@ -150,7 +192,8 @@ services:
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
       - JWT_SECRET=${JWT_SECRET}
     depends_on:
-      - eureka-server
+      eureka-server:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -176,9 +219,12 @@ services:
       - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - postgres-shipping
-      - eureka-server
-      - rabbitmq
+      postgres-shipping:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -203,9 +249,12 @@ services:
       - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - postgres-inventory
-      - eureka-server
-      - rabbitmq
+      postgres-inventory:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -230,9 +279,12 @@ services:
       - RABBITMQ_USERNAME=${RABBITMQ_USER:-guest}
       - RABBITMQ_PASSWORD=${RABBITMQ_PASS:-guest}
     depends_on:
-      - postgres-order
-      - eureka-server
-      - rabbitmq
+      postgres-order:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -262,9 +314,12 @@ services:
       - SMTP_PASS=${SMTP_PASS:-}
       - MAIL_FROM=${MAIL_FROM:-noreply@smartlogix.cl}
     depends_on:
-      - postgres-notification
-      - eureka-server
-      - rabbitmq
+      postgres-notification:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -282,8 +337,10 @@ services:
     env_file:
       - ./users/.env
     depends_on:
-      - pg-users-local
-      - eureka-server
+      pg-users-local:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -306,8 +363,10 @@ services:
       - JWT_EXPIRATION=86400000
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
     depends_on:
-      - postgres-auth
-      - eureka-server
+      postgres-auth:
+        condition: service_healthy
+      eureka-server:
+        condition: service_healthy
     deploy:
       resources:
         limits:

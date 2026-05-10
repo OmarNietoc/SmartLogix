@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useState } from 'react';
+﻿import React, { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   Boxes,
   ClipboardList,
+  Edit2,
   LayoutDashboard,
   LogOut,
   Map,
@@ -48,17 +49,17 @@ const emptyData: WorkspaceData = {
 };
 
 const navGroups = [
-  { label: 'Operación', items: [
+  { label: 'OperaciÃ³n', items: [
     { id: 'dashboard', label: 'Vista general', icon: LayoutDashboard },
-    { id: 'orders', label: 'Órdenes', icon: ClipboardList },
+    { id: 'orders', label: 'Ã“rdenes', icon: ClipboardList },
   ] },
   { label: 'Inventario', items: [
     { id: 'products', label: 'Productos', icon: Package },
     { id: 'warehouses', label: 'Bodegas', icon: Warehouse },
     { id: 'stock', label: 'Stock', icon: Boxes },
   ] },
-  { label: 'Logística', items: [
-    { id: 'shipments', label: 'Envíos', icon: Truck },
+  { label: 'LogÃ­stica', items: [
+    { id: 'shipments', label: 'EnvÃ­os', icon: Truck },
     { id: 'routes', label: 'Rutas', icon: Map },
   ] },
 ] as const;
@@ -92,7 +93,7 @@ export default function App() {
     });
 
     const failed = results.filter((result) => result.status === 'rejected').length;
-    if (failed) setError(`${failed} módulo(s) no respondieron. Revisa que el backend esté levantado en el gateway.`);
+    if (failed) setError(`${failed} mÃ³dulo(s) no respondieron. Revisa que el backend estÃ© levantado en el gateway.`);
     setLoading(false);
   };
 
@@ -114,8 +115,8 @@ export default function App() {
           {error && <div className="banner"><RefreshCw className="ico" />{error}</div>}
           {view === 'dashboard' && <Dashboard data={data} onCreateOrder={() => setView('create-order')} />}
           {view === 'orders' && <OrdersView orders={data.orders} onCreateOrder={() => setView('create-order')} />}
-          {view === 'products' && <ProductsView products={data.products} />}
-          {view === 'warehouses' && <WarehousesView warehouses={data.warehouses} />}
+          {view === 'products' && <ProductManagerView products={data.products} onSaved={loadData} />}
+          {view === 'warehouses' && <WarehouseManagerView warehouses={data.warehouses} onSaved={loadData} />}
           {view === 'stock' && <StockView stock={data.stock} />}
           {view === 'shipments' && <ShipmentsView shipments={data.shipments} />}
           {view === 'routes' && <RoutesView routes={data.routes} />}
@@ -159,7 +160,7 @@ export default function App() {
             <strong>{user?.name || 'Admin'}</strong>
             <span>{user?.companyName || 'SmartLogix'}</span>
           </div>
-          <button className="btn btn-icon" onClick={clearSession} title="Cerrar sesión">
+          <button className="btn btn-icon" onClick={clearSession} title="Cerrar sesiÃ³n">
             <LogOut className="ico" />
           </button>
         </div>
@@ -179,14 +180,14 @@ const PageHeader = ({ view, loading, onRefresh, onCreateOrder }: {
   onCreateOrder: () => void;
 }) => {
   const meta: Record<View, { title: string; eyebrow: string; description: string }> = {
-    dashboard: { title: 'Vista general', eyebrow: 'Operación', description: 'Salud completa de órdenes, inventario y última milla.' },
-    orders: { title: 'Órdenes', eyebrow: 'Operación', description: 'Seguimiento del flujo Saga desde compra hasta entrega.' },
-    'create-order': { title: 'Crear orden', eyebrow: 'Operación', description: 'Nuevo pedido.' },
-    products: { title: 'Productos', eyebrow: 'Inventario', description: 'Catálogo SKU conectado a ms-inventory.' },
-    warehouses: { title: 'Bodegas', eyebrow: 'Inventario', description: 'Centros de distribución, tránsito y almacenamiento.' },
+    dashboard: { title: 'Vista general', eyebrow: 'OperaciÃ³n', description: 'Salud completa de Ã³rdenes, inventario y Ãºltima milla.' },
+    orders: { title: 'Ã“rdenes', eyebrow: 'OperaciÃ³n', description: 'Seguimiento del flujo Saga desde compra hasta entrega.' },
+    'create-order': { title: 'Crear orden', eyebrow: 'OperaciÃ³n', description: 'Nuevo pedido.' },
+    products: { title: 'Productos', eyebrow: 'Inventario', description: 'CatÃ¡logo SKU conectado a ms-inventory.' },
+    warehouses: { title: 'Bodegas', eyebrow: 'Inventario', description: 'Centros de distribuciÃ³n, trÃ¡nsito y almacenamiento.' },
     stock: { title: 'Stock', eyebrow: 'Inventario', description: 'Disponibilidad y reservas por producto y bodega.' },
-    shipments: { title: 'Envíos', eyebrow: 'Logística', description: 'Tracking y estado de despachos individuales.' },
-    routes: { title: 'Rutas', eyebrow: 'Logística', description: 'Planificación de rutas y asignación de envíos.' },
+    shipments: { title: 'EnvÃ­os', eyebrow: 'LogÃ­stica', description: 'Tracking y estado de despachos individuales.' },
+    routes: { title: 'Rutas', eyebrow: 'LogÃ­stica', description: 'PlanificaciÃ³n de rutas y asignaciÃ³n de envÃ­os.' },
   };
 
   return (
@@ -219,9 +220,9 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
   return (
     <div className="dashboard-grid">
       <div className="kpi-grid">
-        <Kpi label="Órdenes totales" value={data.orders.length} detail={`${pendingOrders} pendientes`} />
+        <Kpi label="Ã“rdenes totales" value={data.orders.length} detail={`${pendingOrders} pendientes`} />
         <Kpi label="Productos" value={data.products.length} detail={`${lowStock} con bajo stock`} tone={lowStock ? 'warn' : 'ok'} />
-        <Kpi label="En tránsito" value={inTransit} detail={`${data.shipments.length} envíos`} />
+        <Kpi label="En trÃ¡nsito" value={inTransit} detail={`${data.shipments.length} envÃ­os`} />
         <Kpi label="Rutas activas" value={activeRoutes} detail={`${data.routes.length} planificadas`} />
       </div>
 
@@ -230,18 +231,18 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
         <div className="flow-strip">
           <FlowStep label="Orden" value={data.orders.length} />
           <FlowStep label="Reserva" value={data.stock.reduce((sum, item) => sum + Number(item.stockReserved || 0), 0)} />
-          <FlowStep label="Envío" value={data.shipments.length} />
+          <FlowStep label="EnvÃ­o" value={data.shipments.length} />
           <FlowStep label="Ruta" value={data.routes.length} />
         </div>
       </section>
 
       <section className="panel">
-        <PanelTitle icon={<ClipboardList className="ico" />} title="Órdenes recientes" />
+        <PanelTitle icon={<ClipboardList className="ico" />} title="Ã“rdenes recientes" />
         <MiniList rows={data.orders.slice(0, 5).map((order) => ({
           title: order.customerName,
-          subtitle: `${order.comunaNombre || 'Destino'} · ${formatMoney(order.total)}`,
+          subtitle: `${order.comunaNombre || 'Destino'} Â· ${formatMoney(order.total)}`,
           badge: order.status,
-        }))} empty="Sin órdenes registradas" />
+        }))} empty="Sin Ã³rdenes registradas" />
       </section>
 
       <section className="panel">
@@ -258,7 +259,7 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
 
 const OrdersView = ({ orders, onCreateOrder }: { orders: Order[]; onCreateOrder: () => void }) => (
   <DataPanel
-    title="Listado de órdenes"
+    title="Listado de Ã³rdenes"
     searchPlaceholder="Buscar cliente, comuna o estado"
     rows={orders}
     emptyAction={<button className="btn btn-primary" onClick={onCreateOrder}><Plus className="ico" /> Crear primera orden</button>}
@@ -267,38 +268,71 @@ const OrdersView = ({ orders, onCreateOrder }: { orders: Order[]; onCreateOrder:
       { header: 'Destino', render: (order) => `${order.street}, ${order.comunaNombre || order.comunaId}` },
       { header: 'Estado', render: (order) => <StatusBadge value={order.status} /> },
       { header: 'Total', align: 'right', render: (order) => formatMoney(order.total) },
-      { header: 'Creación', render: (order) => formatDate(order.createdAt) },
+      { header: 'CreaciÃ³n', render: (order) => formatDate(order.createdAt) },
     ]}
   />
 );
 
-const ProductsView = ({ products }: { products: Product[] }) => (
-  <DataPanel
-    title="Catálogo de productos"
-    searchPlaceholder="Buscar producto o SKU"
-    rows={products}
-    columns={[
-      { header: 'Producto', render: (product) => <StrongCell title={product.name} subtitle={product.sku} /> },
-      { header: 'Empresa', render: (product) => shortId(product.companyId) },
-      { header: 'Estado', render: (product) => <StatusBadge value={product.status} /> },
-      { header: 'Precio', align: 'right', render: (product) => formatMoney(product.price) },
-    ]}
-  />
-);
 
-const WarehousesView = ({ warehouses }: { warehouses: WarehouseRecord[] }) => (
-  <DataPanel
-    title="Bodegas"
-    searchPlaceholder="Buscar bodega, dirección o tipo"
-    rows={warehouses}
-    columns={[
-      { header: 'Bodega', render: (warehouse) => <StrongCell title={warehouse.name} subtitle={warehouse.locationAddress} /> },
-      { header: 'Tipo', render: (warehouse) => <StatusBadge value={warehouse.type} /> },
-      { header: 'Estado', render: (warehouse) => <StatusBadge value={warehouse.status} /> },
-      { header: 'Empresa', render: (warehouse) => shortId(warehouse.companyId) },
-    ]}
-  />
-);
+const ProductManagerView = ({ products, onSaved }: { products: Product[]; onSaved: () => Promise<void> }) => {
+  const [editing, setEditing] = useState<Product | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  return (
+    <>
+      <DataPanel
+        title="Catalogo de productos"
+        searchPlaceholder="Buscar producto o SKU"
+        rows={products}
+        headerAction={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus className="ico" /> Producto</button>}
+        columns={[
+          { header: 'Producto', render: (product) => <StrongCell title={product.name} subtitle={product.sku} /> },
+          { header: 'Empresa', render: (product) => shortId(product.companyId) },
+          { header: 'Estado', render: (product) => <StatusBadge value={product.status} /> },
+          { header: 'Precio', align: 'right', render: (product) => formatMoney(product.price) },
+          { header: '', align: 'right', render: (product) => <button className="btn btn-icon" onClick={() => setEditing(product)} aria-label="Editar producto"><Edit2 className="ico" /></button> },
+        ]}
+      />
+      {(creating || editing) && (
+        <ProductModal
+          product={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={onSaved}
+        />
+      )}
+    </>
+  );
+};
+
+const WarehouseManagerView = ({ warehouses, onSaved }: { warehouses: WarehouseRecord[]; onSaved: () => Promise<void> }) => {
+  const [editing, setEditing] = useState<WarehouseRecord | null>(null);
+  const [creating, setCreating] = useState(false);
+
+  return (
+    <>
+      <DataPanel
+        title="Bodegas"
+        searchPlaceholder="Buscar bodega, direccion o tipo"
+        rows={warehouses}
+        headerAction={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus className="ico" /> Bodega</button>}
+        columns={[
+          { header: 'Bodega', render: (warehouse) => <StrongCell title={warehouse.name} subtitle={warehouse.locationAddress} /> },
+          { header: 'Tipo', render: (warehouse) => <StatusBadge value={warehouse.type} /> },
+          { header: 'Estado', render: (warehouse) => <StatusBadge value={warehouse.status} /> },
+          { header: 'Empresa', render: (warehouse) => shortId(warehouse.companyId) },
+          { header: '', align: 'right', render: (warehouse) => <button className="btn btn-icon" onClick={() => setEditing(warehouse)} aria-label="Editar bodega"><Edit2 className="ico" /></button> },
+        ]}
+      />
+      {(creating || editing) && (
+        <WarehouseModal
+          warehouse={editing}
+          onClose={() => { setCreating(false); setEditing(null); }}
+          onSaved={onSaved}
+        />
+      )}
+    </>
+  );
+};
 
 const StockView = ({ stock }: { stock: Inventory[] }) => (
   <DataPanel
@@ -321,13 +355,13 @@ const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => {
   return (
     <>
   <DataPanel
-    title="Envíos"
-    searchPlaceholder="Buscar tracking, cliente o dirección"
+    title="EnvÃ­os"
+    searchPlaceholder="Buscar tracking, cliente o direcciÃ³n"
     rows={shipments}
     onRowClick={setSelectedShipment}
     columns={[
       { header: 'Tracking', render: (shipment) => <StrongCell title={shipment.trackingNumber || shortId(shipment.id)} subtitle={shipment.customerName} /> },
-      { header: 'Dirección', render: (shipment) => shipment.shippingAddress },
+      { header: 'DirecciÃ³n', render: (shipment) => shipment.shippingAddress },
       { header: 'Estado', render: (shipment) => <StatusBadge value={shipment.deliveryStatus} /> },
       { header: 'Entrega estimada', render: (shipment) => formatDate(shipment.estimatedDelivery) },
       { header: 'Ruta', render: (shipment) => shortId(shipment.routeId) },
@@ -347,7 +381,7 @@ const RoutesView = ({ routes }: { routes: Route[] }) => (
       { header: 'Ruta', render: (route) => <StrongCell title={shortId(route.id)} subtitle={route.originAddress} /> },
       { header: 'Estado', render: (route) => <StatusBadge value={route.status} /> },
       { header: 'Fecha', render: (route) => formatDate(route.routeDate) },
-      { header: 'Envíos', align: 'right', render: (route) => route.shipments?.length || 0 },
+      { header: 'EnvÃ­os', align: 'right', render: (route) => route.shipments?.length || 0 },
       { header: 'Carrier', render: (route) => shortId(route.carrierId) },
     ]}
   />
@@ -359,13 +393,14 @@ interface Column<T> {
   render: (row: T) => React.ReactNode;
 }
 
-const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, emptyAction, onRowClick }: {
+const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, emptyAction, onRowClick, headerAction }: {
   title: string;
   rows: T[];
   columns: Column<T>[];
   searchPlaceholder: string;
   emptyAction?: React.ReactNode;
   onRowClick?: (row: T) => void;
+  headerAction?: React.ReactNode;
 }) => {
   const [query, setQuery] = useState('');
   const filteredRows = useMemo(() => {
@@ -379,7 +414,7 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
       <PanelTitle
         icon={<Search className="ico" />}
         title={title}
-        action={<div className="search-box"><Search className="ico" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchPlaceholder} /></div>}
+        action={<div className="panel-actions">{headerAction}<div className="search-box"><Search className="ico" /><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={searchPlaceholder} /></div></div>}
       />
       <div className="table-wrap">
         <table className="data-table">
@@ -394,14 +429,145 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
             ))}
           </tbody>
         </table>
-        {!filteredRows.length && <EmptyState text={query ? 'Sin resultados para la búsqueda.' : 'No hay datos disponibles para este módulo.'} action={emptyAction} />}
+        {!filteredRows.length && <EmptyState text={query ? 'Sin resultados para la bÃºsqueda.' : 'No hay datos disponibles para este mÃ³dulo.'} action={emptyAction} />}
       </div>
     </section>
   );
 };
 
+const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => Promise<void> }) => {
+  const [form, setForm] = useState({
+    sku: product?.sku || '',
+    name: product?.name || '',
+    price: product?.price ? String(product.price) : '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const price = Number(form.price);
+    if (!form.sku.trim()) return setError('Ingresa el SKU.');
+    if (!form.name.trim()) return setError('Ingresa el nombre del producto.');
+    if (!Number.isFinite(price) || price < 0) return setError('Ingresa un precio valido.');
+
+    setSaving(true);
+    setError('');
+    try {
+      const payload = { sku: form.sku.trim(), name: form.name.trim(), price };
+      if (product) await smartlogixService.updateProduct(product.id, payload);
+      else await smartlogixService.createProduct(payload);
+      await onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar el producto');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <EditorModal title={product ? 'Editar producto' : 'Nuevo producto'} onClose={onClose}>
+      <form className="editor-form" onSubmit={submit}>
+        <div className="form-grid two">
+          <div className="field">
+            <label>SKU</label>
+            <input className="input" value={form.sku} onChange={(event) => setForm((current) => ({ ...current, sku: event.target.value }))} required />
+          </div>
+          <div className="field">
+            <label>Precio</label>
+            <input className="input" type="number" min="0" step="0.01" value={form.price} onChange={(event) => setForm((current) => ({ ...current, price: event.target.value }))} required />
+          </div>
+          <div className="field wide">
+            <label>Nombre</label>
+            <input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
+          </div>
+        </div>
+        {error && <p className="field-error">{error}</p>}
+        <div className="editor-actions">
+          <button type="button" className="btn" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
+        </div>
+      </form>
+    </EditorModal>
+  );
+};
+
+const WarehouseModal = ({ warehouse, onClose, onSaved }: { warehouse: WarehouseRecord | null; onClose: () => void; onSaved: () => Promise<void> }) => {
+  const [form, setForm] = useState({
+    name: warehouse?.name || '',
+    locationAddress: warehouse?.locationAddress || '',
+    type: warehouse?.type || 'WAREHOUSE',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!form.name.trim()) return setError('Ingresa el nombre de la bodega.');
+    if (!form.locationAddress.trim()) return setError('Ingresa la direccion.');
+
+    setSaving(true);
+    setError('');
+    try {
+      const payload = { name: form.name.trim(), locationAddress: form.locationAddress.trim(), type: form.type };
+      if (warehouse) await smartlogixService.updateWarehouse(warehouse.id, payload);
+      else await smartlogixService.createWarehouse(payload);
+      await onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo guardar la bodega');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <EditorModal title={warehouse ? 'Editar bodega' : 'Nueva bodega'} onClose={onClose}>
+      <form className="editor-form" onSubmit={submit}>
+        <div className="form-grid">
+          <div className="field">
+            <label>Nombre</label>
+            <input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
+          </div>
+          <div className="field">
+            <label>Direccion</label>
+            <input className="input" value={form.locationAddress} onChange={(event) => setForm((current) => ({ ...current, locationAddress: event.target.value }))} required />
+          </div>
+          <div className="field">
+            <label>Tipo</label>
+            <select className="select" value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}>
+              <option value="WAREHOUSE">Bodega</option>
+              <option value="RETAIL_STORE">Tienda / punto de retiro</option>
+            </select>
+          </div>
+        </div>
+        {error && <p className="field-error">{error}</p>}
+        <div className="editor-actions">
+          <button type="button" className="btn" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Guardar'}</button>
+        </div>
+      </form>
+    </EditorModal>
+  );
+};
+
+const EditorModal = ({ title, children, onClose }: { title: string; children: React.ReactNode; onClose: () => void }) => (
+  <div className="modal-backdrop" onClick={onClose}>
+    <article className="editor-modal" onClick={(event) => event.stopPropagation()}>
+      <header className="modal-head">
+        <h2>{title}</h2>
+        <button className="btn btn-icon" onClick={onClose} aria-label="Cerrar">
+          <X className="ico" />
+        </button>
+      </header>
+      {children}
+    </article>
+  </div>
+);
+
 const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () => void }) => {
-  const destination = shipment.shippingAddress || 'Dirección no disponible';
+  const destination = shipment.shippingAddress || 'DirecciÃ³n no disponible';
   const mapUrl = shipment.latitude && shipment.longitude
     ? `https://maps.google.com/maps?q=${shipment.latitude},${shipment.longitude}&z=15&output=embed`
     : `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
@@ -411,7 +577,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
       <article className="shipment-modal" onClick={(event) => event.stopPropagation()}>
         <header className="modal-head">
           <div>
-            <span className="eyebrow">Detalle de envío</span>
+            <span className="eyebrow">Detalle de envÃ­o</span>
             <h2>{shipment.trackingNumber || shortId(shipment.id)}</h2>
           </div>
           <button className="btn btn-icon" onClick={onClose} aria-label="Cerrar detalle">
@@ -427,7 +593,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
               <dd>{shipment.customerName || 'Sin cliente'}</dd>
               <dt>Email</dt>
               <dd>{shipment.customerEmail || 'Sin email'}</dd>
-              <dt>Dirección validada</dt>
+              <dt>DirecciÃ³n validada</dt>
               <dd>{destination}</dd>
               <dt>Orden</dt>
               <dd>{shortId(shipment.orderId)}</dd>
@@ -438,7 +604,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
               <dt>Entrega real</dt>
               <dd>{formatDate(shipment.actualDelivery)}</dd>
               <dt>Coordenadas</dt>
-              <dd>{shipment.latitude && shipment.longitude ? `${shipment.latitude}, ${shipment.longitude}` : 'Mapa por dirección'}</dd>
+              <dd>{shipment.latitude && shipment.longitude ? `${shipment.latitude}, ${shipment.longitude}` : 'Mapa por direcciÃ³n'}</dd>
             </dl>
           </section>
 
@@ -529,3 +695,4 @@ const formatMoney = (value?: number) => new Intl.NumberFormat('es-CL', {
 const formatDate = (value?: string) => value ? new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' }).format(new Date(value)) : 'Sin fecha';
 const shortId = (value?: string) => value ? value.slice(0, 8) : 'N/A';
 const initials = (value: string) => value.split(/\s|@/).filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('');
+

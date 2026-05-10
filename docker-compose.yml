@@ -1,0 +1,23 @@
+name: smartlogix-backend
+
+include:
+  - path: ./Backend/docker-compose-local.yml
+
+services:
+  frontend:
+    build:
+      context: ./Frontend/smartlogix-app
+      dockerfile: Dockerfile
+    container_name: smartlogix-frontend-local
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8080
+    volumes:
+      - ./Frontend/smartlogix-app:/app
+      - frontend-node-modules:/app/node_modules
+    depends_on:
+      - api-gateway
+
+volumes:
+  frontend-node-modules:

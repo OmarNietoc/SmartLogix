@@ -70,6 +70,7 @@ lerna-debug.log*
 
 # Documentación y Pruebas locales
 Pruebas/
+.tools/
 
 .DS_Store
 .DS_Store?

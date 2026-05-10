@@ -188,11 +188,11 @@ class InventoryReservationServiceTest {
 
     private StockReservationRequestDTO buildRequest(String orderId, String productId, String warehouseId, Integer qty) {
         return StockReservationRequestDTO.builder()
-                .orderId(orderId).productId(productId).warehouseId(warehouseId).quantity(qty).build();
+                .orderId(orderId).productId(productId).warehouseId(warehouseId).quantity(qty).companyId("c1").build();
     }
 
     private Inventory buildInventory(String id, String productId, String warehouseId, int available, int reserved) {
-        Product product = Product.builder().id(productId).sku("SKU1").name("Test").price(BigDecimal.TEN).build();
+        Product product = Product.builder().id(productId).companyId("c1").sku("SKU1").name("Test").price(BigDecimal.TEN).build();
         Warehouse warehouse = buildWarehouse(warehouseId);
         return Inventory.builder().id(id).product(product).warehouse(warehouse)
                 .stockAvailable(available).stockReserved(reserved).build();

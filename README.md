@@ -132,9 +132,26 @@ cp .env.example .env
 # Editar .env con tus credenciales (ver sección Variables de Entorno)
 ```
 
-### 2. Levantar el stack completo
+### 2. Levantar el stack completo, incluido el frontend
+
+Desde la raiz del repositorio:
 
 ```bash
+docker compose up -d --build
+```
+
+Esto levanta en un solo comando:
+
+- Frontend Vite: http://localhost:5173
+- API Gateway: http://localhost:8080
+- Eureka: http://localhost:8761
+- RabbitMQ Management: http://localhost:15672
+- Todos los microservicios y sus bases PostgreSQL
+
+### Backend solamente
+
+```bash
+cd Backend
 docker compose -f docker-compose-local.yml up -d
 ```
 
@@ -372,3 +389,37 @@ done
 | **Mapeo DTOs** | Solo MapStruct `@Mapper(componentModel = "spring")` — prohibido mapeo manual |
 | **Cascade** | Solo `PERSIST` y `MERGE` — prohibido `ALL` y `REMOVE` |
 | **Secretos** | Variables de entorno — prohibido hardcodear en `application.yml` o compose |
+
+---
+
+## Actualizaciones Recientes
+
+- Frontend operativo en `Frontend/smartlogix-app` con React, Vite, TypeScript, Zustand y Vitest.
+- El modulo de inventario ahora opera por empresa autenticada: productos, bodegas y stock se filtran con `X-Company-Id` inyectado por el API Gateway desde el JWT.
+- Productos y bodegas pueden crearse y editarse desde el frontend. El backend ignora `companyId` enviado en el body y usa siempre la empresa autenticada.
+- El seed Prisma vive en `Backend/prisma` y puede poblar usuarios demo, productos, bodegas y stock local.
+
+### Carga de Datos Demo
+
+```bash
+cd Backend/prisma
+npm install
+npm run seed:all
+```
+
+Variables usadas por Prisma:
+
+```env
+USERS_DATABASE_URL=postgresql://postgres:postgres@localhost:5437/db_users?schema=public
+INVENTORY_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/smartlogix_inventory?schema=public
+```
+
+Frontend local:
+
+```bash
+cd Frontend/smartlogix-app
+npm install
+npm run dev
+```
+
+URL: http://localhost:5173
