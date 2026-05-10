@@ -140,7 +140,7 @@ const RegisterForm: React.FC<{ onSwitch: () => void }> = ({ onSwitch }) => {
       </div>
       <div className="field">
         <label>RUT empresa</label>
-        <input className="input" value={data.taxId} onChange={(e) => set('taxId', e.target.value)} required placeholder="76.123.456-7" />
+        <input className="input" value={data.taxId} onChange={(e) => set('taxId', e.target.value)} required placeholder="76.123.456-0" />
       </div>
       <div className="form-grid two">
         <div className="field">

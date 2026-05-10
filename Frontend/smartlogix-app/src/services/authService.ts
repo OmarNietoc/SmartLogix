@@ -32,6 +32,27 @@ export const demoUsers: DemoUser[] = [
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+export const normalizeRut = (rut: string) => rut.replace(/[.-]/g, '').trim().toUpperCase();
+
+export const isValidRut = (rut: string) => {
+  const normalized = normalizeRut(rut);
+  if (!/^\d{7,8}[0-9K]$/.test(normalized)) return false;
+
+  const body = normalized.slice(0, -1);
+  const verifier = normalized.slice(-1);
+  let multiplier = 2;
+  let sum = 0;
+
+  for (let i = body.length - 1; i >= 0; i -= 1) {
+    sum += Number(body[i]) * multiplier;
+    multiplier = multiplier === 7 ? 2 : multiplier + 1;
+  }
+
+  const remainder = 11 - (sum % 11);
+  const expected = remainder === 11 ? '0' : remainder === 10 ? 'K' : String(remainder);
+  return verifier === expected;
+};
+
 export const validateLogin = (email: string, password: string) => {
   const normalizedEmail = email.trim().toLowerCase();
 
@@ -53,6 +74,7 @@ export const validateRegister = (data: {
 }) => {
   if (!data.companyName.trim()) return 'Ingresa el nombre de la empresa.';
   if (!data.taxId.trim()) return 'Ingresa el RUT de la empresa.';
+  if (!isValidRut(data.taxId)) return 'Ingresa un RUT de empresa valido.';
   if (!data.firstName.trim()) return 'Ingresa el nombre del usuario.';
   if (!data.lastName.trim()) return 'Ingresa el apellido del usuario.';
   if (!emailPattern.test(data.email.trim().toLowerCase())) return 'Ingresa un correo corporativo válido.';
@@ -98,6 +120,7 @@ export const authService = {
       method: 'POST',
       body: JSON.stringify({
         ...data,
+        taxId: normalizeRut(data.taxId),
         email: data.email.trim().toLowerCase(),
         contactEmail: data.email.trim().toLowerCase(),
         phone: '123456789'
