@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CompanyDTO {
     private String id;
-    @jakarta.validation.constraints.Pattern(regexp = "^[0-9]{8}[0-9Kk]$", message = "El RUT debe tener 9 caracteres, terminando en número o K")
+    @jakarta.validation.constraints.Pattern(regexp = "^[0-9]{7,8}[0-9Kk]$", message = "El RUT ingresado no es valido")
     private String taxId;
     private String name;
     private String contactEmail;
