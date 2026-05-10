@@ -49,19 +49,25 @@ const emptyData: WorkspaceData = {
 };
 
 const navGroups = [
-  { label: 'OperaciÃ³n', items: [
-    { id: 'dashboard', label: 'Vista general', icon: LayoutDashboard },
-    { id: 'orders', label: 'Ã“rdenes', icon: ClipboardList },
-  ] },
-  { label: 'Inventario', items: [
-    { id: 'products', label: 'Productos', icon: Package },
-    { id: 'warehouses', label: 'Bodegas', icon: Warehouse },
-    { id: 'stock', label: 'Stock', icon: Boxes },
-  ] },
-  { label: 'LogÃ­stica', items: [
-    { id: 'shipments', label: 'EnvÃ­os', icon: Truck },
-    { id: 'routes', label: 'Rutas', icon: Map },
-  ] },
+  {
+    label: 'Operación', items: [
+      { id: 'dashboard', label: 'Vista general', icon: LayoutDashboard },
+      { id: 'orders', label: 'Órdenes', icon: ClipboardList },
+    ]
+  },
+  {
+    label: 'Inventario', items: [
+      { id: 'products', label: 'Productos', icon: Package },
+      { id: 'warehouses', label: 'Bodegas', icon: Warehouse },
+      { id: 'stock', label: 'Stock', icon: Boxes },
+    ]
+  },
+  {
+    label: 'LogÃ­stica', items: [
+      { id: 'shipments', label: 'EnvÃ­os', icon: Truck },
+      { id: 'routes', label: 'Rutas', icon: Map },
+    ]
+  },
 ] as const;
 
 export default function App() {
@@ -93,7 +99,7 @@ export default function App() {
     });
 
     const failed = results.filter((result) => result.status === 'rejected').length;
-    if (failed) setError(`${failed} mÃ³dulo(s) no respondieron. Revisa que el backend estÃ© levantado en el gateway.`);
+    if (failed) setError(`${failed} módulos no respondieron. Revisa que el backend esté levantado en el gateway.`);
     setLoading(false);
   };
 
@@ -160,7 +166,7 @@ export default function App() {
             <strong>{user?.name || 'Admin'}</strong>
             <span>{user?.companyName || 'SmartLogix'}</span>
           </div>
-          <button className="btn btn-icon" onClick={clearSession} title="Cerrar sesiÃ³n">
+          <button className="btn btn-icon" onClick={clearSession} title="Cerrar sesión">
             <LogOut className="ico" />
           </button>
         </div>
@@ -180,14 +186,14 @@ const PageHeader = ({ view, loading, onRefresh, onCreateOrder }: {
   onCreateOrder: () => void;
 }) => {
   const meta: Record<View, { title: string; eyebrow: string; description: string }> = {
-    dashboard: { title: 'Vista general', eyebrow: 'OperaciÃ³n', description: 'Salud completa de Ã³rdenes, inventario y Ãºltima milla.' },
-    orders: { title: 'Ã“rdenes', eyebrow: 'OperaciÃ³n', description: 'Seguimiento del flujo Saga desde compra hasta entrega.' },
-    'create-order': { title: 'Crear orden', eyebrow: 'OperaciÃ³n', description: 'Nuevo pedido.' },
-    products: { title: 'Productos', eyebrow: 'Inventario', description: 'CatÃ¡logo SKU conectado a ms-inventory.' },
-    warehouses: { title: 'Bodegas', eyebrow: 'Inventario', description: 'Centros de distribuciÃ³n, trÃ¡nsito y almacenamiento.' },
+    dashboard: { title: 'Vista general', eyebrow: 'Operación', description: 'Salud completa de órdenes, inventario y última milla.' },
+    orders: { title: 'Órdenes', eyebrow: 'Operación', description: 'Seguimiento del flujo Saga desde compra hasta entrega.' },
+    'create-order': { title: 'Crear orden', eyebrow: 'Operación', description: 'Nuevo pedido.' },
+    products: { title: 'Productos', eyebrow: 'Inventario', description: 'Catálogo SKU conectado a ms-inventory.' },
+    warehouses: { title: 'Bodegas', eyebrow: 'Inventario', description: 'Centros de distribución, tránsito y almacenamiento.' },
     stock: { title: 'Stock', eyebrow: 'Inventario', description: 'Disponibilidad y reservas por producto y bodega.' },
-    shipments: { title: 'EnvÃ­os', eyebrow: 'LogÃ­stica', description: 'Tracking y estado de despachos individuales.' },
-    routes: { title: 'Rutas', eyebrow: 'LogÃ­stica', description: 'PlanificaciÃ³n de rutas y asignaciÃ³n de envÃ­os.' },
+    shipments: { title: 'Envíos', eyebrow: 'Logística', description: 'Tracking y estado de despachos individuales.' },
+    routes: { title: 'Rutas', eyebrow: 'Logística', description: 'Planificación de rutas y asignación de envíos.' },
   };
 
   return (
@@ -237,12 +243,12 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
       </section>
 
       <section className="panel">
-        <PanelTitle icon={<ClipboardList className="ico" />} title="Ã“rdenes recientes" />
+        <PanelTitle icon={<ClipboardList className="ico" />} title="Órdenes recientes" />
         <MiniList rows={data.orders.slice(0, 5).map((order) => ({
           title: order.customerName,
           subtitle: `${order.comunaNombre || 'Destino'} Â· ${formatMoney(order.total)}`,
           badge: order.status,
-        }))} empty="Sin Ã³rdenes registradas" />
+        }))} empty="Sin Órdenes registradas" />
       </section>
 
       <section className="panel">
@@ -259,7 +265,7 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
 
 const OrdersView = ({ orders, onCreateOrder }: { orders: Order[]; onCreateOrder: () => void }) => (
   <DataPanel
-    title="Listado de Ã³rdenes"
+    title="Listado de Órdenes"
     searchPlaceholder="Buscar cliente, comuna o estado"
     rows={orders}
     emptyAction={<button className="btn btn-primary" onClick={onCreateOrder}><Plus className="ico" /> Crear primera orden</button>}
@@ -268,7 +274,7 @@ const OrdersView = ({ orders, onCreateOrder }: { orders: Order[]; onCreateOrder:
       { header: 'Destino', render: (order) => `${order.street}, ${order.comunaNombre || order.comunaId}` },
       { header: 'Estado', render: (order) => <StatusBadge value={order.status} /> },
       { header: 'Total', align: 'right', render: (order) => formatMoney(order.total) },
-      { header: 'CreaciÃ³n', render: (order) => formatDate(order.createdAt) },
+      { header: 'Creación', render: (order) => formatDate(order.createdAt) },
     ]}
   />
 );
@@ -354,19 +360,19 @@ const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => {
 
   return (
     <>
-  <DataPanel
-    title="EnvÃ­os"
-    searchPlaceholder="Buscar tracking, cliente o direcciÃ³n"
-    rows={shipments}
-    onRowClick={setSelectedShipment}
-    columns={[
-      { header: 'Tracking', render: (shipment) => <StrongCell title={shipment.trackingNumber || shortId(shipment.id)} subtitle={shipment.customerName} /> },
-      { header: 'DirecciÃ³n', render: (shipment) => shipment.shippingAddress },
-      { header: 'Estado', render: (shipment) => <StatusBadge value={shipment.deliveryStatus} /> },
-      { header: 'Entrega estimada', render: (shipment) => formatDate(shipment.estimatedDelivery) },
-      { header: 'Ruta', render: (shipment) => shortId(shipment.routeId) },
-    ]}
-  />
+      <DataPanel
+        title="Envíos"
+        searchPlaceholder="Buscar tracking, cliente o dirección"
+        rows={shipments}
+        onRowClick={(shipment) => setSelectedShipment(shipment)}
+        columns={[
+          { header: 'Tracking', render: (shipment) => <StrongCell title={shipment.trackingNumber || shortId(shipment.id)} subtitle={shipment.customerName} /> },
+          { header: 'Dirección', render: (shipment) => shipment.shippingAddress },
+          { header: 'Estado', render: (shipment) => <StatusBadge value={shipment.deliveryStatus} /> },
+          { header: 'Entrega estimada', render: (shipment) => formatDate(shipment.estimatedDelivery) },
+          { header: 'Ruta', render: (shipment) => shortId(shipment.routeId) },
+        ]}
+      />
       {selectedShipment && <ShipmentModal shipment={selectedShipment} onClose={() => setSelectedShipment(null)} />}
     </>
   );
@@ -429,7 +435,7 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
             ))}
           </tbody>
         </table>
-        {!filteredRows.length && <EmptyState text={query ? 'Sin resultados para la bÃºsqueda.' : 'No hay datos disponibles para este mÃ³dulo.'} action={emptyAction} />}
+        {!filteredRows.length && <EmptyState text={query ? 'Sin resultados para la búsqueda.' : 'No hay datos disponibles para este módulo.'} action={emptyAction} />}
       </div>
     </section>
   );
@@ -567,7 +573,7 @@ const EditorModal = ({ title, children, onClose }: { title: string; children: Re
 );
 
 const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () => void }) => {
-  const destination = shipment.shippingAddress || 'DirecciÃ³n no disponible';
+  const destination = shipment.shippingAddress || 'Dirección no disponible';
   const mapUrl = shipment.latitude && shipment.longitude
     ? `https://maps.google.com/maps?q=${shipment.latitude},${shipment.longitude}&z=15&output=embed`
     : `https://maps.google.com/maps?q=${encodeURIComponent(destination)}&z=15&output=embed`;
@@ -593,7 +599,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
               <dd>{shipment.customerName || 'Sin cliente'}</dd>
               <dt>Email</dt>
               <dd>{shipment.customerEmail || 'Sin email'}</dd>
-              <dt>DirecciÃ³n validada</dt>
+              <dt>Dirección validada</dt>
               <dd>{destination}</dd>
               <dt>Orden</dt>
               <dd>{shortId(shipment.orderId)}</dd>
@@ -604,7 +610,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
               <dt>Entrega real</dt>
               <dd>{formatDate(shipment.actualDelivery)}</dd>
               <dt>Coordenadas</dt>
-              <dd>{shipment.latitude && shipment.longitude ? `${shipment.latitude}, ${shipment.longitude}` : 'Mapa por direcciÃ³n'}</dd>
+              <dd>{shipment.latitude && shipment.longitude ? `${shipment.latitude}, ${shipment.longitude}` : 'Mapa por dirección'}</dd>
             </dl>
           </section>
 
