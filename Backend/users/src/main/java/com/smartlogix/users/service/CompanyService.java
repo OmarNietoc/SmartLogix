@@ -3,6 +3,7 @@ package com.smartlogix.users.service;
 import com.smartlogix.users.model.Company;
 import com.smartlogix.users.repository.CompanyRepository;
 import com.smartlogix.users.exception.ResourceNotFoundException;
+import com.smartlogix.users.validation.ChileanRutValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,8 +18,11 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
 
     public Company createCompany(Company company) {
-        if (companyRepository.existsByTaxId(company.getTaxId())) {
-            throw new IllegalArgumentException("Ya existe una empresa registrada con el RUT: " + company.getTaxId());
+        String normalizedTaxId = ChileanRutValidator.normalize(company.getTaxId());
+        company.setTaxId(normalizedTaxId);
+
+        if (companyRepository.existsByNormalizedTaxId(normalizedTaxId)) {
+            throw new IllegalArgumentException("Ya existe una empresa registrada con el RUT: " + normalizedTaxId);
         }
         return companyRepository.save(company);
     }

@@ -11,12 +11,13 @@ datasource db {
 model Product {
   id        String      @id
   companyId String      @map("company_id")
-  sku       String      @unique
+  sku       String
   name      String
   price     Decimal     @db.Decimal(10, 2)
   status    String
   stock     Inventory[]
 
+  @@unique([companyId, sku])
   @@map("products")
 }
 

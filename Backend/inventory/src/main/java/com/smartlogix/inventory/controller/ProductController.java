@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Tag(name = "Inventory - Productos", description = "Catálogo de productos por empresa")
+@Tag(name = "Inventory - Productos", description = "Catalogo de productos por empresa")
 @RestController
 @RequestMapping("/smartlogix/inventory/products")
 @RequiredArgsConstructor
@@ -25,7 +25,7 @@ public class ProductController {
     private final ProductService productService;
     private final ProductMapper productMapper;
 
-    @Operation(summary = "Listar productos", description = "Retorna todos los productos. Filtrable por empresa")
+    @Operation(summary = "Listar productos", description = "Retorna los productos de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Listado obtenido exitosamente"),
         @ApiResponse(responseCode = "500", description = "Error interno del servidor")
@@ -39,46 +39,50 @@ public class ProductController {
                 .statusCode(HttpStatus.OK.value()).message("Listado de productos obtenido exitosamente").data(data).build());
     }
 
-    @Operation(summary = "Obtener producto por ID", description = "Retorna un producto por su UUID")
+    @Operation(summary = "Obtener producto por ID", description = "Retorna un producto por UUID dentro de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto obtenido exitosamente"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @GetMapping("/{id}")
     public ResponseEntity<MessageResponse<ProductDTO>> getProductById(
-            @Parameter(description = "UUID del producto") @PathVariable String id) {
+            @Parameter(description = "UUID del producto") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
         return ResponseEntity.ok(MessageResponse.<ProductDTO>builder()
                 .statusCode(HttpStatus.OK.value()).message("Producto obtenido exitosamente")
-                .data(productMapper.toDto(productService.getProductById(id))).build());
+                .data(productMapper.toDto(productService.getProductById(id, companyId))).build());
     }
 
-    @Operation(summary = "Obtener producto por SKU", description = "Retorna un producto por su código SKU único")
+    @Operation(summary = "Obtener producto por SKU", description = "Retorna un producto por SKU dentro de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto obtenido exitosamente"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @GetMapping("/sku/{sku}")
     public ResponseEntity<MessageResponse<ProductDTO>> getProductBySku(
-            @Parameter(description = "Código SKU del producto", example = "PROD-001") @PathVariable String sku) {
+            @Parameter(description = "Codigo SKU del producto", example = "PROD-001") @PathVariable String sku,
+            @RequestHeader("X-Company-Id") String companyId) {
         return ResponseEntity.ok(MessageResponse.<ProductDTO>builder()
                 .statusCode(HttpStatus.OK.value()).message("Producto obtenido exitosamente")
-                .data(productMapper.toDto(productService.getProductBySku(sku))).build());
+                .data(productMapper.toDto(productService.getProductBySku(sku, companyId))).build());
     }
 
-    @Operation(summary = "Crear producto", description = "Registra un nuevo producto en el catálogo")
+    @Operation(summary = "Crear producto", description = "Registra un nuevo producto en el catalogo de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "201", description = "Producto creado exitosamente"),
-        @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos o SKU duplicado")
+        @ApiResponse(responseCode = "400", description = "Datos de entrada invalidos o SKU duplicado")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<ProductDTO>> createProduct(@Valid @RequestBody ProductDTO dto) {
-        Product created = productService.createProduct(productMapper.toEntity(dto));
+    public ResponseEntity<MessageResponse<ProductDTO>> createProduct(
+            @Valid @RequestBody ProductDTO dto,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Product created = productService.createProduct(productMapper.toEntity(dto), companyId);
         return new ResponseEntity<>(MessageResponse.<ProductDTO>builder()
                 .statusCode(HttpStatus.CREATED.value()).message("Producto creado exitosamente")
                 .data(productMapper.toDto(created)).build(), HttpStatus.CREATED);
     }
 
-    @Operation(summary = "Actualizar producto", description = "Modifica los datos de un producto existente")
+    @Operation(summary = "Actualizar producto", description = "Modifica un producto de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto actualizado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado")
@@ -86,22 +90,24 @@ public class ProductController {
     @PutMapping("/{id}")
     public ResponseEntity<MessageResponse<ProductDTO>> updateProduct(
             @Parameter(description = "UUID del producto") @PathVariable String id,
-            @Valid @RequestBody ProductDTO dto) {
-        Product updated = productService.updateProduct(id, productMapper.toEntity(dto));
+            @Valid @RequestBody ProductDTO dto,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Product updated = productService.updateProduct(id, productMapper.toEntity(dto), companyId);
         return ResponseEntity.ok(MessageResponse.<ProductDTO>builder()
                 .statusCode(HttpStatus.OK.value()).message("Producto actualizado exitosamente")
                 .data(productMapper.toDto(updated)).build());
     }
 
-    @Operation(summary = "Eliminar producto", description = "Elimina un producto del catálogo")
+    @Operation(summary = "Eliminar producto", description = "Elimina un producto de la empresa autenticada")
     @ApiResponses({
         @ApiResponse(responseCode = "200", description = "Producto eliminado exitosamente"),
         @ApiResponse(responseCode = "404", description = "Producto no encontrado")
     })
     @DeleteMapping("/{id}")
     public ResponseEntity<MessageResponse<Void>> deleteProduct(
-            @Parameter(description = "UUID del producto") @PathVariable String id) {
-        productService.deleteProduct(id);
+            @Parameter(description = "UUID del producto") @PathVariable String id,
+            @RequestHeader("X-Company-Id") String companyId) {
+        productService.deleteProduct(id, companyId);
         return ResponseEntity.ok(MessageResponse.<Void>builder()
                 .statusCode(HttpStatus.OK.value()).message("Producto eliminado exitosamente").data(null).build());
     }

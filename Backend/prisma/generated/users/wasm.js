@@ -152,7 +152,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\acer\\Desktop\\Proyectos_DUOC\\SmartLogix\\Backend\\prisma\\generated\\users",
+      "value": "C:\\Users\\basti\\OneDrive\\Escritorio\\FULL_STAK_III\\SmartLogix\\Backend\\prisma\\generated\\users",
       "fromEnvVar": null
     },
     "config": {
@@ -166,7 +166,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\acer\\Desktop\\Proyectos_DUOC\\SmartLogix\\Backend\\prisma\\users\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\basti\\OneDrive\\Escritorio\\FULL_STAK_III\\SmartLogix\\Backend\\prisma\\users\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

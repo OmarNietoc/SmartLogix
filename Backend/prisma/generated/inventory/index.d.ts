@@ -4598,16 +4598,17 @@ export namespace Prisma {
 
   export type ProductWhereUniqueInput = Prisma.AtLeast<{
     id?: string
-    sku?: string
+    companyId_sku?: ProductCompanyIdSkuCompoundUniqueInput
     AND?: ProductWhereInput | ProductWhereInput[]
     OR?: ProductWhereInput[]
     NOT?: ProductWhereInput | ProductWhereInput[]
     companyId?: StringFilter<"Product"> | string
+    sku?: StringFilter<"Product"> | string
     name?: StringFilter<"Product"> | string
     price?: DecimalFilter<"Product"> | Decimal | DecimalJsLike | number | string
     status?: StringFilter<"Product"> | string
     stock?: InventoryListRelationFilter
-  }, "id" | "sku">
+  }, "id" | "companyId_sku">
 
   export type ProductOrderByWithAggregationInput = {
     id?: SortOrder
@@ -4990,6 +4991,11 @@ export namespace Prisma {
 
   export type InventoryOrderByRelationAggregateInput = {
     _count?: SortOrder
+  }
+
+  export type ProductCompanyIdSkuCompoundUniqueInput = {
+    companyId: string
+    sku: string
   }
 
   export type ProductCountOrderByAggregateInput = {

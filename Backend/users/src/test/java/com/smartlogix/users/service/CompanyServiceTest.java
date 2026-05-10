@@ -35,7 +35,30 @@ class CompanyServiceTest {
 
         assertThat(result.getId()).isEqualTo("c1");
         assertThat(result.getName()).isEqualTo("Empresa c1");
+        assertThat(result.getTaxId()).isEqualTo("761234560");
         verify(companyRepository).save(company);
+    }
+
+    @Test
+    @DisplayName("createCompany rejects invalid RUT")
+    void createCompany_invalidRut_throws() {
+        Company company = buildCompany("c1");
+        company.setTaxId("76.123.456-8");
+
+        assertThatThrownBy(() -> companyService.createCompany(company))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("RUT");
+    }
+
+    @Test
+    @DisplayName("createCompany rejects duplicate normalized RUT")
+    void createCompany_duplicateRut_throws() {
+        Company company = buildCompany("c1");
+        when(companyRepository.existsByNormalizedTaxId("761234560")).thenReturn(true);
+
+        assertThatThrownBy(() -> companyService.createCompany(company))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Ya existe");
     }
 
     // ── getAllCompanies ────────────────────────────────────────────────────────
@@ -73,7 +96,7 @@ class CompanyServiceTest {
         Company result = companyService.getCompanyById("c1");
 
         assertThat(result.getId()).isEqualTo("c1");
-        assertThat(result.getTaxId()).isEqualTo("76123456-7");
+        assertThat(result.getTaxId()).isEqualTo("76.123.456-0");
     }
 
     @Test
@@ -83,7 +106,7 @@ class CompanyServiceTest {
 
         assertThatThrownBy(() -> companyService.getCompanyById("bad"))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("Company not found");
+                .hasMessageContaining("Empresa no encontrada");
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────
@@ -91,7 +114,7 @@ class CompanyServiceTest {
     private Company buildCompany(String id) {
         return Company.builder()
                 .id(id)
-                .taxId("76123456-7")
+                .taxId("76.123.456-0")
                 .name("Empresa " + id)
                 .contactEmail("contacto@empresa.cl")
                 .phone("+56912345678")

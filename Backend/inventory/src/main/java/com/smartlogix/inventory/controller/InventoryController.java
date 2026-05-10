@@ -68,8 +68,10 @@ public class InventoryController {
         @ApiResponse(responseCode = "400", description = "Datos de entrada inválidos")
     })
     @PostMapping
-    public ResponseEntity<MessageResponse<InventoryDTO>> createInventory(@Valid @RequestBody InventoryCreationRequestDTO request) {
-        Inventory created = inventoryService.createInventory(request);
+    public ResponseEntity<MessageResponse<InventoryDTO>> createInventory(
+            @Valid @RequestBody InventoryCreationRequestDTO request,
+            @RequestHeader("X-Company-Id") String companyId) {
+        Inventory created = inventoryService.createInventory(request, companyId);
         return new ResponseEntity<>(MessageResponse.<InventoryDTO>builder()
                 .statusCode(HttpStatus.CREATED.value()).message("Stock creado exitosamente")
                 .data(inventoryMapper.toDto(created)).build(), HttpStatus.CREATED);

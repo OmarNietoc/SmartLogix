@@ -152,7 +152,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\acer\\Desktop\\Proyectos_DUOC\\SmartLogix\\Backend\\prisma\\generated\\inventory",
+      "value": "C:\\Users\\basti\\OneDrive\\Escritorio\\FULL_STAK_III\\SmartLogix\\Backend\\prisma\\generated\\inventory",
       "fromEnvVar": null
     },
     "config": {
@@ -166,7 +166,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\acer\\Desktop\\Proyectos_DUOC\\SmartLogix\\Backend\\prisma\\inventory\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\basti\\OneDrive\\Escritorio\\FULL_STAK_III\\SmartLogix\\Backend\\prisma\\inventory\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -189,8 +189,8 @@ const config = {
       }
     }
   },
-  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/inventory\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"INVENTORY_DATABASE_URL\")\n}\n\nmodel Product {\n  id        String      @id\n  companyId String      @map(\"company_id\")\n  sku       String      @unique\n  name      String\n  price     Decimal     @db.Decimal(10, 2)\n  status    String\n  stock     Inventory[]\n\n  @@map(\"products\")\n}\n\nmodel Warehouse {\n  id              String      @id\n  companyId       String      @map(\"company_id\")\n  name            String\n  locationAddress String      @map(\"location_address\")\n  type            String\n  status          String\n  stock           Inventory[]\n\n  @@map(\"warehouses\")\n}\n\nmodel Inventory {\n  id             String    @id\n  productId      String    @map(\"product_id\")\n  warehouseId    String    @map(\"warehouse_id\")\n  stockAvailable Int       @map(\"stock_available\")\n  stockReserved  Int       @map(\"stock_reserved\")\n  lastUpdated    DateTime? @map(\"last_updated\")\n  product        Product   @relation(fields: [productId], references: [id])\n  warehouse      Warehouse @relation(fields: [warehouseId], references: [id])\n\n  @@unique([productId, warehouseId])\n  @@map(\"inventory\")\n}\n",
-  "inlineSchemaHash": "4da3c309a17d98b23cce51c9906ebdae46dc643cd387e37492d1633d9bc60da1",
+  "inlineSchema": "generator client {\n  provider = \"prisma-client-js\"\n  output   = \"../generated/inventory\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n  url      = env(\"INVENTORY_DATABASE_URL\")\n}\n\nmodel Product {\n  id        String      @id\n  companyId String      @map(\"company_id\")\n  sku       String\n  name      String\n  price     Decimal     @db.Decimal(10, 2)\n  status    String\n  stock     Inventory[]\n\n  @@unique([companyId, sku])\n  @@map(\"products\")\n}\n\nmodel Warehouse {\n  id              String      @id\n  companyId       String      @map(\"company_id\")\n  name            String\n  locationAddress String      @map(\"location_address\")\n  type            String\n  status          String\n  stock           Inventory[]\n\n  @@map(\"warehouses\")\n}\n\nmodel Inventory {\n  id             String    @id\n  productId      String    @map(\"product_id\")\n  warehouseId    String    @map(\"warehouse_id\")\n  stockAvailable Int       @map(\"stock_available\")\n  stockReserved  Int       @map(\"stock_reserved\")\n  lastUpdated    DateTime? @map(\"last_updated\")\n  product        Product   @relation(fields: [productId], references: [id])\n  warehouse      Warehouse @relation(fields: [warehouseId], references: [id])\n\n  @@unique([productId, warehouseId])\n  @@map(\"inventory\")\n}\n",
+  "inlineSchemaHash": "16b1c20c8b6e539d2df65b6274569ad3532b0ce824e23e81862c16169858bdba",
   "copyEngine": true
 }
 config.dirname = '/'
