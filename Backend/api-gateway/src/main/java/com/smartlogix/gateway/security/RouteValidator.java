@@ -11,6 +11,11 @@ public class RouteValidator {
     public static final List<String> openApiEndpoints = List.of(
             "/smartlogix/auth/register",
             "/smartlogix/auth/login",
+            "/api-docs",
+            "/v3/api-docs",
+            "/swagger-ui",
+            "/swagger-ui.html",
+            "/swagger-resources",
             "/eureka"
     );
 

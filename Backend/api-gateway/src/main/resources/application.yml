@@ -114,6 +114,8 @@ eureka:
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls-primary-name: ms-auth
     urls:
       - name: ms-auth
         url: /api-docs/ms-auth
