@@ -316,19 +316,24 @@ button { cursor: pointer; }
   background: #fbfcfa;
   font-size: 11px;
   letter-spacing: .06em;
-  text-align: left;
+  text-align: center;
   text-transform: uppercase;
 }
 .data-table td {
   padding: 14px 16px;
   border-top: 1px solid var(--border);
   color: var(--text);
+  text-align: center;
   vertical-align: middle;
+}
+.data-table td > .btn,
+.data-table td > .status {
+  margin-inline: auto;
 }
 .data-table tbody tr:hover { background: #fbfcfa; }
 .data-table tbody tr.clickable-row { cursor: pointer; }
 .data-table tbody tr.clickable-row:hover { background: var(--accent-soft); }
-.right { text-align: right; }
+.right { text-align: center; }
 
 .empty-state {
   display: flex;

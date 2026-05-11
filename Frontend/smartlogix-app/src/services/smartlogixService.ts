@@ -57,6 +57,8 @@ export interface ProductPayload {
   price: number;
 }
 
+
+
 export interface Warehouse {
   id: string;
   companyId?: string;
@@ -117,8 +119,28 @@ export interface CreateRoutePayload {
   optimizeRoute: boolean;
 }
 
+export interface InventoryCreationPayload {
+  productId: string;
+  warehouseId: string;
+  stockAvailable: number;
+}
+
+export interface StockAdjustmentPayload {
+  quantity: number;
+  reason: string;
+}
+
+export interface StockReservationPayload {
+  orderId: string;
+  productId: string;
+  warehouseId: string;
+  quantity: number;
+  companyId: string;
+}
+
 export const smartlogixService = {
   getRegiones: () => request<Region[]>('/smartlogix/order/regiones'),
+
   getComunas: (regionId: number) => request<Comuna[]>(`/smartlogix/order/comunas?regionId=${regionId}`),
   getOrders: () => request<Order[]>('/smartlogix/order/orders'),
   createOrder: (payload: CreateOrderPayload) => request<Order>('/smartlogix/order/orders', {
@@ -148,6 +170,20 @@ export const smartlogixService = {
     body: JSON.stringify(payload),
   }),
   getInventory: () => request<Inventory[]>('/smartlogix/inventory/stocks'),
+  createInventory: (payload: InventoryCreationPayload) => request<Inventory>('/smartlogix/inventory/stocks', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+  increaseInventory: (id: string, payload: StockAdjustmentPayload) => request<Inventory>(`/smartlogix/inventory/stocks/${id}/increase`, {
+    method: 'PATCH',
+    body: JSON.stringify(payload),
+  }),
+  reserveInventory: (payload: StockReservationPayload) => request('/smartlogix/inventory/reservations', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  }),
+
+
   getShipments: () => request<Shipment[]>('/smartlogix/shipping/shipments'),
   getRoutes: () => request<Route[]>('/smartlogix/shipping/routes'),
   createRoute: (payload: CreateRoutePayload) => request<Route>('/smartlogix/shipping/routes', {

@@ -1,9 +1,10 @@
-﻿import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   BarChart3,
   Boxes,
   ClipboardList,
   Edit2,
+  Eye,
   LayoutDashboard,
   LogOut,
   Map,
@@ -63,8 +64,8 @@ const navGroups = [
     ]
   },
   {
-    label: 'LogÃ­stica', items: [
-      { id: 'shipments', label: 'EnvÃ­os', icon: Truck },
+    label: 'Logística', items: [
+      { id: 'shipments', label: 'Enví­os', icon: Truck },
       { id: 'routes', label: 'Rutas', icon: Map },
     ]
   },
@@ -121,9 +122,9 @@ export default function App() {
           {error && <div className="banner"><RefreshCw className="ico" />{error}</div>}
           {view === 'dashboard' && <Dashboard data={data} onCreateOrder={() => setView('create-order')} />}
           {view === 'orders' && <OrdersView orders={data.orders} onCreateOrder={() => setView('create-order')} />}
-          {view === 'products' && <ProductManagerView products={data.products} onSaved={loadData} />}
-          {view === 'warehouses' && <WarehouseManagerView warehouses={data.warehouses} onSaved={loadData} />}
-          {view === 'stock' && <StockView stock={data.stock} />}
+          {view === 'products' && <ProductManagerView products={data.products} warehouses={data.warehouses} stock={data.stock} onSaved={loadData} />}
+          {view === 'warehouses' && <WarehouseManagerView warehouses={data.warehouses} />}
+          {view === 'stock' && <StockView stock={data.stock} onSaved={loadData} />}
           {view === 'shipments' && <ShipmentsView shipments={data.shipments} />}
           {view === 'routes' && <RoutesView routes={data.routes} />}
         </main>
@@ -226,9 +227,9 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
   return (
     <div className="dashboard-grid">
       <div className="kpi-grid">
-        <Kpi label="Ã“rdenes totales" value={data.orders.length} detail={`${pendingOrders} pendientes`} />
+        <Kpi label="Órdenes totales" value={data.orders.length} detail={`${pendingOrders} pendientes`} />
         <Kpi label="Productos" value={data.products.length} detail={`${lowStock} con bajo stock`} tone={lowStock ? 'warn' : 'ok'} />
-        <Kpi label="En trÃ¡nsito" value={inTransit} detail={`${data.shipments.length} envÃ­os`} />
+        <Kpi label="En tránsito" value={inTransit} detail={`${data.shipments.length} envíos`} />
         <Kpi label="Rutas activas" value={activeRoutes} detail={`${data.routes.length} planificadas`} />
       </div>
 
@@ -237,7 +238,7 @@ const Dashboard = ({ data, onCreateOrder }: { data: WorkspaceData; onCreateOrder
         <div className="flow-strip">
           <FlowStep label="Orden" value={data.orders.length} />
           <FlowStep label="Reserva" value={data.stock.reduce((sum, item) => sum + Number(item.stockReserved || 0), 0)} />
-          <FlowStep label="EnvÃ­o" value={data.shipments.length} />
+          <FlowStep label="Enví­o" value={data.shipments.length} />
           <FlowStep label="Ruta" value={data.routes.length} />
         </div>
       </section>
@@ -280,7 +281,7 @@ const OrdersView = ({ orders, onCreateOrder }: { orders: Order[]; onCreateOrder:
 );
 
 
-const ProductManagerView = ({ products, onSaved }: { products: Product[]; onSaved: () => Promise<void> }) => {
+const ProductManagerView = ({ products, warehouses, stock, onSaved }: { products: Product[]; warehouses: WarehouseRecord[]; stock: Inventory[]; onSaved: () => Promise<void> }) => {
   const [editing, setEditing] = useState<Product | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -304,15 +305,17 @@ const ProductManagerView = ({ products, onSaved }: { products: Product[]; onSave
           product={editing}
           onClose={() => { setCreating(false); setEditing(null); }}
           onSaved={onSaved}
+          products={products}
+          warehouses={warehouses}
+          stock={stock}
         />
       )}
     </>
   );
 };
 
-const WarehouseManagerView = ({ warehouses, onSaved }: { warehouses: WarehouseRecord[]; onSaved: () => Promise<void> }) => {
-  const [editing, setEditing] = useState<WarehouseRecord | null>(null);
-  const [creating, setCreating] = useState(false);
+const WarehouseManagerView = ({ warehouses }: { warehouses: WarehouseRecord[] }) => {
+  const [selected, setSelected] = useState<WarehouseRecord | null>(null);
 
   return (
     <>
@@ -320,40 +323,54 @@ const WarehouseManagerView = ({ warehouses, onSaved }: { warehouses: WarehouseRe
         title="Bodegas"
         searchPlaceholder="Buscar bodega, direccion o tipo"
         rows={warehouses}
-        headerAction={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus className="ico" /> Bodega</button>}
+        onRowClick={(warehouse) => setSelected(warehouse)}
         columns={[
           { header: 'Bodega', render: (warehouse) => <StrongCell title={warehouse.name} subtitle={warehouse.locationAddress} /> },
           { header: 'Tipo', render: (warehouse) => <StatusBadge value={warehouse.type} /> },
           { header: 'Estado', render: (warehouse) => <StatusBadge value={warehouse.status} /> },
           { header: 'Empresa', render: (warehouse) => shortId(warehouse.companyId) },
-          { header: '', align: 'right', render: (warehouse) => <button className="btn btn-icon" onClick={() => setEditing(warehouse)} aria-label="Editar bodega"><Edit2 className="ico" /></button> },
+          { header: '', align: 'right', render: (warehouse) => <button className="btn btn-icon" onClick={(event) => { event.stopPropagation(); setSelected(warehouse); }} aria-label="Ver bodega"><Eye className="ico" /></button> },
         ]}
       />
-      {(creating || editing) && (
-        <WarehouseModal
-          warehouse={editing}
-          onClose={() => { setCreating(false); setEditing(null); }}
-          onSaved={onSaved}
+      {selected && (
+        <WarehouseDetailModal
+          warehouse={selected}
+          onClose={() => setSelected(null)}
         />
       )}
     </>
   );
 };
 
-const StockView = ({ stock }: { stock: Inventory[] }) => (
-  <DataPanel
-    title="Stock por bodega"
-    searchPlaceholder="Buscar producto, SKU o bodega"
-    rows={stock}
-    columns={[
-      { header: 'Producto', render: (item) => <StrongCell title={item.productName || item.sku} subtitle={item.sku} /> },
-      { header: 'Bodega', render: (item) => item.warehouseName },
-      { header: 'Disponible', align: 'right', render: (item) => item.stockAvailable },
-      { header: 'Reservado', align: 'right', render: (item) => item.stockReserved },
-      { header: 'Actualizado', render: (item) => formatDate(item.lastUpdated) },
-    ]}
-  />
-);
+const StockView = ({ stock, onSaved }: { stock: Inventory[]; onSaved: () => Promise<void> }) => {
+  const [editing, setEditing] = useState<Inventory | null>(null);
+
+  return (
+    <>
+      <DataPanel
+        title="Stock por bodega"
+        searchPlaceholder="Buscar producto, SKU o bodega"
+        rows={stock}
+        onRowClick={(item) => setEditing(item)}
+        columns={[
+          { header: 'Producto', render: (item) => <StrongCell title={item.productName || item.sku} subtitle={item.sku} /> },
+          { header: 'Bodega', render: (item) => item.warehouseName },
+          { header: 'Disponible', align: 'right', render: (item) => item.stockAvailable },
+          { header: 'Reservado', align: 'right', render: (item) => item.stockReserved },
+          { header: 'Actualizado', render: (item) => formatDate(item.lastUpdated) },
+          { header: '', align: 'right', render: (item) => <button className="btn btn-icon" onClick={(event) => { event.stopPropagation(); setEditing(item); }} aria-label="Editar stock"><Edit2 className="ico" /></button> },
+        ]}
+      />
+      {editing && (
+        <StockModal
+          inventory={editing}
+          onClose={() => setEditing(null)}
+          onSaved={onSaved}
+        />
+      )}
+    </>
+  );
+};
 
 const ShipmentsView = ({ shipments }: { shipments: Shipment[] }) => {
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
@@ -387,7 +404,7 @@ const RoutesView = ({ routes }: { routes: Route[] }) => (
       { header: 'Ruta', render: (route) => <StrongCell title={shortId(route.id)} subtitle={route.originAddress} /> },
       { header: 'Estado', render: (route) => <StatusBadge value={route.status} /> },
       { header: 'Fecha', render: (route) => formatDate(route.routeDate) },
-      { header: 'EnvÃ­os', align: 'right', render: (route) => route.shipments?.length || 0 },
+      { header: 'Envíos', align: 'right', render: (route) => route.shipments?.length || 0 },
       { header: 'Carrier', render: (route) => shortId(route.carrierId) },
     ]}
   />
@@ -441,12 +458,34 @@ const DataPanel = <T extends object>({ title, rows, columns, searchPlaceholder, 
   );
 };
 
-const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; onClose: () => void; onSaved: () => Promise<void> }) => {
+const ProductModal = ({
+  product,
+  onClose,
+  onSaved,
+  products,
+  warehouses,
+  stock,
+}: {
+  product: Product | null;
+  onClose: () => void;
+  onSaved: () => Promise<void>;
+  products: Product[];
+  warehouses: WarehouseRecord[];
+  stock: Inventory[];
+}) => {
+  const activeWarehouses = useMemo(
+    () => warehouses.filter((warehouse) => (warehouse.status || '').toUpperCase() !== 'INACTIVE'),
+    [warehouses],
+  );
+
   const [form, setForm] = useState({
     sku: product?.sku || '',
     name: product?.name || '',
     price: product?.price ? String(product.price) : '',
+    warehouseId: '',
+    initialStock: '0',
   });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
@@ -457,12 +496,44 @@ const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; 
     if (!form.name.trim()) return setError('Ingresa el nombre del producto.');
     if (!Number.isFinite(price) || price < 0) return setError('Ingresa un precio valido.');
 
+    if (!form.warehouseId) return setError('Selecciona una bodega destino.');
+    const initialStock = Number(form.initialStock);
+    if (!Number.isInteger(initialStock) || initialStock <= 0) return setError('Ingresa un stock inicial mayor a cero.');
+
     setSaving(true);
     setError('');
     try {
       const payload = { sku: form.sku.trim(), name: form.name.trim(), price };
-      if (product) await smartlogixService.updateProduct(product.id, payload);
-      else await smartlogixService.createProduct(payload);
+      let createdOrUpdated: Product | null = null;
+
+      if (product) {
+        createdOrUpdated = await smartlogixService.updateProduct(product.id, payload);
+      } else {
+        const existingProduct = products.find((item) => item.sku.trim().toLowerCase() === payload.sku.toLowerCase());
+        createdOrUpdated = existingProduct
+          ? await smartlogixService.updateProduct(existingProduct.id, payload)
+          : await smartlogixService.createProduct(payload);
+      }
+
+      // Crear o aumentar inventario para la bodega seleccionada
+      if (!createdOrUpdated) throw new Error('No se pudo obtener el producto guardado.');
+
+      // Si ya existe stock para (product, warehouse) lo incrementamos.
+      // Si no existe, creamos.
+      const existing = stock.find(
+        (s) => s.productId === createdOrUpdated.id && s.warehouseId === form.warehouseId,
+      );
+      if (existing) {
+        await smartlogixService.increaseInventory(existing.id, { quantity: initialStock, reason: 'Ingreso de stock' });
+      } else {
+        await smartlogixService.createInventory({
+          productId: createdOrUpdated.id,
+          warehouseId: form.warehouseId,
+          stockAvailable: initialStock,
+        });
+      }
+
+
       await onSaved();
       onClose();
     } catch (err) {
@@ -471,6 +542,7 @@ const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; 
       setSaving(false);
     }
   };
+
 
   return (
     <EditorModal title={product ? 'Editar producto' : 'Nuevo producto'} onClose={onClose}>
@@ -488,6 +560,35 @@ const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; 
             <label>Nombre</label>
             <input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
           </div>
+          <div className="field">
+            <label>Bodega destino</label>
+            <select
+              className="select"
+              value={form.warehouseId}
+              onChange={(event) => setForm((current) => ({ ...current, warehouseId: event.target.value }))}
+              required
+              disabled={!activeWarehouses.length}
+            >
+              <option value="">{activeWarehouses.length ? 'Selecciona bodega' : 'No hay bodegas disponibles'}</option>
+              {activeWarehouses.map((warehouse) => (
+                <option key={warehouse.id} value={warehouse.id}>
+                  {warehouse.name} - {warehouse.locationAddress}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Stock inicial</label>
+            <input
+              className="input"
+              type="number"
+              min="1"
+              step="1"
+              value={form.initialStock}
+              onChange={(event) => setForm((current) => ({ ...current, initialStock: event.target.value }))}
+              required
+            />
+          </div>
         </div>
         {error && <p className="field-error">{error}</p>}
         <div className="editor-actions">
@@ -499,53 +600,122 @@ const ProductModal = ({ product, onClose, onSaved }: { product: Product | null; 
   );
 };
 
-const WarehouseModal = ({ warehouse, onClose, onSaved }: { warehouse: WarehouseRecord | null; onClose: () => void; onSaved: () => Promise<void> }) => {
-  const [form, setForm] = useState({
-    name: warehouse?.name || '',
-    locationAddress: warehouse?.locationAddress || '',
-    type: warehouse?.type || 'WAREHOUSE',
-  });
+const WarehouseDetailModal = ({ warehouse, onClose }: { warehouse: WarehouseRecord; onClose: () => void }) => (
+  <EditorModal title="Detalle de bodega" onClose={onClose}>
+    <div className="editor-form">
+      <div className="form-grid two">
+        <div className="field">
+          <label>Nombre</label>
+          <input className="input" value={warehouse.name} disabled />
+        </div>
+        <div className="field">
+          <label>Tipo</label>
+          <input className="input" value={warehouse.type} disabled />
+        </div>
+        <div className="field wide">
+          <label>Direccion</label>
+          <input className="input" value={warehouse.locationAddress} disabled />
+        </div>
+        <div className="field">
+          <label>Estado</label>
+          <input className="input" value={warehouse.status} disabled />
+        </div>
+        <div className="field">
+          <label>Empresa</label>
+          <input className="input" value={warehouse.companyId || 'N/A'} disabled />
+        </div>
+      </div>
+      <div className="editor-actions">
+        <button type="button" className="btn btn-primary" onClick={onClose}>Cerrar</button>
+      </div>
+    </div>
+  </EditorModal>
+);
+
+const StockModal = ({ inventory, onClose, onSaved }: { inventory: Inventory; onClose: () => void; onSaved: () => Promise<void> }) => {
+  const { user } = useAuthStore();
+  const [action, setAction] = useState<'increase' | 'reserve'>('increase');
+  const [quantity, setQuantity] = useState('1');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!form.name.trim()) return setError('Ingresa el nombre de la bodega.');
-    if (!form.locationAddress.trim()) return setError('Ingresa la direccion.');
+    const parsedQuantity = Number(quantity);
+    if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) return setError('Ingresa una cantidad mayor a cero.');
+    if (action === 'reserve' && parsedQuantity > Number(inventory.stockAvailable)) return setError('No puedes reservar mas stock del disponible.');
 
     setSaving(true);
     setError('');
     try {
-      const payload = { name: form.name.trim(), locationAddress: form.locationAddress.trim(), type: form.type };
-      if (warehouse) await smartlogixService.updateWarehouse(warehouse.id, payload);
-      else await smartlogixService.createWarehouse(payload);
+      if (action === 'increase') {
+        await smartlogixService.increaseInventory(inventory.id, {
+          quantity: parsedQuantity,
+          reason: 'Aumento manual de stock',
+        });
+      } else {
+        if (!user?.companyId) throw new Error('No se pudo identificar la empresa para reservar stock.');
+        await smartlogixService.reserveInventory({
+          orderId: `manual-${Date.now()}`,
+          productId: inventory.productId,
+          warehouseId: inventory.warehouseId,
+          quantity: parsedQuantity,
+          companyId: user.companyId,
+        });
+      }
+
       await onSaved();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'No se pudo guardar la bodega');
+      setError(err instanceof Error ? err.message : 'No se pudo actualizar el stock');
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <EditorModal title={warehouse ? 'Editar bodega' : 'Nueva bodega'} onClose={onClose}>
+    <EditorModal title="Editar stock" onClose={onClose}>
       <form className="editor-form" onSubmit={submit}>
-        <div className="form-grid">
+        <div className="form-grid two">
           <div className="field">
-            <label>Nombre</label>
-            <input className="input" value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required />
+            <label>Producto</label>
+            <input className="input" value={inventory.productName || inventory.sku} disabled />
           </div>
           <div className="field">
-            <label>Direccion</label>
-            <input className="input" value={form.locationAddress} onChange={(event) => setForm((current) => ({ ...current, locationAddress: event.target.value }))} required />
+            <label>SKU</label>
+            <input className="input" value={inventory.sku} disabled />
+          </div>
+          <div className="field wide">
+            <label>Bodega</label>
+            <input className="input" value={inventory.warehouseName} disabled />
           </div>
           <div className="field">
-            <label>Tipo</label>
-            <select className="select" value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}>
-              <option value="WAREHOUSE">Bodega</option>
-              <option value="RETAIL_STORE">Tienda / punto de retiro</option>
+            <label>Stock disponible</label>
+            <input className="input" value={inventory.stockAvailable} disabled />
+          </div>
+          <div className="field">
+            <label>Stock reservado</label>
+            <input className="input" value={inventory.stockReserved} disabled />
+          </div>
+          <div className="field">
+            <label>Accion</label>
+            <select className="select" value={action} onChange={(event) => setAction(event.target.value as 'increase' | 'reserve')}>
+              <option value="increase">Aumentar stock</option>
+              <option value="reserve">Reservar stock</option>
             </select>
+          </div>
+          <div className="field">
+            <label>Cantidad</label>
+            <input
+              className="input"
+              type="number"
+              min="1"
+              max={action === 'reserve' ? inventory.stockAvailable : undefined}
+              step="1"
+              value={quantity}
+              onChange={(event) => setQuantity(event.target.value)}
+              required
+            />
           </div>
         </div>
         {error && <p className="field-error">{error}</p>}
@@ -583,7 +753,7 @@ const ShipmentModal = ({ shipment, onClose }: { shipment: Shipment; onClose: () 
       <article className="shipment-modal" onClick={(event) => event.stopPropagation()}>
         <header className="modal-head">
           <div>
-            <span className="eyebrow">Detalle de envÃ­o</span>
+            <span className="eyebrow">Detalle de enví­o</span>
             <h2>{shipment.trackingNumber || shortId(shipment.id)}</h2>
           </div>
           <button className="btn btn-icon" onClick={onClose} aria-label="Cerrar detalle">

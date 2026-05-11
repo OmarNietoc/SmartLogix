@@ -1,0 +1,308 @@
+GUIA DE DESPLIEGUE - SMARTLOGIX
+================================
+
+Esta guia explica como desplegar la aplicacion SmartLogix usando Docker Compose
+desde la raiz del repositorio.
+
+
+1. Prerequisitos
+----------------
+
+Antes de iniciar, verifica que tienes instalado:
+
+- Docker Desktop
+- Git
+- Conexion a internet para descargar imagenes Docker y dependencias Maven/npm
+
+En Windows, Docker Desktop debe estar iniciado y usando Linux containers.
+
+Para comprobar que Docker funciona:
+
+  docker version
+  docker compose version
+
+Si aparece un error parecido a:
+
+  failed to connect to the docker API at npipe:////./pipe/docker_engine
+
+abre Docker Desktop y espera a que el motor de Docker este corriendo.
+
+
+2. Ubicarse en la raiz del proyecto
+-----------------------------------
+
+Abre una terminal en la carpeta raiz del repositorio:
+
+  C:\Users\basti\OneDrive\Escritorio\FULL_STAK_III\SmartLogix
+
+O navega manualmente:
+
+  cd C:\Users\basti\OneDrive\Escritorio\FULL_STAK_III\SmartLogix
+
+
+3. Revisar variables de entorno
+-------------------------------
+
+El backend usa variables definidas en:
+
+  Backend\.env
+
+Valores minimos para entorno local:
+
+  JWT_SECRET=smartlogix-local-development-secret-please-change
+  SHIPPING_DB_PASSWORD=postgres
+  INVENTORY_DB_PASSWORD=postgres
+  ORDER_DB_PASSWORD=postgres
+  NOTIFICATION_DB_PASSWORD=postgres
+  AUTH_DB_PASSWORD=postgres
+  USERS_DB_PASSWORD=postgres
+  RABBITMQ_USER=guest
+  RABBITMQ_PASS=guest
+  SMTP_HOST=sandbox.smtp.mailtrap.io
+  SMTP_PORT=2525
+  SMTP_USER=
+  SMTP_PASS=
+  MAIL_FROM=noreply@smartlogix.cl
+
+El microservicio de usuarios tambien tiene su propio archivo:
+
+  Backend\users\.env
+
+Valores esperados:
+
+  DB_URL=jdbc:postgresql://pg-users-local:5432/db_users
+  DB_USERNAME=postgres
+  DB_PASSWORD=postgres
+  SERVER_PORT=8083
+  EUREKA_URI=http://eureka-server-local:8761/eureka/
+
+
+4. Construir y levantar toda la aplicacion
+------------------------------------------
+
+Desde la raiz del proyecto ejecuta:
+
+  docker compose up --build -d
+
+Este comando construye y levanta:
+
+- Frontend React/Vite
+- API Gateway
+- Eureka Server
+- Microservicios backend
+- Bases de datos PostgreSQL
+- RabbitMQ
+
+
+5. Verificar estado de contenedores
+-----------------------------------
+
+Para ver si los contenedores quedaron arriba:
+
+  docker compose ps
+
+Para ver logs generales:
+
+  docker compose logs
+
+Para seguir logs en tiempo real:
+
+  docker compose logs -f
+
+Para revisar un servicio especifico:
+
+  docker compose logs -f api-gateway
+  docker compose logs -f eureka-server
+  docker compose logs -f ms-auth
+  docker compose logs -f ms-users
+  docker compose logs -f frontend
+
+
+6. URLs principales
+-------------------
+
+Frontend:
+
+  http://localhost:5173
+
+API Gateway:
+
+  http://localhost:8080
+
+Swagger centralizado:
+
+  http://localhost:8080/swagger-ui.html
+
+Eureka Dashboard:
+
+  http://localhost:8761
+
+RabbitMQ Management:
+
+  http://localhost:15672
+
+Credenciales RabbitMQ por defecto:
+
+  usuario: guest
+  password: guest
+
+
+7. Puertos usados
+-----------------
+
+Frontend:
+
+  5173
+
+Backend:
+
+  8080 - API Gateway
+  8761 - Eureka Server
+  8081 - ms-inventory
+  8082 - ms-order
+  8083 - ms-users
+  8084 - ms-shipping
+  8085 - ms-notification
+  8086 - ms-auth
+
+Bases de datos:
+
+  5432 - shipping_db
+  5433 - smartlogix_inventory
+  5434 - orderdb
+  5435 - notificationdb
+  5436 - authdb
+  5437 - db_users
+
+RabbitMQ:
+
+  5672  - AMQP
+  15672 - panel web
+
+
+8. Detener la aplicacion
+------------------------
+
+Para detener contenedores sin borrar volumenes:
+
+  docker compose down
+
+Para detener y borrar volumenes de datos:
+
+  docker compose down -v
+
+IMPORTANTE: docker compose down -v elimina las bases de datos locales.
+
+
+9. Reconstruir despues de cambios
+---------------------------------
+
+Si cambiaste codigo del backend, frontend o Dockerfiles:
+
+  docker compose up --build -d
+
+Si quieres forzar una reconstruccion completa sin cache:
+
+  docker compose build --no-cache
+  docker compose up -d
+
+
+10. Problemas comunes
+---------------------
+
+Error:
+
+  Error loading config file: C:\Users\basti\.docker\config.json: Access is denied
+
+Solucion sugerida en PowerShell:
+
+  icacls "$env:USERPROFILE\.docker" /grant "${env:USERNAME}:(OI)(CI)F" /T
+
+Luego vuelve a probar:
+
+  docker version
+  docker compose up --build -d
+
+
+Error:
+
+  failed to connect to the docker API at npipe:////./pipe/docker_engine
+
+Solucion:
+
+- Abrir Docker Desktop.
+- Esperar a que Docker termine de iniciar.
+- Verificar que este usando Linux containers.
+- Ejecutar nuevamente:
+
+  docker version
+
+
+Error:
+
+  port is already allocated
+
+Solucion:
+
+- Revisa que aplicacion esta usando el puerto.
+- Cierra el proceso o cambia el puerto en docker-compose.yml.
+- Puertos frecuentes en conflicto: 8080, 5173, 5432.
+
+
+Error:
+
+  service unhealthy
+
+Solucion:
+
+- Revisa logs del servicio afectado:
+
+  docker compose logs -f nombre-del-servicio
+
+- Verifica que las bases de datos y RabbitMQ esten saludables:
+
+  docker compose ps
+
+
+11. Orden recomendado para validar despliegue
+---------------------------------------------
+
+1. Ejecutar:
+
+   docker compose up --build -d
+
+2. Esperar 1 o 2 minutos a que Eureka, RabbitMQ y PostgreSQL terminen de iniciar.
+
+3. Revisar contenedores:
+
+   docker compose ps
+
+4. Abrir Eureka:
+
+   http://localhost:8761
+
+5. Confirmar que los microservicios aparecen registrados.
+
+6. Abrir Swagger:
+
+   http://localhost:8080/swagger-ui.html
+
+7. Abrir el frontend:
+
+   http://localhost:5173
+
+
+12. Comando principal resumido
+------------------------------
+
+Desde la raiz del proyecto:
+
+  docker compose up --build -d
+
+Para ver logs:
+
+  docker compose logs -f
+
+Para detener:
+
+  docker compose down
