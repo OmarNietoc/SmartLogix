@@ -1,10 +1,11 @@
 import { create } from 'zustand';
+import type { Order } from '../services/smartlogixService';
 
 interface OrderState {
-  orders: any[];
+  orders: Order[];
   isLoading: boolean;
   error: string | null;
-  setOrders: (orders: any[]) => void;
+  setOrders: (orders: Order[]) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }

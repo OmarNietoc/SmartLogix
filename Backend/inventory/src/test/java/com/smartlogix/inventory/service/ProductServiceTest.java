@@ -64,6 +64,68 @@ class ProductServiceTest {
                 .hasMessageContaining("SKU-1");
     }
 
+    @Test
+    void getProductBySku_returnsProductForCompany() {
+        when(productRepository.findBySkuAndCompanyId("SKU-1", "company-1"))
+                .thenReturn(Optional.of(product("p1", "company-1", "SKU-1")));
+
+        Product result = productService.getProductBySku("SKU-1", "company-1");
+
+        assertThat(result.getId()).isEqualTo("p1");
+    }
+
+    @Test
+    void updateProduct_updatesMutableFieldsAndRejectsDuplicateSku() {
+        Product existing = product("p1", "company-1", "SKU-1");
+        Product update = product("ignored", "other", "SKU-2");
+        update.setName("Nuevo nombre");
+        update.setPrice(BigDecimal.valueOf(25));
+        when(productRepository.findByIdAndCompanyId("p1", "company-1")).thenReturn(Optional.of(existing));
+        when(productRepository.existsBySkuAndCompanyId("SKU-2", "company-1")).thenReturn(false);
+        when(productRepository.save(any(Product.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Product saved = productService.updateProduct("p1", update, "company-1");
+
+        assertThat(saved.getSku()).isEqualTo("SKU-2");
+        assertThat(saved.getName()).isEqualTo("Nuevo nombre");
+        assertThat(saved.getCompanyId()).isEqualTo("company-1");
+    }
+
+    @Test
+    void deleteProduct_marksProductInactive() {
+        Product existing = product("p1", "company-1", "SKU-1");
+        when(productRepository.findByIdAndCompanyId("p1", "company-1")).thenReturn(Optional.of(existing));
+
+        productService.deleteProduct("p1", "company-1");
+
+        assertThat(existing.getStatus()).isEqualTo("INACTIVE");
+        verify(productRepository).save(existing);
+    }
+
+    @Test
+    void createProduct_validatesCompanySkuNameAndPrice() {
+        assertThatThrownBy(() -> productService.createProduct(product("p1", null, "SKU-1"), " "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("X-Company-Id");
+
+        Product invalidSku = product("p1", "company-1", " ");
+        assertThatThrownBy(() -> productService.createProduct(invalidSku, "company-1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("sku");
+
+        Product invalidName = product("p1", "company-1", "SKU-1");
+        invalidName.setName(" ");
+        assertThatThrownBy(() -> productService.createProduct(invalidName, "company-1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("name");
+
+        Product invalidPrice = product("p1", "company-1", "SKU-1");
+        invalidPrice.setPrice(BigDecimal.valueOf(-1));
+        assertThatThrownBy(() -> productService.createProduct(invalidPrice, "company-1"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("price");
+    }
+
     private Product product(String id, String companyId, String sku) {
         return Product.builder()
                 .id(id)
@@ -71,6 +133,7 @@ class ProductServiceTest {
                 .sku(sku)
                 .name("Producto " + sku)
                 .price(BigDecimal.TEN)
+                .status("ACTIVE")
                 .build();
     }
 }

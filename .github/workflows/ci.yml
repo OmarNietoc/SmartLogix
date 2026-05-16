@@ -1,0 +1,79 @@
+name: SmartLogix CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    name: Backend tests and coverage
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        service:
+          - Backend/auth
+          - Backend/inventory
+          - Backend/order
+          - Backend/shipping
+          - Backend/notification
+          - Backend/users
+          - Backend/api-gateway
+          - Backend/eureka-server
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Run Maven verify
+        working-directory: ${{ matrix.service }}
+        run: mvn -B clean verify
+      - name: Upload JaCoCo report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-${{ matrix.service }}
+          path: ${{ matrix.service }}/target/site/jacoco
+          if-no-files-found: ignore
+
+  frontend-tests:
+    name: Frontend tests and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Frontend/smartlogix-app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: Frontend/smartlogix-app/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run test:coverage
+      - run: npm run build
+      - name: Upload frontend coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: Frontend/smartlogix-app/coverage
+          if-no-files-found: ignore
+
+  docker-build:
+    name: Docker compose validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate root compose
+        run: docker compose config
+      - name: Validate backend compose
+        working-directory: Backend
+        run: docker compose -f docker-compose-local.yml config
+      - name: Build images without starting services
+        run: docker compose build

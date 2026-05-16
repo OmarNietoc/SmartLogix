@@ -16,7 +16,7 @@ describe('RegionComunaSelector', () => {
   });
 
   it('debería cargar regiones al montar y mantener deshabilitada comuna', async () => {
-    (orderService.getRegiones as any).mockResolvedValue([{ id: 1, nombre: 'Metropolitana' }]);
+    vi.mocked(orderService.getRegiones).mockResolvedValue([{ id: 1, nombre: 'Metropolitana' }]);
     
     render(<RegionComunaSelector onComunaChange={vi.fn()} />);
     
@@ -29,8 +29,8 @@ describe('RegionComunaSelector', () => {
   });
 
   it('debería limpiar comuna y cargar comunas al seleccionar una región', async () => {
-    (orderService.getRegiones as any).mockResolvedValue([{ id: 1, nombre: 'Metropolitana' }]);
-    (orderService.getComunas as any).mockResolvedValue([{ id: 101, nombre: 'Santiago' }]);
+    vi.mocked(orderService.getRegiones).mockResolvedValue([{ id: 1, nombre: 'Metropolitana' }]);
+    vi.mocked(orderService.getComunas).mockResolvedValue([{ id: 101, nombre: 'Santiago', regionId: 1 }]);
     const handleComunaChange = vi.fn();
 
     render(<RegionComunaSelector onComunaChange={handleComunaChange} />);

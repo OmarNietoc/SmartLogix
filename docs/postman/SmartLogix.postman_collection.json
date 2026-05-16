@@ -1,0 +1,163 @@
+{
+  "info": {
+    "name": "SmartLogix",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "token", "value": "" },
+    { "key": "companyId", "value": "company-demo" },
+    { "key": "orderId", "value": "order-demo" },
+    { "key": "productId", "value": "product-demo" },
+    { "key": "warehouseId", "value": "warehouse-demo" },
+    { "key": "shipmentId", "value": "shipment-demo" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"companyName\":\"Logistica Demo SpA\",\"taxId\":\"761234560\",\"firstName\":\"Admin\",\"lastName\":\"Demo\",\"email\":\"admin@example.com\",\"password\":\"demo1234\",\"contactEmail\":\"admin@example.com\",\"phone\":\"123456789\"}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/auth/login",
+            "body": { "mode": "raw", "raw": "{\"email\":\"admin@example.com\",\"password\":\"demo1234\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Users",
+      "item": [
+        { "name": "List companies", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/companies" } },
+        {
+          "name": "Create company",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/users/companies",
+            "body": { "mode": "raw", "raw": "{\"taxId\":\"761234560\",\"name\":\"Logistica Demo SpA\",\"contactEmail\":\"contacto@example.com\",\"phone\":\"123456789\"}" }
+          }
+        },
+        { "name": "List profiles", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/companies/{{companyId}}/profiles" } },
+        { "name": "List roles", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/roles" } }
+      ]
+    },
+    {
+      "name": "Inventory",
+      "item": [
+        { "name": "List products", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/products" } },
+        {
+          "name": "Create product",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/inventory/products",
+            "body": { "mode": "raw", "raw": "{\"sku\":\"SKU-DEMO-001\",\"name\":\"Producto demo\",\"price\":12990}" }
+          }
+        },
+        { "name": "List warehouses", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/warehouses" } },
+        {
+          "name": "Create warehouse",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/inventory/warehouses",
+            "body": { "mode": "raw", "raw": "{\"name\":\"Bodega Central\",\"locationAddress\":\"Av. Las Condes 1234, Santiago\",\"type\":\"DISTRIBUTION_CENTER\"}" }
+          }
+        },
+        { "name": "List stock", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/stocks" } },
+        {
+          "name": "Create stock",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/inventory/stocks",
+            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"stockAvailable\":20}" }
+          }
+        },
+        {
+          "name": "Create reservation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/inventory/reservations",
+            "body": { "mode": "raw", "raw": "{\"orderId\":\"{{orderId}}\",\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"quantity\":1,\"companyId\":\"{{companyId}}\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Order",
+      "item": [
+        { "name": "List orders", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/order/orders" } },
+        {
+          "name": "Create order",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/order/orders",
+            "body": { "mode": "raw", "raw": "{\"customerName\":\"Cliente Demo\",\"customerEmail\":\"cliente@example.com\",\"street\":\"Av. Providencia 1234\",\"comunaId\":13123,\"items\":[{\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"productName\":\"Producto demo\",\"quantity\":1,\"price\":12990}]}" }
+          }
+        },
+        {
+          "name": "Update order status",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/order/orders/{{orderId}}/status",
+            "body": { "mode": "raw", "raw": "{\"status\":\"CONFIRMED\"}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Shipping",
+      "item": [
+        { "name": "List shipments", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/shipping/shipments" } },
+        { "name": "List routes", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/shipping/routes" } },
+        {
+          "name": "Create route",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/shipping/routes",
+            "body": { "mode": "raw", "raw": "{\"companyId\":\"{{companyId}}\",\"carrierId\":\"LOCAL\",\"originAddress\":\"Bodega Central Santiago\",\"shipmentIds\":[\"{{shipmentId}}\"],\"optimizeRoute\":true}" }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Notification",
+      "item": [
+        { "name": "List notifications", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/notification/notifications" } },
+        {
+          "name": "Create notification",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": "{{baseUrl}}/smartlogix/notification/notifications",
+            "body": { "mode": "raw", "raw": "{\"recipientEmail\":\"cliente@example.com\",\"subject\":\"Orden creada\",\"message\":\"Tu orden fue creada\",\"type\":\"ORDER_CREATED\"}" }
+          }
+        }
+      ]
+    }
+  ]
+}
