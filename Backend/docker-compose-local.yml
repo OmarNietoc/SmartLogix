@@ -334,8 +334,12 @@ services:
     restart: unless-stopped
     ports:
       - "8083:8083"
-    env_file:
-      - ./users/.env
+    environment:
+      - DB_URL=jdbc:postgresql://pg-users-local:5432/db_users
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=${USERS_DB_PASSWORD:-postgres}
+      - SERVER_PORT=8083
+      - EUREKA_URI=http://eureka-server-local:8761/eureka/
     depends_on:
       pg-users-local:
         condition: service_healthy

@@ -13,15 +13,23 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        service:
-          - Backend/auth
-          - Backend/inventory
-          - Backend/order
-          - Backend/shipping
-          - Backend/notification
-          - Backend/users
-          - Backend/api-gateway
-          - Backend/eureka-server
+        include:
+          - service: Backend/auth
+            artifact: auth
+          - service: Backend/inventory
+            artifact: inventory
+          - service: Backend/order
+            artifact: order
+          - service: Backend/shipping
+            artifact: shipping
+          - service: Backend/notification
+            artifact: notification
+          - service: Backend/users
+            artifact: users
+          - service: Backend/api-gateway
+            artifact: api-gateway
+          - service: Backend/eureka-server
+            artifact: eureka-server
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -36,7 +44,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: jacoco-${{ matrix.service }}
+          name: jacoco-${{ matrix.artifact }}
           path: ${{ matrix.service }}/target/site/jacoco
           if-no-files-found: ignore
 
