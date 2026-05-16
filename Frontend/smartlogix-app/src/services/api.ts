@@ -58,6 +58,6 @@ export const request = async <T>(path: string, options: RequestInit = {}): Promi
     return data?.data !== undefined ? data.data : data;
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error('Error de red al contactar con el servidor');
+    throw new Error('Error de red al contactar con el servidor', { cause: error });
   }
 };

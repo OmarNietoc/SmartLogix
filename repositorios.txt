@@ -1,0 +1,18 @@
+Repositorio Principal: https://github.com/OmarNietoc/SmartLogix.git
+
+Frontend: Frontend/smartlogix-app
+- Aplicacion React/Vite/TypeScript para operar ordenes, inventario, stock, envios y rutas desde el API Gateway.
+
+Backend Gateway: Backend/api-gateway
+- Entrada unica REST en puerto 8080 con Spring Cloud Gateway, validacion JWT y rutas hacia microservicios.
+
+Eureka: Backend/eureka-server
+- Service discovery en puerto 8761 para registro y resolucion dinamica de microservicios.
+
+Microservicios:
+- Backend/auth: autenticacion, registro de empresa/admin y emision de JWT.
+- Backend/users: companias, perfiles, roles, carriers e integraciones externas.
+- Backend/inventory: productos, bodegas, stock, movimientos y reservas.
+- Backend/order: creacion y seguimiento de ordenes, regiones/comunas y eventos de saga.
+- Backend/shipping: envios, rutas, estrategia de carrier y eventos logisticos.
+- Backend/notification: notificaciones persistidas, listeners RabbitMQ y correo.

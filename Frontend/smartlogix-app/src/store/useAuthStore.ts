@@ -3,9 +3,17 @@ import { persist } from 'zustand/middleware';
 
 interface AuthState {
   token: string | null;
-  user: any | null;
-  setSession: (token: string, user: any) => void;
+  user: AuthUser | null;
+  setSession: (token: string, user: AuthUser) => void;
   clearSession: () => void;
+}
+
+export interface AuthUser {
+  email: string;
+  companyId: string;
+  role: string;
+  name?: string;
+  companyName?: string;
 }
 
 export const useAuthStore = create<AuthState>()(
