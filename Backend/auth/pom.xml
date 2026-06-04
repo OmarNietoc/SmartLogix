@@ -210,6 +210,16 @@
 						<goals>
 							<goal>report</goal>
 						</goals>
+						<configuration>
+							<excludes>
+								<exclude>**/*Application.class</exclude>
+								<exclude>**/dto/**</exclude>
+								<exclude>**/model/**</exclude>
+								<exclude>**/config/**</exclude>
+								<exclude>**/*MapperImpl.class</exclude>
+								<exclude>**/*Event.class</exclude>
+							</excludes>
+						</configuration>
 					</execution>
 					<execution>
 						<id>check</id>
@@ -230,14 +240,13 @@
 									</limits>
 								</rule>
 							</rules>
-							<includes>
-								<include>**/service/AuthService.class</include>
-								<include>**/security/JwtUtil.class</include>
-								<include>**/validation/ChileanRutValidator.class</include>
-							</includes>
 							<excludes>
 								<exclude>**/*Application.class</exclude>
+								<exclude>**/dto/**</exclude>
+								<exclude>**/model/**</exclude>
 								<exclude>**/config/**</exclude>
+								<exclude>**/*MapperImpl.class</exclude>
+								<exclude>**/*Event.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>

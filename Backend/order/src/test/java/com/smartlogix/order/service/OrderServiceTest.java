@@ -4,6 +4,7 @@ import com.smartlogix.order.dto.*;
 import com.smartlogix.order.exception.ResourceNotFoundException;
 import com.smartlogix.order.mapper.OrderMapper;
 import com.smartlogix.order.model.*;
+import com.smartlogix.order.model.Region;
 import com.smartlogix.order.repository.ComunaRepository;
 import com.smartlogix.order.repository.OrderRepository;
 import com.smartlogix.order.repository.RegionRepository;
@@ -226,6 +227,61 @@ class OrderServiceTest {
     void orderStatus_confirmedToShipped() {
         assertThat(OrderStatus.CONFIRMED.canTransitionTo(OrderStatus.SHIPPED)).isTrue();
         assertThat(OrderStatus.CONFIRMED.canTransitionTo(OrderStatus.DELIVERED)).isFalse();
+    }
+
+    // ── getOrderById wrong company ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getOrderById throws when order belongs to different company")
+    void getOrderById_wrongCompany_throwsException() {
+        Order order = buildSavedOrder("o1", "A", "a@a.com", 1, BigDecimal.TEN);
+        order.setCompanyId("other-company");
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() -> orderService.getOrderById("o1", COMPANY_ID))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── updateOrderStatus wrong company ───────────────────────────────────────
+
+    @Test
+    @DisplayName("updateOrderStatus throws when order belongs to different company")
+    void updateOrderStatus_wrongCompany_throwsException() {
+        Order order = buildSavedOrder("o1", "A", "a@a.com", 1, BigDecimal.TEN);
+        order.setCompanyId("other-company");
+        when(orderRepository.findById("o1")).thenReturn(Optional.of(order));
+
+        assertThatThrownBy(() ->
+                orderService.updateOrderStatus("o1", new UpdateOrderStatusRequest(OrderStatus.CONFIRMED), COMPANY_ID))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ── getAllRegiones ─────────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getAllRegiones returns mapped list of regions")
+    void getAllRegiones_returnsMapped() {
+        Pais pais = Pais.builder().id(1).nombre("Chile").build();
+        Region region = Region.builder().id(13).nombre("Región Metropolitana").pais(pais).build();
+        when(regionRepository.findAll()).thenReturn(List.of(region));
+
+        List<RegionResponse> result = orderService.getAllRegiones();
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).nombre()).isEqualTo("Región Metropolitana");
+    }
+
+    // ── getComunasByRegion ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getComunasByRegion returns communes for given region")
+    void getComunasByRegion_returnsMapped() {
+        when(comunaRepository.findByRegionId(13)).thenReturn(List.of(buildDefaultComuna()));
+
+        List<ComunaResponse> result = orderService.getComunasByRegion(13);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).nombre()).isEqualTo("Providencia");
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

@@ -178,6 +178,16 @@
 						<id>report</id>
 						<phase>verify</phase>
 						<goals><goal>report</goal></goals>
+						<configuration>
+							<excludes>
+								<exclude>**/*Application.class</exclude>
+								<exclude>**/dto/**</exclude>
+								<exclude>**/model/**</exclude>
+								<exclude>**/config/**</exclude>
+								<exclude>**/*MapperImpl.class</exclude>
+								<exclude>**/*Event.class</exclude>
+							</excludes>
+						</configuration>
 					</execution>
 					<execution>
 						<id>check</id>
@@ -196,15 +206,13 @@
 									</limits>
 								</rule>
 							</rules>
-							<includes>
-								<include>**/service/OrderService.class</include>
-								<include>**/model/OrderStatus.class</include>
-							</includes>
 							<excludes>
 								<exclude>**/*Application.class</exclude>
-								<exclude>**/config/**</exclude>
 								<exclude>**/dto/**</exclude>
 								<exclude>**/model/**</exclude>
+								<exclude>**/config/**</exclude>
+								<exclude>**/*MapperImpl.class</exclude>
+								<exclude>**/*Event.class</exclude>
 							</excludes>
 						</configuration>
 					</execution>

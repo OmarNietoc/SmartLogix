@@ -112,6 +112,12 @@
                         <id>report</id>
                         <phase>verify</phase>
                         <goals><goal>report</goal></goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>**/*Application.class</exclude>
+                                <exclude>**/config/**</exclude>
+                            </excludes>
+                        </configuration>
                     </execution>
                     <execution>
                         <id>check</id>
@@ -130,9 +136,6 @@
                                     </limits>
                                 </rule>
                             </rules>
-                            <includes>
-                                <include>**/security/**</include>
-                            </includes>
                             <excludes>
                                 <exclude>**/*Application.class</exclude>
                                 <exclude>**/config/**</exclude>
