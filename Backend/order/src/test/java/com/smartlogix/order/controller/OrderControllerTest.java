@@ -17,6 +17,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.smartlogix.order.exception.ResourceNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -113,6 +116,51 @@ class OrderControllerTest {
         mockMvc.perform(get("/smartlogix/order/comunas").param("regionId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].nombre").value("Santiago"));
+    }
+
+    @Test
+    void getOrderById_notFound_returns404() throws Exception {
+        when(orderService.getOrderById("bad", COMPANY_ID)).thenThrow(new ResourceNotFoundException("Pedido no encontrado"));
+
+        mockMvc.perform(get("/smartlogix/order/orders/bad")
+                .header("X-Company-Id", COMPANY_ID))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateOrderStatus_invalidTransition_returns400() throws Exception {
+        UpdateOrderStatusRequest request = new UpdateOrderStatusRequest(OrderStatus.CONFIRMED);
+        when(orderService.updateOrderStatus(eq("order-1"), any(), eq(COMPANY_ID)))
+                .thenThrow(new IllegalStateException("Transición inválida"));
+
+        mockMvc.perform(put("/smartlogix/order/orders/order-1/status")
+                .header("X-Company-Id", COMPANY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createOrder_dataIntegrityViolation_returns409() throws Exception {
+        OrderItemRequest item = new OrderItemRequest("prod-1", "wh-1", "Producto X", 2, new BigDecimal("1000"));
+        CreateOrderRequest request = new CreateOrderRequest("Juan", "juan@empresa.cl", "Av. 1", 1, List.of(item), null);
+        when(orderService.createOrder(any(), eq(COMPANY_ID)))
+                .thenThrow(new DataIntegrityViolationException("dup"));
+
+        mockMvc.perform(post("/smartlogix/order/orders")
+                .header("X-Company-Id", COMPANY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void getAllOrders_unexpectedException_returns500() throws Exception {
+        when(orderService.getAllOrders(COMPANY_ID)).thenThrow(new RuntimeException("unexpected"));
+
+        mockMvc.perform(get("/smartlogix/order/orders")
+                .header("X-Company-Id", COMPANY_ID))
+                .andExpect(status().isInternalServerError());
     }
 
     private OrderResponse buildOrderResponse(String id) {

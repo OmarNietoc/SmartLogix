@@ -18,6 +18,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import com.smartlogix.shipping.exception.ShipmentNotFoundException;
+import com.smartlogix.shipping.exception.ExternalApiException;
+import org.springframework.dao.DataIntegrityViolationException;
+
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
@@ -132,6 +136,63 @@ class ShipmentControllerTest {
                 .header("X-Company-Id", COMPANY_ID))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Envío eliminado exitosamente"));
+    }
+
+    @Test
+    void getShipmentById_notFound_returns404() throws Exception {
+        when(shipmentService.getShipmentById("bad", COMPANY_ID))
+                .thenThrow(new ShipmentNotFoundException("Envío no encontrado: bad"));
+
+        mockMvc.perform(get("/smartlogix/shipping/shipments/bad")
+                .header("X-Company-Id", COMPANY_ID))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void updateShipmentStatus_invalidTransition_returns400() throws Exception {
+        when(shipmentService.updateShipmentStatus(eq("ship-1"), any(), eq(COMPANY_ID)))
+                .thenThrow(new IllegalStateException("Transición inválida"));
+
+        mockMvc.perform(patch("/smartlogix/shipping/shipments/ship-1/status")
+                .header("X-Company-Id", COMPANY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("\"DELIVERED\""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createShipment_illegalArgument_returns400() throws Exception {
+        ShipmentDTO request = buildShipmentDTO(null);
+        when(shipmentMapper.toEntity(any())).thenReturn(new Shipment());
+        when(shipmentService.createShipment(any())).thenThrow(new IllegalArgumentException("Argumento inválido"));
+
+        mockMvc.perform(post("/smartlogix/shipping/shipments")
+                .header("X-Company-Id", COMPANY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createShipment_dataIntegrityViolation_returns409() throws Exception {
+        ShipmentDTO request = buildShipmentDTO(null);
+        when(shipmentMapper.toEntity(any())).thenReturn(new Shipment());
+        when(shipmentService.createShipment(any())).thenThrow(new DataIntegrityViolationException("dup"));
+
+        mockMvc.perform(post("/smartlogix/shipping/shipments")
+                .header("X-Company-Id", COMPANY_ID)
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void getAllShipments_unexpectedException_returns500() throws Exception {
+        when(shipmentService.getAllShipments(eq(COMPANY_ID), any())).thenThrow(new RuntimeException("unexpected"));
+
+        mockMvc.perform(get("/smartlogix/shipping/shipments")
+                .header("X-Company-Id", COMPANY_ID))
+                .andExpect(status().isInternalServerError());
     }
 
     private ShipmentDTO buildShipmentDTO(String id) {
