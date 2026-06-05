@@ -1,0 +1,28 @@
+flowchart LR
+  FE[Frontend React/Vite :5173] --> GW[API Gateway/BFF :8080]
+  GW --> AUTH[ms-auth :8086]
+  GW --> USERS[ms-users :8083]
+  GW --> INV[ms-inventory :8081]
+  GW --> ORD[ms-order :8082]
+  GW --> SHIP[ms-shipping :8084]
+  GW --> NOTIF[ms-notification :8085]
+
+  GW -. discovery .-> EUR[Eureka :8761]
+  AUTH -. discovery .-> EUR
+  USERS -. discovery .-> EUR
+  INV -. discovery .-> EUR
+  ORD -. discovery .-> EUR
+  SHIP -. discovery .-> EUR
+  NOTIF -. discovery .-> EUR
+
+  ORD <--> MQ[RabbitMQ :5672]
+  INV <--> MQ
+  SHIP <--> MQ
+  NOTIF <--> MQ
+
+  AUTH --> DBA[(authdb)]
+  USERS --> DBU[(db_users)]
+  INV --> DBI[(smartlogix_inventory)]
+  ORD --> DBO[(orderdb)]
+  SHIP --> DBS[(shipping_db)]
+  NOTIF --> DBN[(notificationdb)]

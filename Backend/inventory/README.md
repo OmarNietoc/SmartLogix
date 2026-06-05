@@ -9,11 +9,35 @@ Microservicio de productos, bodegas, stock, movimientos y reservas.
 
 Endpoints principales:
 
-- `GET/POST /products`
-- `GET/POST /warehouses`
-- `GET/POST /stocks`
+- `GET /products`
+- `GET /products/{id}`
+- `GET /products/sku/{sku}`
+- `POST /products`
+- `PUT /products/{id}`
+- `DELETE /products/{id}`
+- `GET /warehouses`
+- `GET /warehouses?type=WAREHOUSE`
+- `GET /warehouses/{id}`
+- `POST /warehouses`
+- `PUT /warehouses/{id}`
+- `DELETE /warehouses/{id}`
+- `GET /stocks`
+- `GET /stocks?productId=&warehouseId=`
+- `GET /stocks/{id}`
+- `POST /stocks`
 - `PATCH /stocks/{id}/increase`
+- `PATCH /stocks/{id}/decrease`
+- `GET /stocks/{id}/movements`
+- `GET /reservations`
+- `GET /reservations?orderId=&status=`
+- `GET /reservations/{id}`
 - `POST /reservations`
+- `PATCH /reservations/{id}/compensate`
+- `PATCH /reservations/{id}/confirm-output`
+
+Las rutas se consumen normalmente por Gateway con Bearer token. El Gateway propaga `X-Company-Id` hacia este servicio.
+
+Estados validos de reserva: `RESERVED`, `COMPENSATED`, `CANCELLED`.
 
 Comandos:
 

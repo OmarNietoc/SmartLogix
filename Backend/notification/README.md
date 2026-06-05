@@ -9,9 +9,23 @@ Microservicio de notificaciones, listeners RabbitMQ y envio de correos.
 
 Endpoints principales:
 
-- `GET/POST /notifications`
+- `POST /notifications`
+- `GET /notifications`
+- `GET /notifications/unread`
 - `GET /notifications/{id}`
 - `PATCH /notifications/{id}/read`
+- `GET /notifications/order/{orderId}`
+
+Body real para crear notificacion manual:
+
+```json
+{
+  "orderId": "order-id",
+  "recipient": "cliente@smartlogix.cl",
+  "subject": "Orden creada",
+  "message": "Tu orden fue creada exitosamente"
+}
+```
 
 Comandos:
 

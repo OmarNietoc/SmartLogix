@@ -1,0 +1,100 @@
+erDiagram
+  USER_CREDENTIAL {
+    string id PK
+    string email
+    string password
+    string company_id
+  }
+
+  COMPANY {
+    string id PK
+    string tax_id
+    string name
+    string contact_email
+  }
+
+  USER_PROFILE {
+    string id PK
+    string auth_id
+    string company_id FK
+    string first_name
+    string last_name
+  }
+
+  PRODUCT {
+    string id PK
+    string company_id
+    string sku
+    string name
+    decimal price
+  }
+
+  WAREHOUSE {
+    string id PK
+    string company_id
+    string name
+    string location_address
+  }
+
+  INVENTORY {
+    string id PK
+    string product_id FK
+    string warehouse_id FK
+    int stock_available
+  }
+
+  INVENTORY_RESERVATION {
+    string id PK
+    string order_id
+    string product_id FK
+    string warehouse_id FK
+    int quantity
+    string status
+  }
+
+  ORDER {
+    string id PK
+    string company_id
+    string customer_email
+    string status
+    int comuna_id FK
+  }
+
+  ORDER_ITEM {
+    string id PK
+    string order_id FK
+    string product_id
+    int quantity
+    decimal price
+  }
+
+  SHIPMENT {
+    string id PK
+    string order_id
+    string route_id FK
+    string tracking_number
+    string delivery_status
+  }
+
+  ROUTE {
+    string id PK
+    string company_id
+    string carrier_id
+    string status
+  }
+
+  NOTIFICATION {
+    string id PK
+    string order_id
+    string recipient
+    string subject
+    string status
+  }
+
+  COMPANY ||--o{ USER_PROFILE : owns
+  PRODUCT ||--o{ INVENTORY : stocked
+  WAREHOUSE ||--o{ INVENTORY : contains
+  PRODUCT ||--o{ INVENTORY_RESERVATION : reserved
+  WAREHOUSE ||--o{ INVENTORY_RESERVATION : reserves
+  ORDER ||--o{ ORDER_ITEM : contains
+  ROUTE ||--o{ SHIPMENT : groups

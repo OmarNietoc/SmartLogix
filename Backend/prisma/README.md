@@ -1,8 +1,32 @@
 # SmartLogix Prisma Seed
 
-Seed local para poblar datos demo en las bases PostgreSQL usadas por Docker Compose.
+Herramienta auxiliar para poblar datos demo en bases PostgreSQL locales usadas por Docker Compose.
 
-## Uso
+Este directorio no reemplaza la persistencia principal del backend. Los microservicios productivos usan JPA/Hibernate con Spring Data repositories. Prisma se usa solo como utilidad local de seed para datos de apoyo.
+
+## Tecnologia
+
+- Node.js
+- Prisma
+- PostgreSQL
+
+## Variables de entorno
+
+Usar `Backend/prisma/.env.example` como plantilla. No versionar `Backend/prisma/.env` real.
+
+| Variable | Uso |
+|---|---|
+| `USERS_DATABASE_URL` | Conexion Prisma a `db_users` |
+| `INVENTORY_DATABASE_URL` | Conexion Prisma a `smartlogix_inventory` |
+
+Ejemplo seguro:
+
+```env
+USERS_DATABASE_URL=postgresql://postgres:<password>@localhost:5437/db_users?schema=public
+INVENTORY_DATABASE_URL=postgresql://postgres:<password>@localhost:5433/smartlogix_inventory?schema=public
+```
+
+## Uso local
 
 ```bash
 cd Backend/prisma
@@ -10,17 +34,17 @@ npm install
 npm run seed:all
 ```
 
-El seed usa:
+## Relacion con autenticacion
 
-- `USERS_DATABASE_URL`: `postgresql://postgres:postgres@localhost:5437/db_users?schema=public`
-- `INVENTORY_DATABASE_URL`: `postgresql://postgres:postgres@localhost:5433/smartlogix_inventory?schema=public`
+El microservicio real de autenticacion existe en `Backend/auth` y expone:
 
-## Credenciales demo del frontend
+- `POST /smartlogix/auth/register`
+- `POST /smartlogix/auth/login`
 
-Estas credenciales son validadas por el frontend hasta que `ms-auth` implemente endpoints reales:
+El registro crea credenciales en `ms-auth` y coordina la empresa/perfil admin con `ms-users`. Por lo tanto, las credenciales del sistema no deben documentarse como validadas solo por frontend.
 
-- `admin@smartlogix.cl` / `demo1234`
-- `operador@smartlogix.cl` / `demo1234`
-- `conductor@smartlogix.cl` / `demo1234`
+## Alcance
 
-El backend actual no tiene tabla de credenciales en `ms-auth`; el seed crea perfiles en `ms-users` con `auth_id` igual al correo.
+- Puede crear datos demo de usuarios/inventario para pruebas locales.
+- No debe usarse para justificar la persistencia principal ante la evaluacion.
+- No debe incluir secretos ni archivos `.env` reales en el ZIP/RAR final.

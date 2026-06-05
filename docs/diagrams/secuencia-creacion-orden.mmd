@@ -1,0 +1,28 @@
+sequenceDiagram
+  actor Usuario
+  participant FE as Frontend
+  participant GW as API Gateway/BFF
+  participant ORD as ms-order
+  participant DBORD as PostgreSQL orderdb
+  participant MQ as RabbitMQ
+  participant INV as ms-inventory
+  participant DBINV as PostgreSQL inventory
+  participant SHIP as ms-shipping
+  participant NOTIF as ms-notification
+
+  Usuario->>FE: Completa formulario de orden
+  FE->>GW: POST /smartlogix/order/orders + Bearer JWT
+  GW->>GW: Valida JWT y obtiene companyId
+  GW->>ORD: POST /orders con X-Company-Id
+  ORD->>DBORD: Persiste Order y OrderItem
+  ORD->>MQ: Publica OrderCreated
+  ORD-->>GW: 201 Pedido creado
+  GW-->>FE: Respuesta con pedido
+  MQ-->>INV: Consume OrderCreated
+  INV->>DBINV: Reserva stock
+  INV->>MQ: Publica ReservationConfirmed o ReservationFailed
+  MQ-->>SHIP: Consume ReservationConfirmed
+  SHIP->>SHIP: Crea envio asociado
+  SHIP->>MQ: Publica eventos de despacho
+  MQ-->>NOTIF: Consume eventos de orden/despacho
+  NOTIF->>NOTIF: Crea notificacion y correo

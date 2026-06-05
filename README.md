@@ -110,8 +110,12 @@ No se incluyen tokens ni secretos.
 - [Pruebas unitarias](docs/03-pruebas-unitarias.md)
 - [Despliegue y ejecucion](docs/04-despliegue-y-ejecucion.md)
 - [Presentacion final](docs/05-presentacion-final.md)
+- [Endpoints API](docs/api-endpoints.md)
+- [Checklist de entrega final](docs/checklist-entrega-final.md)
+- [Guia de defensa oral](docs/guia-defensa-oral.md)
 - [Postman Collection](docs/postman/SmartLogix.postman_collection.json)
+- [Postman Environment](docs/postman/SmartLogix.postman_environment.json)
 
 ## Variables de entorno
 
-Usa `Backend/.env.example` como plantilla. No subir `.env`, claves JWT, credenciales SMTP ni passwords reales al repositorio.
+Usa `Backend/.env.example`, `Backend/users/.env.example`, `Backend/prisma/.env.example` y `Frontend/smartlogix-app/.env.example` como plantillas. No subir `.env`, claves JWT, credenciales SMTP ni passwords reales al repositorio ni al ZIP/RAR final.
