@@ -112,9 +112,26 @@ No se incluyen tokens ni secretos.
 - [Presentacion final](docs/05-presentacion-final.md)
 - [Endpoints API](docs/api-endpoints.md)
 - [Checklist de entrega final](docs/checklist-entrega-final.md)
+- [Checklist ZIP/RAR final](docs/checklist-zip-final.md)
 - [Guia de defensa oral](docs/guia-defensa-oral.md)
+- [Guion de demo funcional](docs/demo-guion-funcional.md)
+- [Evidencias finales](docs/evidencias)
+- [Documentos finales para PDF](docs/final)
 - [Postman Collection](docs/postman/SmartLogix.postman_collection.json)
 - [Postman Environment](docs/postman/SmartLogix.postman_environment.json)
+
+## Entrega academica
+
+La preparacion final esta centralizada en:
+
+- `README_ENTREGA.md`
+- `docs/final/README_GENERAR_PDFS.md`
+- `scripts/generate-docs.ps1`
+- `scripts/generate-docs.sh`
+- `scripts/package-final.ps1`
+- `scripts/package-final.sh`
+
+Los scripts de entrega excluyen `.env` reales, `node_modules`, `target`, `dist`, `coverage`, logs y paquetes ZIP/RAR previos.
 
 ## Variables de entorno
 

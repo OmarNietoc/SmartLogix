@@ -98,9 +98,9 @@ Frontend/smartlogix-app/coverage/lcov.info
 | notification | `Backend/notification/src/test/java/com/smartlogix/notification/listener/OrderStatusListenersTest.java` | Emails y notificaciones por estados confirmed, shipped, delivered y rejected |
 | eureka-server | `Backend/eureka-server/src/test/java/com/smartlogix/eureka/EurekaServerApplicationTest.java` | Bootstrap Spring Boot/Eureka y delegacion de `main` |
 
-## 7. Cobertura real posterior a sincronizacion con remoto
+## 7. Cobertura real registrada localmente
 
-Metricas leidas desde reportes JaCoCo regenerados con `mvn clean verify` despues de integrar `origin/main` en la rama `feature/fase2-cobertura-sync`. El criterio academico se evalua sobre cobertura global de lineas por servicio backend.
+Metricas leidas desde reportes JaCoCo generados con `mvn clean verify`. El criterio academico se evalua sobre cobertura global de lineas por servicio backend. Antes de entregar, regenerar reportes y usar `docs/evidencias/04_pruebas_cobertura/cobertura-final.md` como tabla final auditada.
 
 | Componente | Lineas antes Fase 2 | Lineas finales | Metodos finales | Ramas finales | Estado frente al 60% | Reporte |
 |---|---:|---:|---:|---:|---|---|
@@ -129,10 +129,11 @@ La cobertura de lineas backend funcional queda sobre 60% en todos los servicios 
 
 ## 10. Evidencia recomendada para entrega
 
-Guardar en `docs/evidencias/cobertura/`:
+Guardar evidencia en `docs/evidencias/04_pruebas_cobertura/`:
 
-- HTML de JaCoCo por servicio.
 - Captura de resumen JaCoCo.
-- `coverage/index.html` frontend.
+- Captura de `Frontend/smartlogix-app/coverage/index.html`.
 - Captura de comando `mvn clean verify`.
 - Captura de comando `npm run test:coverage`.
+
+No versionar `target/` ni `coverage/`; ambos estan ignorados y deben usarse solo como fuente para capturas.

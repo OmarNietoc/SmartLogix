@@ -90,7 +90,7 @@ No es un BFF orquestador complejo de vistas; es un Gateway con funciones BFF suf
 ## Riesgos conocidos
 
 - Los puertos internos de microservicios estan expuestos en Docker Compose para demo local.
-- La cobertura global JaCoCo aun esta bajo 60% en varios servicios.
+- La cobertura global JaCoCo de lineas supera el 60% en los servicios medidos; debe regenerarse antes de entregar para que las capturas coincidan con el estado final.
 - No hay migraciones Flyway/Liquibase; se usa JPA/Hibernate con `ddl-auto`.
 
 ## Diagramas adicionales
