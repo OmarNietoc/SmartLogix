@@ -1,41 +1,42 @@
 package com.smartlogix.shipping.event;
 
-import org.junit.jupiter.api.DisplayName;
+import com.smartlogix.shipping.config.RabbitMQConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ShippingEventPublisherTest {
 
     @Mock private RabbitTemplate rabbitTemplate;
-    @InjectMocks private ShippingEventPublisher publisher;
 
     @Test
-    @DisplayName("publishOrderShipped sends order.shipped event via RabbitMQ")
-    void publishOrderShipped_callsRabbitTemplate() {
-        OrderShippedEvent event = new OrderShippedEvent("order-1", "ana@test.com", "TRK-001");
+    void publishOrderShipped_sendsEventWithConfiguredRoutingKey() {
+        OrderShippedEvent event = new OrderShippedEvent("order-1", "cliente@smartlogix.cl", "SL-ABC12345");
 
-        publisher.publishOrderShipped(event);
+        new ShippingEventPublisher(rabbitTemplate).publishOrderShipped(event);
 
         verify(rabbitTemplate).convertAndSend(
-                anyString(), anyString(), eq(event));
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.ROUTING_KEY_ORDER_SHIPPED,
+                event
+        );
     }
 
     @Test
-    @DisplayName("publishOrderDelivered sends order.delivered event via RabbitMQ")
-    void publishOrderDelivered_callsRabbitTemplate() {
-        OrderDeliveredEvent event = new OrderDeliveredEvent("order-1", "TRK-001", "ana@test.com");
+    void publishOrderDelivered_sendsEventWithConfiguredRoutingKey() {
+        OrderDeliveredEvent event = new OrderDeliveredEvent("order-1", "SL-ABC12345", "cliente@smartlogix.cl");
 
-        publisher.publishOrderDelivered(event);
+        new ShippingEventPublisher(rabbitTemplate).publishOrderDelivered(event);
 
         verify(rabbitTemplate).convertAndSend(
-                anyString(), anyString(), eq(event));
+                RabbitMQConfig.EXCHANGE_NAME,
+                RabbitMQConfig.ROUTING_KEY_ORDER_DELIVERED,
+                event
+        );
     }
 }

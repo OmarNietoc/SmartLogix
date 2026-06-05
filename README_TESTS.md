@@ -1,138 +1,138 @@
-# SmartLogix — Guía de Tests Unitarios
+# SmartLogix - Guia de Tests Unitarios y Cobertura
 
-## 1. Overview
+Este documento resume frameworks, comandos y metricas reales auditadas desde los reportes existentes. Las cifras corresponden a reportes JaCoCo/Vitest generados por comandos de build y no deben reemplazarse por estimaciones manuales.
 
-| Componente | Framework | Cobertura objetivo | Tests existentes |
-|---|---|---|---|
-| api-gateway | JUnit 5 + Mockito | 60% | AuthenticationFilterTest, JwtUtilTest, RouteValidatorTest |
-| auth | JUnit 5 + Mockito / @WebMvcTest | 60% | AuthServiceTest, AuthControllerTest, JwtUtilTest, ChileanRutValidatorTest |
-| inventory | JUnit 5 + Mockito / @WebMvcTest | 60% | InventoryServiceTest, InventoryReservationServiceTest, ProductServiceTest, InventoryControllerTest, ProductControllerTest |
-| notification | JUnit 5 + Mockito / @WebMvcTest | 60% | NotificationServiceTest, OrderEventListenerTest, NotificationControllerTest, EmailServiceTest |
-| order | JUnit 5 + Mockito / @WebMvcTest | 60% | OrderServiceTest, OrderControllerTest |
-| shipping | JUnit 5 + Mockito / @WebMvcTest | 60% | RouteServiceTest, ShipmentServiceTest, RouteControllerTest, ShipmentControllerTest |
-| users | JUnit 5 + Mockito | 60% | CompanyServiceTest, UserProfileServiceTest, ExternalCarrierServiceTest, MarketplaceIntegrationServiceTest, RoleServiceTest |
-| Frontend | Vitest + React Testing Library | 60% líneas/funciones, 50% ramas | authService, api, Auth, authServiceApi, RegionComunaSelector, smartlogixService, CreateOrder, useAuthStore |
+## 1. Frameworks
 
-Todos los tests de backend usan H2 (base de datos en memoria) cuando se requiere contexto de Spring. Los unit tests con Mockito no levantan contexto de aplicación.
+| Componente | Framework | Reporte |
+|---|---|---|
+| Backend Spring Boot | JUnit 5, Mockito, Spring Boot Test, MockMvc | `Backend/<servicio>/target/site/jacoco/index.html` |
+| Frontend React | Vitest, React Testing Library, jsdom | `Frontend/smartlogix-app/coverage/index.html` |
 
----
+## 2. Comandos backend
 
-## 2. Cómo correr los tests
-
-### Backend (por cada microservicio)
+Ejecutar por microservicio:
 
 ```bash
-# Situarse en el directorio del microservicio
-cd Backend/auth        # o inventory, order, shipping, notification, users, api-gateway
-
-# Correr todos los tests
-mvn test
-
-# Correr un test específico
-mvn test -Dtest=AuthServiceTest
-
-# Correr con reporte de cobertura JaCoCo
-mvn test jacoco:report
-
-# Ver reporte HTML
-# Abrir: target/site/jacoco/index.html
+cd Backend/auth
+mvn clean verify
 ```
 
-### Frontend
+Servicios:
+
+```bash
+cd Backend/auth && mvn clean verify
+cd Backend/users && mvn clean verify
+cd Backend/inventory && mvn clean verify
+cd Backend/order && mvn clean verify
+cd Backend/shipping && mvn clean verify
+cd Backend/notification && mvn clean verify
+cd Backend/api-gateway && mvn clean verify
+cd Backend/eureka-server && mvn clean verify
+```
+
+Reporte JaCoCo:
+
+```text
+Backend/<servicio>/target/site/jacoco/index.html
+Backend/<servicio>/target/site/jacoco/jacoco.xml
+```
+
+## 3. Comandos frontend
 
 ```bash
 cd Frontend/smartlogix-app
-
-# Correr todos los tests (modo CI, sin watch)
-npm test
-
-# Correr con cobertura
+npm ci
+npm run test
 npm run test:coverage
-
-# Ver reporte HTML de cobertura
-# Abrir: coverage/index.html
+npm run build
 ```
 
----
+Reporte Vitest:
 
-## 3. Cómo generar reportes de cobertura
-
-### Backend — JaCoCo
-
-JaCoCo está configurado en todos los `pom.xml` de los microservicios. Se activa automáticamente con `mvn test jacoco:report`.
-
-Reporte generado en: `target/site/jacoco/index.html`
-
-Para generar todos los reportes a la vez desde la raíz:
-
-```bash
-# Requiere que cada microservicio sea un módulo Maven o correrlo individualmente
-cd Backend/auth && mvn test jacoco:report
-cd ../inventory && mvn test jacoco:report
-cd ../order && mvn test jacoco:report
-cd ../shipping && mvn test jacoco:report
-cd ../notification && mvn test jacoco:report
-cd ../users && mvn test jacoco:report
-cd ../api-gateway && mvn test jacoco:report
+```text
+Frontend/smartlogix-app/coverage/index.html
+Frontend/smartlogix-app/coverage/lcov.info
 ```
 
-### Frontend — Vitest v8
+## 4. Tests existentes y reforzados
 
-La cobertura usa `@vitest/coverage-v8` configurado en `vitest.config.ts`:
+| Componente | Tests destacados |
+|---|---|
+| api-gateway | `AuthenticationFilterTest`, `JwtUtilTest`, `RouteValidatorTest` |
+| auth | `AuthServiceTest`, `AuthControllerTest`, `JwtUtilTest`, `ChileanRutValidatorTest` |
+| inventory | `ProductServiceTest`, `InventoryServiceTest`, `InventoryReservationServiceTest`, `WarehouseServiceTest`, `InventoryMapperTest`, `OrderEventConsumerTest`, controllers |
+| order | `OrderServiceTest`, `OrderControllerTest`, `OrderMapperTest`, `OrderEventConsumersTest` |
+| shipping | `ShipmentServiceTest`, `RouteServiceTest`, `RoutingApiServiceTest`, `ShippingMapperTest`, `ReservationConfirmedConsumerTest`, `ShippingEventPublisherTest`, controllers |
+| notification | `NotificationServiceTest`, `EmailServiceTest`, `OrderEventListenerTest`, `OrderStatusListenersTest`, controller |
+| users | tests de `CompanyService`, `UserProfileService`, carriers, integrations, roles, controllers y mappers |
+| frontend | servicios API, auth, stores y componentes principales |
 
-- Provider: `v8`
-- Umbrales: 60% líneas, funciones y statements; 50% ramas
-- Archivos incluidos: `src/services/**`, `src/components/**`, `src/pages/Auth.tsx`
+## 5. Tests agregados en Prioridad 1
 
-```bash
-npm run test:coverage
-# Reporte en: coverage/index.html
-```
-
----
-
-## 4. Resultados de cobertura EV3
-
-Resultados obtenidos con `mvn verify` en cada microservicio backend. JaCoCo valida el minimo de 60% de cobertura de lineas configurado en los `pom.xml`.
-
-| Microservicio | Lineas | Metodos | Ramas | Instrucciones | Cumple 60% lineas |
-|---|---|---|---|---|---|
-| api-gateway | 87.18% | 100.00% | 70.00% | 89.22% | Si |
-| auth | 74.00% | 83.87% | 42.86% | 74.56% | Si |
-| inventory | 85.57% | 69.37% | 67.59% | 77.54% | Si |
-| notification | 82.04% | 78.12% | 100.00% | 80.91% | Si |
-| order | 94.40% | 92.31% | 100.00% | 91.55% | Si |
-| shipping | 74.38% | 65.00% | 74.04% | 67.44% | Si |
-| users | 88.83% | 90.57% | 71.43% | 89.53% | Si |
-| Frontend | 79.77% | 70.68% | 56.07% | 73.76% | Si |
-
-> Nota: `auth` cumple el umbral EV3 configurado por lineas, aunque su cobertura de ramas queda bajo 60%. Para la entrega, se recomienda mostrar el reporte de JaCoCo y explicar que el control automatico del backend valida cobertura de lineas.
-
----
-
-## 5. Patrones de diseño en tests
-
-| Patrón | Dónde se prueba | Archivo de test |
+| Servicio | Archivo | Motivo |
 |---|---|---|
-| **Strategy** | ShippingCalculationStrategy (DhlStrategy vs LocalCarrierStrategy) | `shipping/RouteServiceTest.java` |
-| **Repository** | Acceso a datos via Spring Data JPA en todos los servicios | `*ServiceTest.java` (todos los microservicios) |
-| **Facade** | Services encapsulan lógica de repos, mappers y eventos | `OrderServiceTest.java`, `NotificationServiceTest.java` |
-| **Observer / Event-Driven** | Listeners RabbitMQ en notification | `OrderEventListenerTest.java` |
-| **Circuit Breaker** | EmailService con Resilience4j fallback | `EmailServiceTest.java` |
-| **JWT / Token** | Generación y validación de tokens en auth y gateway | `JwtUtilTest.java` (auth y api-gateway) |
+| auth | `Backend/auth/src/test/java/com/smartlogix/auth_service/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
+| auth | `Backend/auth/src/test/java/com/smartlogix/auth_service/security/CustomUserDetailsServiceTest.java` | Cubrir carga de usuario Spring Security |
+| users | `Backend/users/src/test/java/com/smartlogix/users/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
+| inventory | `Backend/inventory/src/test/java/com/smartlogix/inventory/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
+| order | `Backend/order/src/test/java/com/smartlogix/order/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
+| shipping | `Backend/shipping/src/test/java/com/smartlogix/shipping/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
+| notification | `Backend/notification/src/test/java/com/smartlogix/notification/exception/GlobalExceptionHandlerTest.java` | Cubrir contrato de errores |
 
----
+## 6. Tests agregados o reforzados en Fase 2
 
-## 6. Convenciones del proyecto
+| Servicio | Archivo | Comportamiento cubierto |
+|---|---|---|
+| users | `Backend/users/src/test/java/com/smartlogix/users/controller/UsersControllerTest.java` | Controllers principales con MockMvc: companies, profiles, roles, carriers e integrations |
+| users | `Backend/users/src/test/java/com/smartlogix/users/mapper/UsersMapperTest.java` | Mapeos entidad/DTO de companies, profiles, carriers e integrations |
+| inventory | `Backend/inventory/src/test/java/com/smartlogix/inventory/mapper/InventoryMapperTest.java` | Mappers de products, warehouses, inventory, movements y reservations |
+| inventory | `Backend/inventory/src/test/java/com/smartlogix/inventory/service/WarehouseServiceTest.java` | Consultas, creacion, validaciones, actualizacion y baja logica de bodegas |
+| inventory | `Backend/inventory/src/test/java/com/smartlogix/inventory/event/OrderEventConsumerTest.java` | Reserva de stock, compensacion y publicacion de eventos RabbitMQ |
+| order | `Backend/order/src/test/java/com/smartlogix/order/mapper/OrderMapperTest.java` | Mapeo de orden con comuna, region e items |
+| order | `Backend/order/src/test/java/com/smartlogix/order/event/OrderEventConsumersTest.java` | Transiciones por eventos de reserva, despacho y entrega |
+| shipping | `Backend/shipping/src/test/java/com/smartlogix/shipping/mapper/ShippingMapperTest.java` | Mapeo de shipment y route, estados y campos anidados |
+| shipping | `Backend/shipping/src/test/java/com/smartlogix/shipping/event/ReservationConfirmedConsumerTest.java` | Creacion de envio desde reserva confirmada y errores de repositorio |
+| shipping | `Backend/shipping/src/test/java/com/smartlogix/shipping/event/ShippingEventPublisherTest.java` | Publicacion de eventos `order.shipped` y `order.delivered` |
+| shipping | `Backend/shipping/src/test/java/com/smartlogix/shipping/service/RoutingApiServiceTest.java` | Fallback local cuando no hay coordenadas o falla el servicio externo |
+| notification | `Backend/notification/src/test/java/com/smartlogix/notification/listener/OrderStatusListenersTest.java` | Emails y notificaciones por estados confirmed, shipped, delivered y rejected |
+| eureka-server | `Backend/eureka-server/src/test/java/com/smartlogix/eureka/EurekaServerApplicationTest.java` | Bootstrap Spring Boot/Eureka y delegacion de `main` |
 
-### Backend
-- Anotación unit: `@ExtendWith(MockitoExtension.class)` + `@InjectMocks` + `@Mock`
-- Anotación controller: `@WebMvcTest(XController.class)` + `@Import(SecurityConfig.class)` + `@MockBean XService`
-- Estructura: `// arrange` → `// act` → `// assert`
-- Paquete del test = paquete de la clase bajo test
+## 7. Cobertura real posterior a sincronizacion con remoto
 
-### Frontend
-- Tests en: `src/__tests__/`
-- Mocks con `vi.mock()` para servicios y API
-- `vi.clearAllMocks()` en `beforeEach`
-- Setup global: `src/__tests__/setup.ts` importa `@testing-library/jest-dom`
+Metricas leidas desde reportes JaCoCo regenerados con `mvn clean verify` despues de integrar `origin/main` en la rama `feature/fase2-cobertura-sync`. El criterio academico se evalua sobre cobertura global de lineas por servicio backend.
+
+| Componente | Lineas antes Fase 2 | Lineas finales | Metodos finales | Ramas finales | Estado frente al 60% | Reporte |
+|---|---:|---:|---:|---:|---|---|
+| users | 28.83% | 97.46% | 100.00% | 82.14% | Cumple lineas | `Backend/users/target/site/jacoco/index.html` |
+| inventory | 33.56% | 87.58% | 84.68% | 67.59% | Cumple lineas | `Backend/inventory/target/site/jacoco/index.html` |
+| order | 47.15% | 98.28% | 95.38% | 100.00% | Cumple lineas | `Backend/order/target/site/jacoco/index.html` |
+| shipping | 51.83% | 82.44% | 75.00% | 75.96% | Cumple lineas | `Backend/shipping/target/site/jacoco/index.html` |
+| notification | 54.11% | 90.78% | 82.81% | 100.00% | Cumple lineas | `Backend/notification/target/site/jacoco/index.html` |
+| eureka-server | 0.00% | 66.67% | 50.00% | n/a | Cumple lineas; componente de infraestructura | `Backend/eureka-server/target/site/jacoco/index.html` |
+| api-gateway | 66.67% | 87.18% | 100.00% | 70.00% | Cumple lineas | `Backend/api-gateway/target/site/jacoco/index.html` |
+| auth | 76.33% | 82.67% | 93.55% | 42.86% | Cumple lineas | `Backend/auth/target/site/jacoco/index.html` |
+| frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple lineas/funciones | `Frontend/smartlogix-app/coverage/index.html` |
+
+## 8. Observaciones tecnicas
+
+La cobertura de lineas backend funcional queda sobre 60% en todos los servicios revisados e integrados. La cobertura de ramas tambien queda sobre 60% en la mayoria de servicios; `auth` queda bajo 60% en ramas, pero cumple el umbral academico configurado por lineas.
+
+`Backend/eureka-server/pom.xml` ya excluia `**/*Application.class` del check JaCoCo antes de esta fase. Aun asi, se agrego una prueba de bootstrap que valida las anotaciones `@SpringBootApplication`, `@EnableEurekaServer` y la delegacion de `main` hacia `SpringApplication.run`. Eureka debe presentarse como infraestructura de descubrimiento, no como microservicio de negocio.
+
+## 9. Acciones pendientes recomendadas
+
+1. Subir cobertura de ramas en services con reglas de transicion y handlers de errores.
+2. Mantener los reportes HTML JaCoCo generados y adjuntarlos como evidencia.
+3. Evitar excluir clases adicionales de JaCoCo sin justificacion escrita.
+4. Para defensa oral, explicar que el umbral academico se valida sobre lineas globales y que ramas quedan como mejora continua.
+
+## 10. Evidencia recomendada para entrega
+
+Guardar en `docs/evidencias/cobertura/`:
+
+- HTML de JaCoCo por servicio.
+- Captura de resumen JaCoCo.
+- `coverage/index.html` frontend.
+- Captura de comando `mvn clean verify`.
+- Captura de comando `npm run test:coverage`.

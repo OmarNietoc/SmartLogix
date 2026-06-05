@@ -1,44 +1,94 @@
 {
   "info": {
-    "name": "SmartLogix",
+    "name": "SmartLogix API Gateway",
+    "description": "Coleccion alineada con los controladores reales del backend. Todas las rutas usan el API Gateway local. Las rutas protegidas requieren Bearer token; el Gateway valida el JWT y propaga X-Company-Id hacia los microservicios.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
-    { "key": "baseUrl", "value": "http://localhost:8080" },
-    { "key": "token", "value": "" },
-    { "key": "companyId", "value": "company-demo" },
-    { "key": "orderId", "value": "order-demo" },
-    { "key": "productId", "value": "product-demo" },
-    { "key": "warehouseId", "value": "warehouse-demo" },
-    { "key": "shipmentId", "value": "shipment-demo" }
+    { "key": "base_url", "value": "http://localhost:8080", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "companyId", "value": "company-demo", "type": "string" },
+    { "key": "userId", "value": "profile-demo", "type": "string" },
+    { "key": "orderId", "value": "order-demo", "type": "string" },
+    { "key": "productId", "value": "product-demo", "type": "string" },
+    { "key": "warehouseId", "value": "warehouse-demo", "type": "string" },
+    { "key": "stockId", "value": "stock-demo", "type": "string" },
+    { "key": "reservationId", "value": "reservation-demo", "type": "string" },
+    { "key": "shipmentId", "value": "shipment-demo", "type": "string" },
+    { "key": "routeId", "value": "route-demo", "type": "string" },
+    { "key": "notificationId", "value": "notification-demo", "type": "string" },
+    { "key": "trackingNumber", "value": "TRK-DEMO-001", "type": "string" },
+    { "key": "sku", "value": "SKU-DEMO-001", "type": "string" },
+    { "key": "regionId", "value": "13", "type": "string" }
   ],
   "auth": {
     "type": "bearer",
-    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+    "bearer": [
+      { "key": "token", "value": "{{token}}", "type": "string" }
+    ]
   },
   "item": [
     {
-      "name": "Auth",
+      "name": "Auth public",
       "item": [
         {
-          "name": "Register",
+          "name": "Register company and admin",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) pm.environment.set('token', json.token);",
+                  "  if (json.companyId) pm.environment.set('companyId', json.companyId);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/auth/register",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\"companyName\":\"Logistica Demo SpA\",\"taxId\":\"761234560\",\"firstName\":\"Admin\",\"lastName\":\"Demo\",\"email\":\"admin@example.com\",\"password\":\"demo1234\",\"contactEmail\":\"admin@example.com\",\"phone\":\"123456789\"}"
-            }
+              "raw": "{\n  \"email\": \"admin@smartlogix.cl\",\n  \"password\": \"demo1234\",\n  \"companyName\": \"Logistica Demo SpA\",\n  \"taxId\": \"761234560\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Demo\",\n  \"contactEmail\": \"admin@smartlogix.cl\",\n  \"phone\": \"123456789\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/auth/register"
           }
         },
         {
           "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (pm.response.code >= 200 && pm.response.code < 300) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.token) pm.environment.set('token', json.token);",
+                  "  if (json.companyId) pm.environment.set('companyId', json.companyId);",
+                  "}"
+                ]
+              }
+            }
+          ],
           "request": {
+            "auth": { "type": "noauth" },
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/auth/login",
-            "body": { "mode": "raw", "raw": "{\"email\":\"admin@example.com\",\"password\":\"demo1234\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@smartlogix.cl\",\n  \"password\": \"demo1234\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/auth/login"
           }
         }
       ]
@@ -46,117 +96,386 @@
     {
       "name": "Users",
       "item": [
-        { "name": "List companies", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/companies" } },
+        { "name": "List companies", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/users/companies" } },
         {
           "name": "Create company",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/users/companies",
-            "body": { "mode": "raw", "raw": "{\"taxId\":\"761234560\",\"name\":\"Logistica Demo SpA\",\"contactEmail\":\"contacto@example.com\",\"phone\":\"123456789\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"taxId\": \"761234560\",\n  \"name\": \"Logistica Demo SpA\",\n  \"contactEmail\": \"contacto@smartlogix.cl\",\n  \"phone\": \"123456789\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/users/companies"
           }
         },
-        { "name": "List profiles", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/companies/{{companyId}}/profiles" } },
-        { "name": "List roles", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/users/roles" } }
+        {
+          "name": "Create admin profile by company path",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authId\": \"admin@smartlogix.cl\",\n  \"firstName\": \"Admin\",\n  \"lastName\": \"Demo\",\n  \"roles\": [\"ADMIN\"]\n}"
+            },
+            "url": "{{base_url}}/smartlogix/users/profiles/company/{{companyId}}/admin"
+          }
+        },
+        {
+          "name": "Create employee profile for authenticated company",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"authId\": \"operador@smartlogix.cl\",\n  \"firstName\": \"Operador\",\n  \"lastName\": \"Demo\",\n  \"roles\": [\"OPERATOR\"]\n}"
+            },
+            "url": "{{base_url}}/smartlogix/users/profiles/company"
+          }
+        },
+        {
+          "name": "Assign roles to profile",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "[\"ADMIN\", \"OPERATOR\"]"
+            },
+            "url": "{{base_url}}/smartlogix/users/profiles/{{userId}}/roles"
+          }
+        },
+        { "name": "List profiles for authenticated company", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/users/profiles/company" } },
+        { "name": "List roles", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/users/roles" } },
+        {
+          "name": "Create external carrier",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Carrier Demo\",\n  \"contactEmail\": \"carrier@smartlogix.cl\",\n  \"phone\": \"123456789\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/users/carriers/company/{{companyId}}"
+          }
+        },
+        { "name": "List external carriers by company", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/users/carriers/company/{{companyId}}" } },
+        {
+          "name": "Create marketplace integration",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platformName\": \"Shopify\",\n  \"webhookSecret\": \"demo-secret\",\n  \"active\": true\n}"
+            },
+            "url": "{{base_url}}/smartlogix/users/integrations/company/{{companyId}}"
+          }
+        },
+        { "name": "List marketplace integrations by company", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/users/integrations/company/{{companyId}}" } }
       ]
     },
     {
       "name": "Inventory",
       "item": [
-        { "name": "List products", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/products" } },
+        { "name": "List products", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/products" } },
+        { "name": "Get product by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/products/{{productId}}" } },
+        { "name": "Get product by SKU", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/products/sku/{{sku}}" } },
         {
           "name": "Create product",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/inventory/products",
-            "body": { "mode": "raw", "raw": "{\"sku\":\"SKU-DEMO-001\",\"name\":\"Producto demo\",\"price\":12990}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{sku}}\",\n  \"name\": \"Producto demo\",\n  \"price\": 12990,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/products"
           }
         },
-        { "name": "List warehouses", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/warehouses" } },
+        {
+          "name": "Update product",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sku\": \"{{sku}}\",\n  \"name\": \"Producto demo actualizado\",\n  \"price\": 14990,\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/products/{{productId}}"
+          }
+        },
+        { "name": "Delete product", "request": { "method": "DELETE", "url": "{{base_url}}/smartlogix/inventory/products/{{productId}}" } },
+        { "name": "List warehouses", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/warehouses" } },
+        { "name": "List warehouses by type", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/warehouses?type=WAREHOUSE" } },
+        { "name": "Get warehouse by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/warehouses/{{warehouseId}}" } },
         {
           "name": "Create warehouse",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/inventory/warehouses",
-            "body": { "mode": "raw", "raw": "{\"name\":\"Bodega Central\",\"locationAddress\":\"Av. Las Condes 1234, Santiago\",\"type\":\"DISTRIBUTION_CENTER\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bodega Central\",\n  \"locationAddress\": \"Av. Las Condes 1234, Santiago\",\n  \"type\": \"WAREHOUSE\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/warehouses"
           }
         },
-        { "name": "List stock", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/inventory/stocks" } },
+        {
+          "name": "Update warehouse",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Bodega Central Actualizada\",\n  \"locationAddress\": \"Av. Las Condes 1234, Santiago\",\n  \"type\": \"WAREHOUSE\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/warehouses/{{warehouseId}}"
+          }
+        },
+        { "name": "Delete warehouse", "request": { "method": "DELETE", "url": "{{base_url}}/smartlogix/inventory/warehouses/{{warehouseId}}" } },
+        { "name": "List stock", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/stocks" } },
+        { "name": "List stock by product and warehouse", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/stocks?productId={{productId}}&warehouseId={{warehouseId}}" } },
+        { "name": "Get stock by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/stocks/{{stockId}}" } },
         {
           "name": "Create stock",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/inventory/stocks",
-            "body": { "mode": "raw", "raw": "{\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"stockAvailable\":20}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"productId\": \"{{productId}}\",\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"stockAvailable\": 20\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/stocks"
           }
         },
+        {
+          "name": "Increase stock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 5,\n  \"reason\": \"Ingreso manual demo\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/stocks/{{stockId}}/increase"
+          }
+        },
+        {
+          "name": "Decrease stock",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 1,\n  \"reason\": \"Salida manual demo\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/stocks/{{stockId}}/decrease"
+          }
+        },
+        { "name": "List stock movements", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/stocks/{{stockId}}/movements" } },
+        { "name": "List reservations", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/reservations" } },
+        { "name": "List reservations by order", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/reservations?orderId={{orderId}}" } },
+        { "name": "Get reservation by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/inventory/reservations/{{reservationId}}" } },
         {
           "name": "Create reservation",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/inventory/reservations",
-            "body": { "mode": "raw", "raw": "{\"orderId\":\"{{orderId}}\",\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"quantity\":1,\"companyId\":\"{{companyId}}\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"productId\": \"{{productId}}\",\n  \"warehouseId\": \"{{warehouseId}}\",\n  \"quantity\": 1,\n  \"companyId\": \"{{companyId}}\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/inventory/reservations"
           }
-        }
+        },
+        { "name": "Compensate reservation", "request": { "method": "PATCH", "url": "{{base_url}}/smartlogix/inventory/reservations/{{reservationId}}/compensate" } },
+        { "name": "Confirm reservation as output", "request": { "method": "PATCH", "url": "{{base_url}}/smartlogix/inventory/reservations/{{reservationId}}/confirm-output" } }
       ]
     },
     {
       "name": "Order",
       "item": [
-        { "name": "List orders", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/order/orders" } },
+        { "name": "List orders", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/order/orders" } },
+        { "name": "Get order by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/order/orders/{{orderId}}" } },
         {
           "name": "Create order",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/order/orders",
-            "body": { "mode": "raw", "raw": "{\"customerName\":\"Cliente Demo\",\"customerEmail\":\"cliente@example.com\",\"street\":\"Av. Providencia 1234\",\"comunaId\":13123,\"items\":[{\"productId\":\"{{productId}}\",\"warehouseId\":\"{{warehouseId}}\",\"productName\":\"Producto demo\",\"quantity\":1,\"price\":12990}]}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"customerName\": \"Cliente Demo\",\n  \"customerEmail\": \"cliente@smartlogix.cl\",\n  \"street\": \"Av. Providencia 1234\",\n  \"comunaId\": 13123,\n  \"items\": [\n    {\n      \"productId\": \"{{productId}}\",\n      \"warehouseId\": \"{{warehouseId}}\",\n      \"productName\": \"Producto demo\",\n      \"quantity\": 1,\n      \"price\": 12990\n    }\n  ]\n}"
+            },
+            "url": "{{base_url}}/smartlogix/order/orders"
           }
         },
         {
           "name": "Update order status",
           "request": {
             "method": "PUT",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/order/orders/{{orderId}}/status",
-            "body": { "mode": "raw", "raw": "{\"status\":\"CONFIRMED\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CONFIRMED\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/order/orders/{{orderId}}/status"
           }
-        }
+        },
+        { "name": "List regiones", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/order/regiones" } },
+        { "name": "List comunas by region", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/order/comunas?regionId={{regionId}}" } }
       ]
     },
     {
       "name": "Shipping",
       "item": [
-        { "name": "List shipments", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/shipping/shipments" } },
-        { "name": "List routes", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/shipping/routes" } },
+        { "name": "List shipments", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/shipments" } },
+        { "name": "List shipments by status", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/shipments?deliveryStatus=PENDING" } },
+        { "name": "Get shipment by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/shipments/{{shipmentId}}" } },
+        { "name": "Get shipment by tracking", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/shipments/tracking/{{trackingNumber}}" } },
+        {
+          "name": "Create shipment manually",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"customerName\": \"Cliente Demo\",\n  \"customerEmail\": \"cliente@smartlogix.cl\",\n  \"shippingAddress\": \"Av. Providencia 1234, Santiago\",\n  \"latitude\": -33.4372,\n  \"longitude\": -70.6506,\n  \"deliveryStatus\": \"PENDING\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/shipping/shipments"
+          }
+        },
+        {
+          "name": "Update shipment status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"DISPATCHED\""
+            },
+            "url": "{{base_url}}/smartlogix/shipping/shipments/{{shipmentId}}/status"
+          }
+        },
+        { "name": "Delete shipment", "request": { "method": "DELETE", "url": "{{base_url}}/smartlogix/shipping/shipments/{{shipmentId}}" } },
+        { "name": "List routes", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/routes" } },
+        { "name": "List routes by status", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/routes?status=PLANNED" } },
+        { "name": "Get route by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/shipping/routes/{{routeId}}" } },
         {
           "name": "Create route",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/shipping/routes",
-            "body": { "mode": "raw", "raw": "{\"companyId\":\"{{companyId}}\",\"carrierId\":\"LOCAL\",\"originAddress\":\"Bodega Central Santiago\",\"shipmentIds\":[\"{{shipmentId}}\"],\"optimizeRoute\":true}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"carrierId\": \"LOCAL\",\n  \"originAddress\": \"Bodega Central Santiago\",\n  \"shipmentIds\": [\"{{shipmentId}}\"],\n  \"optimizeRoute\": true\n}"
+            },
+            "url": "{{base_url}}/smartlogix/shipping/routes"
           }
-        }
+        },
+        {
+          "name": "Generate route proposal",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originAddress\": \"Bodega Central Santiago\",\n  \"shipmentIds\": [\"{{shipmentId}}\"]\n}"
+            },
+            "url": "{{base_url}}/smartlogix/shipping/routes/generate-proposal"
+          }
+        },
+        {
+          "name": "Update route status",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "\"IN_PROGRESS\""
+            },
+            "url": "{{base_url}}/smartlogix/shipping/routes/{{routeId}}/status"
+          }
+        },
+        { "name": "Cancel route", "request": { "method": "DELETE", "url": "{{base_url}}/smartlogix/shipping/routes/{{routeId}}" } }
       ]
     },
     {
       "name": "Notification",
       "item": [
-        { "name": "List notifications", "request": { "method": "GET", "url": "{{baseUrl}}/smartlogix/notification/notifications" } },
+        { "name": "List notifications", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/notification/notifications" } },
+        { "name": "List unread notifications", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/notification/notifications/unread" } },
+        { "name": "Get notification by id", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/notification/notifications/{{notificationId}}" } },
+        { "name": "List notifications by order", "request": { "method": "GET", "url": "{{base_url}}/smartlogix/notification/notifications/order/{{orderId}}" } },
         {
-          "name": "Create notification",
+          "name": "Create manual notification",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "url": "{{baseUrl}}/smartlogix/notification/notifications",
-            "body": { "mode": "raw", "raw": "{\"recipientEmail\":\"cliente@example.com\",\"subject\":\"Orden creada\",\"message\":\"Tu orden fue creada\",\"type\":\"ORDER_CREATED\"}" }
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderId\": \"{{orderId}}\",\n  \"recipient\": \"cliente@smartlogix.cl\",\n  \"subject\": \"Orden creada\",\n  \"message\": \"Tu orden fue creada exitosamente\"\n}"
+            },
+            "url": "{{base_url}}/smartlogix/notification/notifications"
           }
-        }
+        },
+        { "name": "Mark notification as read", "request": { "method": "PATCH", "url": "{{base_url}}/smartlogix/notification/notifications/{{notificationId}}/read" } }
+      ]
+    },
+    {
+      "name": "Gateway docs",
+      "item": [
+        { "name": "Swagger UI", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/swagger-ui.html" } },
+        { "name": "OpenAPI ms-auth", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-auth" } },
+        { "name": "OpenAPI ms-users", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-users" } },
+        { "name": "OpenAPI ms-inventory", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-inventory" } },
+        { "name": "OpenAPI ms-order", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-order" } },
+        { "name": "OpenAPI ms-shipping", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-shipping" } },
+        { "name": "OpenAPI ms-notification", "request": { "auth": { "type": "noauth" }, "method": "GET", "url": "{{base_url}}/api-docs/ms-notification" } }
       ]
     }
   ]

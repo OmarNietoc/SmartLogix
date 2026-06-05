@@ -9,10 +9,22 @@ Microservicio de envios, rutas y calculo de carrier con Strategy.
 
 Endpoints principales:
 
-- `GET/POST /shipments`
+- `GET /shipments`
+- `GET /shipments?deliveryStatus=`
 - `GET /shipments/{id}`
+- `GET /shipments/tracking/{tracking_number}`
+- `POST /shipments`
 - `PATCH /shipments/{id}/status`
-- `GET/POST /routes`
+- `DELETE /shipments/{id}`
+- `GET /routes`
+- `GET /routes?status=`
+- `GET /routes/{id}`
+- `POST /routes`
+- `POST /routes/generate-proposal`
+- `PATCH /routes/{id}/status`
+- `DELETE /routes/{id}`
+
+Los endpoints de estado `PATCH` reciben el enum como JSON string, por ejemplo `"DISPATCHED"` para envios o `"IN_PROGRESS"` para rutas.
 
 Comandos:
 

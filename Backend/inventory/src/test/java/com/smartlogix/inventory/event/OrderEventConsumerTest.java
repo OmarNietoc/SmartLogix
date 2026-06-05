@@ -1,11 +1,12 @@
 package com.smartlogix.inventory.event;
 
+import com.smartlogix.inventory.config.RabbitMQConfig;
+import com.smartlogix.inventory.dto.StockReservationRequestDTO;
 import com.smartlogix.inventory.service.InventoryReservationService;
-import com.smartlogix.inventory.event.ReservationConfirmedEvent;
-import com.smartlogix.inventory.event.ReservationFailedEvent;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -14,9 +15,16 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.List;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OrderEventConsumerTest {
@@ -27,10 +35,8 @@ class OrderEventConsumerTest {
 
     @Test
     @DisplayName("handleOrderCreated with empty items list skips reservation")
-    void handleOrderCreated_emptyItems_skipsReservation() {
-        OrderEvent event = buildEvent("order-1", List.of());
-
-        consumer.handleOrderCreated(event);
+    void handleOrderCreated_withNoItems_doesNotReserveOrPublish() {
+        consumer.handleOrderCreated(orderEvent(List.of()));
 
         verifyNoInteractions(reservationService);
         verifyNoInteractions(rabbitTemplate);
@@ -38,72 +44,72 @@ class OrderEventConsumerTest {
 
     @Test
     @DisplayName("handleOrderCreated with null items skips reservation")
-    void handleOrderCreated_nullItems_skipsReservation() {
-        OrderEvent event = buildEvent("order-1", null);
-
-        consumer.handleOrderCreated(event);
+    void handleOrderCreated_withNullItems_doesNotReserveOrPublish() {
+        consumer.handleOrderCreated(orderEvent(null));
 
         verifyNoInteractions(reservationService);
         verifyNoInteractions(rabbitTemplate);
     }
 
     @Test
-    @DisplayName("handleOrderCreated with valid items reserves stock and publishes confirmed event")
-    void handleOrderCreated_validItems_reservesStockAndPublishesConfirmed() {
-        OrderItemEvent item = buildItem("prod-1", "wh-1", 2);
-        OrderEvent event = buildEvent("order-1", List.of(item));
+    @DisplayName("handleOrderCreated reserves every item and publishes confirmed event")
+    void handleOrderCreated_reservesEveryItemAndPublishesConfirmed() {
+        consumer.handleOrderCreated(orderEvent(List.of(item("product-1"), item("product-2"))));
 
-        consumer.handleOrderCreated(event);
-
-        verify(reservationService).reserveStock(argThat(req ->
-                req.getOrderId().equals("order-1") &&
-                req.getProductId().equals("prod-1") &&
-                req.getQuantity() == 2
-        ));
-        verify(rabbitTemplate).convertAndSend(anyString(), eq("order.reservation.confirmed"), any(ReservationConfirmedEvent.class));
+        ArgumentCaptor<StockReservationRequestDTO> requestCaptor = ArgumentCaptor.forClass(StockReservationRequestDTO.class);
+        verify(reservationService, times(2)).reserveStock(requestCaptor.capture());
+        assertThat(requestCaptor.getAllValues()).extracting(StockReservationRequestDTO::getProductId)
+                .containsExactly("product-1", "product-2");
+        verify(rabbitTemplate).convertAndSend(
+                eq(RabbitMQConfig.EXCHANGE_NAME),
+                eq("order.reservation.confirmed"),
+                any(ReservationConfirmedEvent.class)
+        );
     }
 
     @Test
     @DisplayName("handleOrderCreated on stock failure compensates and publishes failed event")
-    void handleOrderCreated_stockFailure_compensatesAndPublishesFailed() {
-        OrderItemEvent item = buildItem("prod-1", "wh-1", 99);
-        OrderEvent event = buildEvent("order-1", List.of(item));
-        doThrow(new RuntimeException("stock insuficiente")).when(reservationService).reserveStock(any());
+    void handleOrderCreated_whenReservationFails_compensatesAndPublishesFailure() {
+        when(reservationService.reserveStock(any())).thenThrow(new IllegalStateException("Stock insuficiente"));
 
-        consumer.handleOrderCreated(event);
+        consumer.handleOrderCreated(orderEvent(List.of(item("product-1"))));
 
         verify(reservationService).compensateAllForOrder("order-1");
-        verify(rabbitTemplate).convertAndSend(anyString(), eq("order.reservation.failed"), any(ReservationFailedEvent.class));
+        verify(rabbitTemplate).convertAndSend(
+                eq(RabbitMQConfig.EXCHANGE_NAME),
+                eq("order.reservation.failed"),
+                any(ReservationFailedEvent.class)
+        );
     }
 
     @Test
-    @DisplayName("handleOrderCreated wraps unexpected exception as AMQP reject")
-    void handleOrderCreated_unexpectedException_wrapsAsAmqpException() {
-        OrderItemEvent item = buildItem("prod-1", "wh-1", 2);
-        OrderEvent event = buildEvent("order-1", List.of(item));
-        doThrow(new RuntimeException("DB down")).when(reservationService).reserveStock(any());
-        doThrow(new RuntimeException("compensate also fails")).when(reservationService).compensateAllForOrder(any());
+    @DisplayName("handleOrderCreated wraps unexpected compensation failure as AMQP reject")
+    void handleOrderCreated_whenCompensationAlsoFails_wrapsAsAmqpReject() {
+        doThrow(new RuntimeException("stock insuficiente")).when(reservationService).reserveStock(any());
+        doThrow(new RuntimeException("compensacion fallida")).when(reservationService).compensateAllForOrder("order-1");
 
-        assertThatThrownBy(() -> consumer.handleOrderCreated(event))
+        assertThatThrownBy(() -> consumer.handleOrderCreated(orderEvent(List.of(item("product-1")))))
                 .isInstanceOf(AmqpRejectAndDontRequeueException.class);
+
+        verify(rabbitTemplate, never()).convertAndSend(eq(RabbitMQConfig.EXCHANGE_NAME), eq("order.reservation.failed"), any(Object.class));
     }
 
-    private OrderEvent buildEvent(String orderId, List<OrderItemEvent> items) {
-        OrderEvent event = new OrderEvent();
-        event.setOrderId(orderId);
-        event.setCustomerEmail("a@b.com");
-        event.setCustomerName("Ana");
-        event.setCompanyId("company-1");
-        event.setShippingAddress("Calle 1");
-        event.setItems(items);
-        return event;
+    private OrderEvent orderEvent(List<OrderItemEvent> items) {
+        return OrderEvent.builder()
+                .orderId("order-1")
+                .customerEmail("cliente@smartlogix.cl")
+                .customerName("Cliente")
+                .shippingAddress("Av. Demo 123")
+                .companyId("company-1")
+                .items(items)
+                .build();
     }
 
-    private OrderItemEvent buildItem(String productId, String warehouseId, int quantity) {
-        OrderItemEvent item = new OrderItemEvent();
-        item.setProductId(productId);
-        item.setWarehouseId(warehouseId);
-        item.setQuantity(quantity);
-        return item;
+    private OrderItemEvent item(String productId) {
+        return OrderItemEvent.builder()
+                .productId(productId)
+                .warehouseId("warehouse-1")
+                .quantity(2)
+                .build();
     }
 }

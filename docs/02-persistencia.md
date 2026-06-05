@@ -1,29 +1,71 @@
 # Persistencia
 
-La persistencia se implementa con JPA/Hibernate y PostgreSQL por microservicio. Cada servicio mantiene su propio esquema y no comparte tablas con otros servicios.
+La persistencia principal de SmartLogix se implementa con JPA/Hibernate y PostgreSQL por microservicio. No se usa una base monolitica compartida.
 
-Bases por servicio:
+## Patron aplicado
 
-- auth: `authdb`, credenciales y roles JWT.
-- users: `db_users`, companias, perfiles, roles, carriers e integraciones.
-- inventory: `smartlogix_inventory`, productos, bodegas, stock, movimientos y reservas.
-- order: `orderdb`, ordenes, items, paises, regiones y comunas.
-- shipping: `shipping_db`, envios y rutas.
-- notification: `notificationdb`, notificaciones y estado de entrega.
+SmartLogix aplica Database per Service:
 
-Entidades principales:
+- Cada microservicio tiene su propia base PostgreSQL.
+- Las entidades de un servicio no son persistidas por otros servicios.
+- La coordinacion entre dominios se realiza por REST y RabbitMQ, no por joins entre bases.
 
-- auth: `UserCredential`.
-- users: `Company`, `UserProfile`, `Role`, `ExternalCarrier`, `MarketplaceIntegration`.
-- inventory: `Product`, `Warehouse`, `Inventory`, `InventoryMovement`, `InventoryReservation`.
-- order: `Order`, `OrderItem`, `Pais`, `Region`, `Comuna`.
-- shipping: `Shipment`, `Route`.
-- notification: `Notification`.
+## Bases por servicio
 
-`Backend/order/src/main/resources/data.sql` carga catalogo geografico de pais, regiones y comunas cuando el servicio inicializa la base.
+| Servicio | Base | Puerto local | Evidencia |
+|---|---|---:|---|
+| auth | `authdb` | 5436 | `Backend/auth/src/main/resources/application.yml` |
+| users | `db_users` | 5437 | `Backend/users/src/main/resources/application.yml` |
+| inventory | `smartlogix_inventory` | 5433 | `Backend/inventory/src/main/resources/application.yml` |
+| order | `orderdb` | 5434 | `Backend/order/src/main/resources/application.yml` |
+| shipping | `shipping_db` | 5432 | `Backend/shipping/src/main/resources/application.yml` |
+| notification | `notificationdb` | 5435 | `Backend/notification/src/main/resources/application.yml` |
 
-Variables de conexion:
+Las bases y contenedores estan definidos en `Backend/docker-compose-local.yml`.
 
-- `DB_URL`: JDBC URL del PostgreSQL del servicio.
-- `DB_USERNAME`: usuario de base de datos.
-- `DB_PASSWORD`: password del servicio. Debe venir desde `.env` local o variables del entorno, nunca hardcodeado.
+## Entidades principales
+
+| Servicio | Entidades |
+|---|---|
+| auth | `UserCredential` |
+| users | `Company`, `UserProfile`, `Role`, `ExternalCarrier`, `MarketplaceIntegration` |
+| inventory | `Product`, `Warehouse`, `Inventory`, `InventoryMovement`, `InventoryReservation` |
+| order | `Order`, `OrderItem`, `Pais`, `Region`, `Comuna` |
+| shipping | `Shipment`, `Route` |
+| notification | `Notification` |
+
+## Repositories
+
+Los servicios usan Spring Data JPA repositories en carpetas `repository`, por ejemplo:
+
+- `Backend/inventory/src/main/java/com/smartlogix/inventory/repository`
+- `Backend/order/src/main/java/com/smartlogix/order/repository`
+- `Backend/users/src/main/java/com/smartlogix/users/repository`
+
+## Datos de inicializacion
+
+`Backend/order/src/main/resources/data.sql` carga datos geograficos de pais, regiones y comunas usados por el frontend al crear ordenes.
+
+## Variables de conexion
+
+| Variable | Uso |
+|---|---|
+| `DB_URL` | JDBC URL del PostgreSQL del servicio |
+| `DB_USERNAME` | Usuario de base |
+| `DB_PASSWORD` | Password local o de ambiente |
+
+Las variables reales deben vivir en `.env` locales. Las plantillas seguras son:
+
+- `Backend/.env.example`
+- `Backend/users/.env.example`
+- `Backend/prisma/.env.example`
+
+## Prisma
+
+`Backend/prisma` es solo una herramienta auxiliar de seed local. No reemplaza JPA ni los repositories Spring del backend.
+
+## Riesgos y mejoras pendientes
+
+- Actualmente no hay Flyway/Liquibase.
+- Para produccion se recomienda reemplazar `ddl-auto: update` por migraciones versionadas.
+- El diagrama ER simplificado esta en `docs/diagrams/er-simplificado.mmd`.

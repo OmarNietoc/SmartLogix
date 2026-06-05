@@ -3,51 +3,58 @@ package com.smartlogix.shipping.event;
 import com.smartlogix.shipping.enums.DeliveryStatus;
 import com.smartlogix.shipping.model.Shipment;
 import com.smartlogix.shipping.repository.ShipmentRepository;
-import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ReservationConfirmedConsumerTest {
 
     @Mock private ShipmentRepository shipmentRepository;
-    @InjectMocks private ReservationConfirmedConsumer consumer;
 
     @Test
-    @DisplayName("handleReservationConfirmed creates shipment with PENDING status")
-    void handleReservationConfirmed_validEvent_createsShipment() {
+    void handleReservationConfirmed_createsPendingShipmentFromEvent() {
         ReservationConfirmedEvent event = new ReservationConfirmedEvent(
-                "order-1", "ana@test.com", "Ana", "Calle 1", "company-1");
-        when(shipmentRepository.save(any(Shipment.class))).thenAnswer(inv -> inv.getArgument(0));
+                "order-1",
+                "cliente@smartlogix.cl",
+                "Cliente Demo",
+                "Av. Demo 123",
+                "company-1"
+        );
 
-        consumer.handleReservationConfirmed(event);
+        new ReservationConfirmedConsumer(shipmentRepository).handleReservationConfirmed(event);
 
         ArgumentCaptor<Shipment> captor = ArgumentCaptor.forClass(Shipment.class);
         verify(shipmentRepository).save(captor.capture());
         Shipment saved = captor.getValue();
         assertThat(saved.getOrderId()).isEqualTo("order-1");
+        assertThat(saved.getCustomerEmail()).isEqualTo("cliente@smartlogix.cl");
+        assertThat(saved.getCustomerName()).isEqualTo("Cliente Demo");
+        assertThat(saved.getShippingAddress()).isEqualTo("Av. Demo 123");
         assertThat(saved.getDeliveryStatus()).isEqualTo(DeliveryStatus.PENDING);
         assertThat(saved.getCompanyId()).isEqualTo("company-1");
-        assertThat(saved.getTrackingNumber()).startsWith("SL-");
+        assertThat(saved.getTrackingNumber()).startsWith("SL-").hasSize(11);
     }
 
     @Test
-    @DisplayName("handleReservationConfirmed uses default address when shippingAddress is null")
-    void handleReservationConfirmed_nullAddress_usesDefaultAddress() {
+    void handleReservationConfirmed_usesDefaultAddressWhenEventAddressIsNull() {
         ReservationConfirmedEvent event = new ReservationConfirmedEvent(
-                "order-1", "ana@test.com", "Ana", null, "company-1");
-        when(shipmentRepository.save(any(Shipment.class))).thenAnswer(inv -> inv.getArgument(0));
+                "order-1",
+                "cliente@smartlogix.cl",
+                "Cliente Demo",
+                null,
+                "company-1"
+        );
 
-        consumer.handleReservationConfirmed(event);
+        new ReservationConfirmedConsumer(shipmentRepository).handleReservationConfirmed(event);
 
         ArgumentCaptor<Shipment> captor = ArgumentCaptor.forClass(Shipment.class);
         verify(shipmentRepository).save(captor.capture());
@@ -55,13 +62,19 @@ class ReservationConfirmedConsumerTest {
     }
 
     @Test
-    @DisplayName("handleReservationConfirmed wraps repository exception as AMQP reject")
-    void handleReservationConfirmed_repositoryThrows_wrapsAsAmqpException() {
+    void handleReservationConfirmed_wrapsRepositoryFailuresAsAmqpReject() {
         ReservationConfirmedEvent event = new ReservationConfirmedEvent(
-                "order-1", "ana@test.com", "Ana", "Calle 1", "company-1");
-        when(shipmentRepository.save(any())).thenThrow(new RuntimeException("DB error"));
+                "order-1",
+                "cliente@smartlogix.cl",
+                "Cliente Demo",
+                "Av. Demo 123",
+                "company-1"
+        );
+        when(shipmentRepository.save(org.mockito.ArgumentMatchers.any(Shipment.class)))
+                .thenThrow(new RuntimeException("db down"));
 
-        assertThatThrownBy(() -> consumer.handleReservationConfirmed(event))
-                .isInstanceOf(AmqpRejectAndDontRequeueException.class);
+        assertThatThrownBy(() -> new ReservationConfirmedConsumer(shipmentRepository).handleReservationConfirmed(event))
+                .isInstanceOf(AmqpRejectAndDontRequeueException.class)
+                .hasMessageContaining("order-1");
     }
 }

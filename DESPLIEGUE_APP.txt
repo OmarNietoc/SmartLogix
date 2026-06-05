@@ -47,32 +47,33 @@ El backend usa variables definidas en:
 
   Backend\.env
 
-Valores minimos para entorno local:
+Valores minimos para entorno local. Usa valores propios y no incluyas el
+archivo Backend\.env real en GitHub ni en el ZIP/RAR final:
 
-  JWT_SECRET=smartlogix-local-development-secret-please-change
-  SHIPPING_DB_PASSWORD=postgres
-  INVENTORY_DB_PASSWORD=postgres
-  ORDER_DB_PASSWORD=postgres
-  NOTIFICATION_DB_PASSWORD=postgres
-  AUTH_DB_PASSWORD=postgres
-  USERS_DB_PASSWORD=postgres
-  RABBITMQ_USER=guest
-  RABBITMQ_PASS=guest
+  JWT_SECRET=<jwt-secret-local-seguro>
+  SHIPPING_DB_PASSWORD=<shipping-db-password>
+  INVENTORY_DB_PASSWORD=<inventory-db-password>
+  ORDER_DB_PASSWORD=<order-db-password>
+  NOTIFICATION_DB_PASSWORD=<notification-db-password>
+  AUTH_DB_PASSWORD=<auth-db-password>
+  USERS_DB_PASSWORD=<users-db-password>
+  RABBITMQ_USER=<rabbitmq-user>
+  RABBITMQ_PASS=<rabbitmq-password>
   SMTP_HOST=sandbox.smtp.mailtrap.io
   SMTP_PORT=2525
-  SMTP_USER=
-  SMTP_PASS=
+  SMTP_USER=<smtp-user-opcional>
+  SMTP_PASS=<smtp-password-opcional>
   MAIL_FROM=noreply@smartlogix.cl
 
 El microservicio de usuarios tambien tiene su propio archivo:
 
   Backend\users\.env
 
-Valores esperados:
+Valores esperados. Usa password real solo en el archivo local:
 
   DB_URL=jdbc:postgresql://pg-users-local:5432/db_users
   DB_USERNAME=postgres
-  DB_PASSWORD=postgres
+  DB_PASSWORD=<users-db-password>
   SERVER_PORT=8083
   EUREKA_URI=http://eureka-server-local:8761/eureka/
 
@@ -141,10 +142,10 @@ RabbitMQ Management:
 
   http://localhost:15672
 
-Credenciales RabbitMQ por defecto:
+Credenciales RabbitMQ:
 
-  usuario: guest
-  password: guest
+  usuario: valor de RABBITMQ_USER
+  password: valor de RABBITMQ_PASS
 
 
 7. Puertos usados

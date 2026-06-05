@@ -1,0 +1,40 @@
+flowchart TB
+  subgraph Host["Host local / Docker Desktop"]
+    FE["smartlogix-frontend-local\nReact/Vite :5173"]
+    GW["api-gateway-local\nSpring Cloud Gateway :8080"]
+    EUR["eureka-server-local\nEureka :8761"]
+    MQ["rabbitmq-local\nAMQP :5672 / UI :15672"]
+
+    AUTH["ms-auth-local :8086"]
+    USERS["ms-users-local :8083"]
+    INV["ms-inventory-local :8081"]
+    ORD["ms-order-local :8082"]
+    SHIP["ms-shipping-local :8084"]
+    NOTIF["ms-notification-local :8085"]
+
+    DBA[("pg-auth-local\nauthdb :5436")]
+    DBU[("pg-users-local\ndb_users :5437")]
+    DBI[("pg-inventory-local\nsmartlogix_inventory :5433")]
+    DBO[("pg-order-local\norderdb :5434")]
+    DBS[("pg-shipping-local\nshipping_db :5432")]
+    DBN[("pg-notification-local\nnotificationdb :5435")]
+  end
+
+  FE --> GW
+  GW --> AUTH
+  GW --> USERS
+  GW --> INV
+  GW --> ORD
+  GW --> SHIP
+  GW --> NOTIF
+  GW -. service discovery .-> EUR
+  AUTH --> DBA
+  USERS --> DBU
+  INV --> DBI
+  ORD --> DBO
+  SHIP --> DBS
+  NOTIF --> DBN
+  ORD <--> MQ
+  INV <--> MQ
+  SHIP <--> MQ
+  NOTIF <--> MQ

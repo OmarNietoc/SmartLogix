@@ -65,6 +65,7 @@ lerna-debug.log*
 .env.production.local
 .env.*
 !Backend/.env.example
+!**/.env.example
 
 # ==============================================================================
 # Misceláneos / OS Generated Files
