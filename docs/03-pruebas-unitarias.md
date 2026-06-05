@@ -45,7 +45,7 @@ Frontend/smartlogix-app/coverage/index.html
 Frontend/smartlogix-app/coverage/lcov.info
 ```
 
-## Cobertura real posterior a sincronizacion con remoto
+## Cobertura real registrada localmente
 
 | Componente | Lineas antes Fase 2 | Lineas finales | Metodos finales | Ramas finales | Estado frente al 60% |
 |---|---:|---:|---:|---:|---|
@@ -59,10 +59,12 @@ Frontend/smartlogix-app/coverage/lcov.info
 | auth | 76.33% | 82.67% | 93.55% | 42.86% | Cumple en lineas |
 | frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple lineas/funciones |
 
-Estas cifras provienen de:
+Estas cifras provienen de reportes locales generados por:
 
 - `Backend/*/target/site/jacoco/jacoco.xml`
 - `Frontend/smartlogix-app/coverage/lcov.info`
+
+Antes de entregar, ejecutar nuevamente los comandos de validacion y actualizar la tabla final de evidencia en `docs/evidencias/04_pruebas_cobertura/cobertura-final.md` si las cifras cambian.
 
 ## Tests agregados en Prioridad 1
 

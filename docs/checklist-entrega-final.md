@@ -2,43 +2,43 @@
 
 ## Obligatorio para cumplir la pauta
 
-- [ ] README general actualizado.
-- [ ] README por componente actualizado.
-- [ ] Frontend identificado y ejecutable.
-- [ ] API Gateway/BFF identificado y ejecutable.
-- [ ] Al menos dos microservicios backend identificados.
-- [ ] Integracion REST documentada.
-- [ ] Persistencia JPA documentada.
-- [ ] Pruebas unitarias ejecutables.
-- [ ] Reportes de cobertura disponibles.
-- [ ] Swagger/OpenAPI o Postman Collection.
-- [ ] Diagramas de arquitectura.
-- [ ] `repositorios.txt` con enlace GitHub.
+- [x] README general actualizado.
+- [x] README por componente actualizado.
+- [x] Frontend identificado y ejecutable.
+- [x] API Gateway/BFF identificado y ejecutable.
+- [x] Microservicios backend identificados.
+- [x] Integracion REST documentada.
+- [x] Persistencia JPA documentada.
+- [x] Pruebas unitarias ejecutables.
+- [x] Reportes de cobertura documentados.
+- [x] Swagger/OpenAPI y Postman Collection documentados.
+- [x] Diagramas de arquitectura disponibles en Mermaid.
+- [x] `repositorios.txt` con enlace GitHub.
 
 ## Recomendado para nota maxima
 
-- [ ] Diagrama de arquitectura de microservicios.
-- [ ] Diagrama de despliegue.
-- [ ] Diagrama de secuencia del flujo principal.
-- [ ] Diagrama entidad-relacion simplificado.
-- [ ] Tabla de endpoints reales.
-- [ ] Postman environment con variables.
-- [ ] Informe de pruebas con metricas reales.
-- [ ] Guia de ejecucion paso a paso.
-- [ ] Guia de defensa oral.
-- [ ] Capturas funcionales o demo documentada.
+- [x] Diagrama de arquitectura de microservicios.
+- [x] Diagrama de despliegue.
+- [x] Diagrama de secuencia del flujo principal.
+- [x] Diagrama entidad-relacion simplificado.
+- [x] Tabla de endpoints reales.
+- [x] Postman environment con variables.
+- [x] Informe de pruebas con metricas reales.
+- [x] Guia de ejecucion paso a paso.
+- [x] Guia de defensa oral.
+- [x] Capturas funcionales o demo documentada.
 
 ## Extra 150%
 
 - [ ] GitHub Actions verde.
-- [ ] Sonar configurado.
-- [ ] Docker Compose completo.
-- [ ] Swagger agregado desde Gateway.
-- [ ] Reportes HTML JaCoCo y Vitest adjuntos.
+- [x] Sonar configurado.
+- [x] Docker Compose completo.
+- [x] Swagger agregado desde Gateway.
+- [ ] Reportes HTML JaCoCo y Vitest adjuntos como capturas de entrega.
 - [ ] Health checks HTTP por servicio.
 - [ ] Perfiles `local/test/prod`.
 - [ ] ADRs de decisiones arquitectonicas.
-- [ ] Checklist por integrante para defensa.
+- [x] Checklist por integrante para defensa.
 
 ## Archivos que deben ir en el ZIP/RAR
 
@@ -72,13 +72,7 @@ coverage/
 *.log
 ```
 
-Archivos `.env` reales detectados en workspace:
-
-- `Backend/.env`
-- `Backend/users/.env`
-- `Backend/prisma/.env`
-
-No imprimir ni adjuntar esos archivos.
+Si existen archivos `.env` reales en el workspace local, no imprimirlos ni adjuntarlos. Usar solo `.env.example`.
 
 ## Comandos finales de validacion
 

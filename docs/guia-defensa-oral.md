@@ -36,7 +36,7 @@ MVC, Repository, Service Layer, DTO/Mapper, Dependency Injection, API Gateway/BF
 
 ### Cual es la principal limitacion actual?
 
-La cobertura global de varios servicios esta bajo 60% y faltan mejoras productivas como migraciones Flyway/Liquibase, Actuator health checks y seguridad interna entre microservicios si se despliega fuera de un entorno local controlado.
+La cobertura global de lineas supera el 60% en los servicios medidos, pero quedan mejoras productivas: migraciones Flyway/Liquibase, Actuator health checks, observabilidad centralizada y seguridad interna entre microservicios si se despliega fuera de un entorno local controlado.
 
 ### Como se ejecuta el sistema?
 
@@ -56,5 +56,5 @@ Luego se revisa frontend en `http://localhost:5173`, Gateway en `http://localhos
 - [ ] Explicar flujo de orden.
 - [ ] Mostrar JPA repositories y entidades.
 - [ ] Mostrar tests y cobertura.
-- [ ] Reconocer honestamente brechas de cobertura global.
+- [ ] Mostrar cobertura regenerada y explicar brechas de ramas donde existan.
 - [ ] Explicar plan de mejora.
