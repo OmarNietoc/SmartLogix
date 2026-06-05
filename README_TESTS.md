@@ -91,20 +91,22 @@ npm run test:coverage
 
 ---
 
-## 4. Resultados de cobertura (llenar post-ejecución)
+## 4. Resultados de cobertura EV3
 
-| Microservicio | Líneas | Funciones | Ramas | Statements | ¿Cumple 60%? |
+Resultados obtenidos con `mvn verify` en cada microservicio backend. JaCoCo valida el minimo de 60% de cobertura de lineas configurado en los `pom.xml`.
+
+| Microservicio | Lineas | Metodos | Ramas | Instrucciones | Cumple 60% lineas |
 |---|---|---|---|---|---|
-| api-gateway | — | — | — | — | — |
-| auth | — | — | — | — | — |
-| inventory | — | — | — | — | — |
-| notification | — | — | — | — | — |
-| order | — | — | — | — | — |
-| shipping | — | — | — | — | — |
-| users | — | — | — | — | — |
-| Frontend | — | — | — | — | — |
+| api-gateway | 87.18% | 100.00% | 70.00% | 89.22% | Si |
+| auth | 74.00% | 83.87% | 42.86% | 74.56% | Si |
+| inventory | 85.57% | 69.37% | 67.59% | 77.54% | Si |
+| notification | 82.04% | 78.12% | 100.00% | 80.91% | Si |
+| order | 94.40% | 92.31% | 100.00% | 91.55% | Si |
+| shipping | 74.38% | 65.00% | 74.04% | 67.44% | Si |
+| users | 88.83% | 90.57% | 71.43% | 89.53% | Si |
+| Frontend | 79.77% | 70.68% | 56.07% | 73.76% | Si |
 
-> Ejecutar `mvn test jacoco:report` en cada microservicio y `npm run test:coverage` en el frontend para obtener los porcentajes reales.
+> Nota: `auth` cumple el umbral EV3 configurado por lineas, aunque su cobertura de ramas queda bajo 60%. Para la entrega, se recomienda mostrar el reporte de JaCoCo y explicar que el control automatico del backend valida cobertura de lineas.
 
 ---
 
