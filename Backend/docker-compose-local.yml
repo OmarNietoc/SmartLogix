@@ -190,7 +190,7 @@ services:
     environment:
       - SERVER_PORT=8080
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-smartlogix-local-development-secret-change-me-123456}
     depends_on:
       eureka-server:
         condition: service_healthy
@@ -363,7 +363,7 @@ services:
       - DB_USERNAME=postgres
       - DB_PASSWORD=${AUTH_DB_PASSWORD:-postgres}
       - SERVER_PORT=8086
-      - JWT_SECRET=${JWT_SECRET}
+      - JWT_SECRET=${JWT_SECRET:-smartlogix-local-development-secret-change-me-123456}
       - JWT_EXPIRATION=86400000
       - EUREKA_URI=http://eureka-server-local:8761/eureka/
     depends_on:

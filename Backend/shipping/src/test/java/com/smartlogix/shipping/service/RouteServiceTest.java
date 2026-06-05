@@ -19,12 +19,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import com.smartlogix.shipping.dto.RouteProposalRequestDTO;
+import com.smartlogix.shipping.dto.RouteProposalResponseDTO;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -205,6 +210,210 @@ class RouteServiceTest {
         assertThat(s.getDeliveryStatus()).isEqualTo(DeliveryStatus.PENDING);
         assertThat(s.getRoute()).isNull();
         verify(routeRepository, never()).deleteById(any());
+    }
+
+    // ── createRoute: optimizeRoute=false ─────────────────────────────────────
+
+    @Test
+    @DisplayName("createRoute with optimizeRoute=false uses manual JSON, skips routingApi")
+    void createRoute_noOptimize_usesManualJson() {
+        Shipment shipment = buildPendingShipment("s1");
+        Route saved = Route.builder().id("r1").companyId(COMPANY_ID).build();
+
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(shipment));
+        when(routeRepository.save(any())).thenReturn(saved);
+
+        Route result = routeService.createRoute(COMPANY_ID, "DHL", "Origin", List.of("s1"), false);
+
+        assertThat(result).isNotNull();
+        verify(routingApiService, never()).fetchOptimizedPath(any(), any());
+    }
+
+    @Test
+    @DisplayName("createRoute throws when shipment status is not PENDING")
+    void createRoute_nonPendingShipment_throwsIllegalState() {
+        Shipment dispatched = buildPendingShipment("s1");
+        dispatched.setDeliveryStatus(DeliveryStatus.DISPATCHED);
+
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(dispatched));
+
+        assertThatThrownBy(() ->
+                routeService.createRoute(COMPANY_ID, "DHL", "Origin", List.of("s1"), false))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("s1");
+    }
+
+    // ── getAllRoutes filter variants ──────────────────────────────────────────
+
+    @Test
+    @DisplayName("getAllRoutes with companyId only calls company query")
+    void getAllRoutes_companyIdOnly_callsCompanyQuery() {
+        when(routeRepository.findByCompanyId(COMPANY_ID)).thenReturn(List.of(Route.builder().id("r1").build()));
+
+        List<Route> routes = routeService.getAllRoutes(COMPANY_ID, null);
+
+        assertThat(routes).hasSize(1);
+        verify(routeRepository).findByCompanyId(COMPANY_ID);
+    }
+
+    @Test
+    @DisplayName("getAllRoutes with status only calls status query")
+    void getAllRoutes_statusOnly_callsStatusQuery() {
+        when(routeRepository.findByStatus(RouteStatus.PLANNED)).thenReturn(List.of(Route.builder().id("r1").build()));
+
+        List<Route> routes = routeService.getAllRoutes(null, RouteStatus.PLANNED);
+
+        assertThat(routes).hasSize(1);
+        verify(routeRepository).findByStatus(RouteStatus.PLANNED);
+    }
+
+    // ── getRouteById wrong company ────────────────────────────────────────────
+
+    @Test
+    @DisplayName("getRouteById throws when route belongs to different company")
+    void getRouteById_wrongCompany_throwsRouteNotFound() {
+        Route route = Route.builder().id("r1").companyId("other-company").build();
+        when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
+
+        assertThatThrownBy(() -> routeService.getRouteById("r1", COMPANY_ID))
+                .isInstanceOf(RouteNotFoundException.class);
+    }
+
+    // ── updateRouteStatus non-IN_PROGRESS ────────────────────────────────────
+
+    @Test
+    @DisplayName("updateRouteStatus to COMPLETED does not dispatch shipments")
+    void updateRouteStatus_toCompleted_noShipmentDispatching() {
+        Shipment s = buildPendingShipment("s1");
+        s.setDeliveryStatus(DeliveryStatus.DELIVERED);
+        Route route = Route.builder().id("r1").companyId(COMPANY_ID).status(RouteStatus.IN_PROGRESS)
+                .shipments(new ArrayList<>(List.of(s))).build();
+
+        when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
+        when(routeRepository.save(any())).thenReturn(route);
+
+        routeService.updateRouteStatus("r1", RouteStatus.COMPLETED, COMPANY_ID);
+
+        assertThat(route.getStatus()).isEqualTo(RouteStatus.COMPLETED);
+        verify(shipmentRepository, never()).save(any());
+    }
+
+    // ── deleteRoute null shipments list ──────────────────────────────────────
+
+    @Test
+    @DisplayName("deleteRoute with null shipments list still cancels route")
+    void deleteRoute_nullShipments_cancelsRoute() {
+        Route route = Route.builder().id("r1").companyId(COMPANY_ID).status(RouteStatus.PLANNED)
+                .shipments(null).build();
+
+        when(routeRepository.findById("r1")).thenReturn(Optional.of(route));
+
+        routeService.deleteRoute("r1", COMPANY_ID);
+
+        assertThat(route.getStatus()).isEqualTo(RouteStatus.CANCELLED);
+        verifyNoInteractions(shipmentRepository);
+    }
+
+    // ── generateProposal ─────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("generateProposal with coordinates already set returns proposal")
+    void generateProposal_shipmentHasCoords_returnsProposal() {
+        Shipment s1 = buildPendingShipment("s1");
+        s1.setLatitude(BigDecimal.valueOf(-33.45));
+        s1.setLongitude(BigDecimal.valueOf(-70.65));
+
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("s1"));
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(s1));
+        when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn(
+                "{\"source\":\"osrm\",\"distance_km\":10.5,\"duration_minutes\":25,\"total_stops\":1,\"optimized_order\":[\"s1\"]}");
+
+        RouteProposalResponseDTO result = routeService.generateProposal(request);
+
+        assertThat(result.source()).isEqualTo("osrm");
+        assertThat(result.distanceKm()).isEqualTo(10.5);
+        assertThat(result.durationMinutes()).isEqualTo(25);
+        assertThat(result.orderedShipments()).hasSize(1);
+        assertThat(result.orderedShipments().get(0).shipmentId()).isEqualTo("s1");
+        verify(routingApiService, never()).geocodeAddress(any());
+    }
+
+    @Test
+    @DisplayName("generateProposal geocodes shipment without coordinates")
+    void generateProposal_shipmentMissingCoords_geocodesAddress() {
+        Shipment s1 = buildPendingShipment("s1");
+        // no latitude/longitude set → null
+
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("s1"));
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(s1));
+        when(routingApiService.geocodeAddress(s1.getShippingAddress())).thenReturn(new double[]{-33.45, -70.65});
+        when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn(
+                "{\"source\":\"geocoded\",\"total_stops\":1,\"optimized_order\":[\"s1\"]}");
+
+        RouteProposalResponseDTO result = routeService.generateProposal(request);
+
+        assertThat(s1.getLatitude()).isNotNull();
+        assertThat(s1.getLongitude()).isNotNull();
+        verify(routingApiService).geocodeAddress(s1.getShippingAddress());
+        assertThat(result.source()).isEqualTo("geocoded");
+    }
+
+    @Test
+    @DisplayName("generateProposal geocode failure is swallowed silently")
+    void generateProposal_geocodeThrows_continuesWithoutCoords() {
+        Shipment s1 = buildPendingShipment("s1");
+
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("s1"));
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(s1));
+        when(routingApiService.geocodeAddress(any())).thenThrow(new RuntimeException("geo error"));
+        when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn(
+                "{\"source\":\"fallback\",\"optimized_order\":[\"s1\"]}");
+
+        assertThatCode(() -> routeService.generateProposal(request)).doesNotThrowAnyException();
+    }
+
+    @Test
+    @DisplayName("generateProposal throws when no shipments found")
+    void generateProposal_noShipments_throwsShipmentNotFound() {
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("bad"));
+        when(shipmentRepository.findAllById(List.of("bad"))).thenReturn(List.of());
+
+        assertThatThrownBy(() -> routeService.generateProposal(request))
+                .isInstanceOf(ShipmentNotFoundException.class);
+    }
+
+    @Test
+    @DisplayName("generateProposal returns fallback response when pathJson is invalid")
+    void generateProposal_invalidPathJson_returnsFallback() {
+        Shipment s1 = buildPendingShipment("s1");
+        s1.setLatitude(BigDecimal.valueOf(-33.45));
+        s1.setLongitude(BigDecimal.valueOf(-70.65));
+
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("s1"));
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(s1));
+        when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn("not-valid-json");
+
+        RouteProposalResponseDTO result = routeService.generateProposal(request);
+
+        assertThat(result.source()).isEqualTo("fallback");
+        assertThat(result.orderedShipments()).hasSize(1);
+    }
+
+    @Test
+    @DisplayName("generateProposal skips null IDs in optimized_order")
+    void generateProposal_nullItemInOrder_skipped() {
+        Shipment s1 = buildPendingShipment("s1");
+        s1.setLatitude(BigDecimal.valueOf(-33.45));
+        s1.setLongitude(BigDecimal.valueOf(-70.65));
+
+        RouteProposalRequestDTO request = new RouteProposalRequestDTO("Origin 1", List.of("s1"));
+        when(shipmentRepository.findAllById(List.of("s1"))).thenReturn(List.of(s1));
+        when(routingApiService.fetchOptimizedPath(any(), any())).thenReturn(
+                "{\"source\":\"test\",\"optimized_order\":[null,\"s1\"]}");
+
+        RouteProposalResponseDTO result = routeService.generateProposal(request);
+
+        assertThat(result.orderedShipments()).hasSize(1);
     }
 
     // ── helpers ───────────────────────────────────────────────────────────────

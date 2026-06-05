@@ -92,6 +92,59 @@ class UserProfileServiceTest {
                 .hasMessageContaining("roles no encontrados");
     }
 
+    // ── createUserProfile — authId duplicate ──────────────────────────────────
+
+    @Test
+    @DisplayName("createUserProfile throws when authId already exists")
+    void createUserProfile_duplicateAuthId_throws() {
+        when(companyRepository.findById("c1")).thenReturn(Optional.of(buildCompany("c1")));
+        when(roleRepository.findByNameIn(Set.of(RoleName.ADMIN))).thenReturn(Set.of(buildRole(RoleName.ADMIN)));
+        when(userProfileRepository.existsByAuthId("auth-p1")).thenReturn(true);
+        UserProfile profile = buildProfile("p1");
+
+        assertThatThrownBy(() -> userProfileService.createUserProfile("c1", profile, Set.of(RoleName.ADMIN)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("correo electrónico");
+    }
+
+    // ── assignRolesToProfile ──────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("assignRolesToProfile updates roles on existing profile")
+    void assignRolesToProfile_valid_updatesRoles() {
+        UserProfile profile = buildProfile("p1");
+        Role driverRole = buildRole(RoleName.DRIVER);
+        when(userProfileRepository.findById("p1")).thenReturn(Optional.of(profile));
+        when(roleRepository.findByNameIn(Set.of(RoleName.DRIVER))).thenReturn(Set.of(driverRole));
+        when(userProfileRepository.save(profile)).thenReturn(profile);
+
+        UserProfile result = userProfileService.assignRolesToProfile("p1", Set.of(RoleName.DRIVER));
+
+        assertThat(result.getRoles()).containsExactly(driverRole);
+        verify(userProfileRepository).save(profile);
+    }
+
+    @Test
+    @DisplayName("assignRolesToProfile throws when profile not found")
+    void assignRolesToProfile_profileNotFound_throws() {
+        when(userProfileRepository.findById("bad")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userProfileService.assignRolesToProfile("bad", Set.of(RoleName.ADMIN)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("Perfil de usuario no encontrado");
+    }
+
+    @Test
+    @DisplayName("assignRolesToProfile throws when role not found")
+    void assignRolesToProfile_roleNotFound_throws() {
+        when(userProfileRepository.findById("p1")).thenReturn(Optional.of(buildProfile("p1")));
+        when(roleRepository.findByNameIn(Set.of(RoleName.DRIVER))).thenReturn(Set.of());
+
+        assertThatThrownBy(() -> userProfileService.assignRolesToProfile("p1", Set.of(RoleName.DRIVER)))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("roles no encontrados");
+    }
+
     // ── getProfilesByCompanyId ────────────────────────────────────────────────
 
     @Test

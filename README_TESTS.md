@@ -98,25 +98,25 @@ Frontend/smartlogix-app/coverage/lcov.info
 | notification | `Backend/notification/src/test/java/com/smartlogix/notification/listener/OrderStatusListenersTest.java` | Emails y notificaciones por estados confirmed, shipped, delivered y rejected |
 | eureka-server | `Backend/eureka-server/src/test/java/com/smartlogix/eureka/EurekaServerApplicationTest.java` | Bootstrap Spring Boot/Eureka y delegacion de `main` |
 
-## 7. Cobertura real posterior a Fase 2
+## 7. Cobertura real posterior a sincronizacion con remoto
 
-Metricas leidas desde reportes JaCoCo regenerados con `mvn clean verify` durante la validacion de Fase 2. El criterio academico se evalua sobre cobertura global de lineas por servicio backend.
+Metricas leidas desde reportes JaCoCo regenerados con `mvn clean verify` despues de integrar `origin/main` en la rama `feature/fase2-cobertura-sync`. El criterio academico se evalua sobre cobertura global de lineas por servicio backend.
 
-| Componente | Lineas antes Fase 2 | Lineas despues Fase 2 | Metodos despues | Ramas despues | Estado frente al 60% | Reporte |
+| Componente | Lineas antes Fase 2 | Lineas finales | Metodos finales | Ramas finales | Estado frente al 60% | Reporte |
 |---|---:|---:|---:|---:|---|---|
-| users | 28.83% | 86.58% | 77.71% | 17.13% | Cumple lineas | `Backend/users/target/site/jacoco/index.html` |
-| inventory | 33.56% | 76.17% | 62.67% | 12.72% | Cumple lineas | `Backend/inventory/target/site/jacoco/index.html` |
-| order | 47.15% | 77.55% | 65.25% | 22.38% | Cumple lineas | `Backend/order/target/site/jacoco/index.html` |
-| shipping | 51.83% | 70.63% | 63.13% | 9.52% | Cumple lineas | `Backend/shipping/target/site/jacoco/index.html` |
-| notification | 54.11% | 72.50% | 55.44% | 10.13% | Cumple lineas | `Backend/notification/target/site/jacoco/index.html` |
+| users | 28.83% | 97.46% | 100.00% | 82.14% | Cumple lineas | `Backend/users/target/site/jacoco/index.html` |
+| inventory | 33.56% | 87.58% | 84.68% | 67.59% | Cumple lineas | `Backend/inventory/target/site/jacoco/index.html` |
+| order | 47.15% | 98.28% | 95.38% | 100.00% | Cumple lineas | `Backend/order/target/site/jacoco/index.html` |
+| shipping | 51.83% | 82.44% | 75.00% | 75.96% | Cumple lineas | `Backend/shipping/target/site/jacoco/index.html` |
+| notification | 54.11% | 90.78% | 82.81% | 100.00% | Cumple lineas | `Backend/notification/target/site/jacoco/index.html` |
 | eureka-server | 0.00% | 66.67% | 50.00% | n/a | Cumple lineas; componente de infraestructura | `Backend/eureka-server/target/site/jacoco/index.html` |
-| api-gateway | 66.67% | 66.67% | 70.59% | 70.00% | Cumple lineas; sin cambios en Fase 2 | `Backend/api-gateway/target/site/jacoco/index.html` |
-| auth | 76.33% | 76.33% | 53.63% | 5.39% | Cumple lineas; sin cambios en Fase 2 | `Backend/auth/target/site/jacoco/index.html` |
-| frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple umbrales configurados; sin cambios en Fase 2 | `Frontend/smartlogix-app/coverage/index.html` |
+| api-gateway | 66.67% | 87.18% | 100.00% | 70.00% | Cumple lineas | `Backend/api-gateway/target/site/jacoco/index.html` |
+| auth | 76.33% | 82.67% | 93.55% | 42.86% | Cumple lineas | `Backend/auth/target/site/jacoco/index.html` |
+| frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple lineas/funciones | `Frontend/smartlogix-app/coverage/index.html` |
 
 ## 8. Observaciones tecnicas
 
-La cobertura de lineas backend funcional queda sobre 60% en todos los servicios revisados en Fase 2. Persisten valores bajos de ramas porque muchos DTOs, configuraciones, builders Lombok y ramas de framework no son el foco principal de esta pauta.
+La cobertura de lineas backend funcional queda sobre 60% en todos los servicios revisados e integrados. La cobertura de ramas tambien queda sobre 60% en la mayoria de servicios; `auth` queda bajo 60% en ramas, pero cumple el umbral academico configurado por lineas.
 
 `Backend/eureka-server/pom.xml` ya excluia `**/*Application.class` del check JaCoCo antes de esta fase. Aun asi, se agrego una prueba de bootstrap que valida las anotaciones `@SpringBootApplication`, `@EnableEurekaServer` y la delegacion de `main` hacia `SpringApplication.run`. Eureka debe presentarse como infraestructura de descubrimiento, no como microservicio de negocio.
 

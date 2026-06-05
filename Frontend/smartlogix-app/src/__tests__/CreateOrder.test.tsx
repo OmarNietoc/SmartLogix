@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { CreateOrder } from '../pages/CreateOrder';
+import type { Order } from '../services/smartlogixService';
 
 vi.mock('../services/smartlogixService', () => ({
   smartlogixService: {
@@ -115,7 +116,7 @@ describe('CreateOrder', () => {
 
   it('calls smartlogixService.createOrder on valid submit', async () => {
     const mockOrder = { id: 'order-new' };
-    vi.mocked(smartlogixService.createOrder).mockResolvedValueOnce(mockOrder as any);
+    vi.mocked(smartlogixService.createOrder).mockResolvedValueOnce(mockOrder as Partial<Order> as Order);
     vi.mocked(smartlogixService.getShipments).mockResolvedValue([]);
 
     render(<CreateOrder onBack={onBack} onCreated={onCreated} />);

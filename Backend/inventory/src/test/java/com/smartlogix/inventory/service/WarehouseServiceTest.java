@@ -4,6 +4,7 @@ import com.smartlogix.inventory.enums.WarehouseType;
 import com.smartlogix.inventory.exception.WarehouseNotFoundException;
 import com.smartlogix.inventory.model.Warehouse;
 import com.smartlogix.inventory.repository.WarehouseRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -16,105 +17,135 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class WarehouseServiceTest {
 
+    private static final String COMPANY_ID = "company-1";
+
     @Mock private WarehouseRepository warehouseRepository;
     @InjectMocks private WarehouseService warehouseService;
 
     @Test
+    @DisplayName("getAllWarehouses without type filter returns company warehouses")
     void getAllWarehouses_withoutType_usesCompanyFilter() {
-        when(warehouseRepository.findByCompanyId("company-1")).thenReturn(List.of(warehouse("w1")));
+        when(warehouseRepository.findByCompanyId(COMPANY_ID)).thenReturn(List.of(warehouse("w1"), warehouse("w2")));
 
-        List<Warehouse> result = warehouseService.getAllWarehouses("company-1", null);
+        List<Warehouse> result = warehouseService.getAllWarehouses(COMPANY_ID, null);
 
-        assertThat(result).hasSize(1);
-        verify(warehouseRepository).findByCompanyId("company-1");
+        assertThat(result).hasSize(2);
+        verify(warehouseRepository).findByCompanyId(COMPANY_ID);
+        verify(warehouseRepository, never()).findByCompanyIdAndType(any(), any());
     }
 
     @Test
+    @DisplayName("getAllWarehouses with type filter delegates to filtered query")
     void getAllWarehouses_withType_usesCompanyAndTypeFilter() {
-        when(warehouseRepository.findByCompanyIdAndType("company-1", WarehouseType.RETAIL_STORE))
+        when(warehouseRepository.findByCompanyIdAndType(COMPANY_ID, WarehouseType.RETAIL_STORE))
                 .thenReturn(List.of(warehouse("w1")));
 
-        List<Warehouse> result = warehouseService.getAllWarehouses("company-1", WarehouseType.RETAIL_STORE);
+        List<Warehouse> result = warehouseService.getAllWarehouses(COMPANY_ID, WarehouseType.RETAIL_STORE);
 
         assertThat(result).hasSize(1);
-        verify(warehouseRepository).findByCompanyIdAndType("company-1", WarehouseType.RETAIL_STORE);
+        verify(warehouseRepository).findByCompanyIdAndType(COMPANY_ID, WarehouseType.RETAIL_STORE);
+        verify(warehouseRepository, never()).findByCompanyId(any());
     }
 
     @Test
-    void getWarehouseById_returnsWarehouseOrThrowsNotFound() {
-        when(warehouseRepository.findByIdAndCompanyId("w1", "company-1")).thenReturn(Optional.of(warehouse("w1")));
+    @DisplayName("getAllWarehouses throws when companyId is blank")
+    void getAllWarehouses_blankCompanyId_throws() {
+        assertThatThrownBy(() -> warehouseService.getAllWarehouses(" ", null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("obligatorio");
+    }
 
-        Warehouse result = warehouseService.getWarehouseById("w1", "company-1");
+    @Test
+    @DisplayName("getWarehouseById returns warehouse when found")
+    void getWarehouseById_found_returnsWarehouse() {
+        when(warehouseRepository.findByIdAndCompanyId("w1", COMPANY_ID)).thenReturn(Optional.of(warehouse("w1")));
+
+        Warehouse result = warehouseService.getWarehouseById("w1", COMPANY_ID);
 
         assertThat(result.getId()).isEqualTo("w1");
+    }
 
-        when(warehouseRepository.findByIdAndCompanyId("missing", "company-1")).thenReturn(Optional.empty());
-        assertThatThrownBy(() -> warehouseService.getWarehouseById("missing", "company-1"))
+    @Test
+    @DisplayName("getWarehouseById throws when warehouse does not exist for company")
+    void getWarehouseById_notFound_throwsWarehouseNotFound() {
+        when(warehouseRepository.findByIdAndCompanyId("missing", COMPANY_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> warehouseService.getWarehouseById("missing", COMPANY_ID))
                 .isInstanceOf(WarehouseNotFoundException.class)
                 .hasMessageContaining("missing");
     }
 
     @Test
-    void createWarehouse_usesAuthenticatedCompanyAndValidatesRequiredFields() {
+    @DisplayName("createWarehouse saves with authenticated company")
+    void createWarehouse_valid_usesAuthenticatedCompanyAndSaves() {
         when(warehouseRepository.save(any(Warehouse.class))).thenAnswer(inv -> inv.getArgument(0));
 
-        Warehouse saved = warehouseService.createWarehouse(warehouse("new"), "company-1");
+        Warehouse saved = warehouseService.createWarehouse(warehouse("new"), COMPANY_ID);
 
-        assertThat(saved.getCompanyId()).isEqualTo("company-1");
+        assertThat(saved.getCompanyId()).isEqualTo(COMPANY_ID);
         verify(warehouseRepository).save(saved);
+    }
 
+    @Test
+    @DisplayName("createWarehouse validates required company and warehouse fields")
+    void createWarehouse_invalidRequiredFields_throws() {
         assertThatThrownBy(() -> warehouseService.createWarehouse(warehouse("bad"), " "))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("X-Company-Id");
 
         Warehouse invalidName = warehouse("bad");
         invalidName.setName(" ");
-        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidName, "company-1"))
+        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidName, COMPANY_ID))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("name");
 
         Warehouse invalidAddress = warehouse("bad");
         invalidAddress.setLocationAddress(" ");
-        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidAddress, "company-1"))
+        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidAddress, COMPANY_ID))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("locationAddress");
 
         Warehouse invalidType = warehouse("bad");
         invalidType.setType(null);
-        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidType, "company-1"))
+        assertThatThrownBy(() -> warehouseService.createWarehouse(invalidType, COMPANY_ID))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("type");
     }
 
     @Test
+    @DisplayName("updateWarehouse updates mutable fields and saves")
     void updateWarehouse_updatesMutableFields() {
         Warehouse existing = warehouse("w1");
         Warehouse update = warehouse("ignored");
         update.setName("Nueva bodega");
         update.setLocationAddress("Nueva direccion");
         update.setType(WarehouseType.RETAIL_STORE);
-        when(warehouseRepository.findByIdAndCompanyId("w1", "company-1")).thenReturn(Optional.of(existing));
-        when(warehouseRepository.save(any(Warehouse.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(warehouseRepository.findByIdAndCompanyId("w1", COMPANY_ID)).thenReturn(Optional.of(existing));
+        when(warehouseRepository.save(existing)).thenReturn(existing);
 
-        Warehouse result = warehouseService.updateWarehouse("w1", update, "company-1");
+        Warehouse result = warehouseService.updateWarehouse("w1", update, COMPANY_ID);
 
         assertThat(result.getName()).isEqualTo("Nueva bodega");
         assertThat(result.getLocationAddress()).isEqualTo("Nueva direccion");
         assertThat(result.getType()).isEqualTo(WarehouseType.RETAIL_STORE);
+        verify(warehouseRepository).save(existing);
     }
 
     @Test
+    @DisplayName("deleteWarehouse marks warehouse inactive")
     void deleteWarehouse_marksInactive() {
         Warehouse existing = warehouse("w1");
-        when(warehouseRepository.findByIdAndCompanyId("w1", "company-1")).thenReturn(Optional.of(existing));
+        when(warehouseRepository.findByIdAndCompanyId("w1", COMPANY_ID)).thenReturn(Optional.of(existing));
+        when(warehouseRepository.save(existing)).thenReturn(existing);
 
-        warehouseService.deleteWarehouse("w1", "company-1");
+        warehouseService.deleteWarehouse("w1", COMPANY_ID);
 
         assertThat(existing.getStatus()).isEqualTo("INACTIVE");
         verify(warehouseRepository).save(existing);
@@ -123,7 +154,7 @@ class WarehouseServiceTest {
     private Warehouse warehouse(String id) {
         return Warehouse.builder()
                 .id(id)
-                .companyId("company-1")
+                .companyId(COMPANY_ID)
                 .name("Bodega " + id)
                 .locationAddress("Av. Demo 123")
                 .type(WarehouseType.WAREHOUSE)

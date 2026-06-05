@@ -45,19 +45,19 @@ Frontend/smartlogix-app/coverage/index.html
 Frontend/smartlogix-app/coverage/lcov.info
 ```
 
-## Cobertura real posterior a Fase 2
+## Cobertura real posterior a sincronizacion con remoto
 
-| Componente | Lineas antes Fase 2 | Lineas despues Fase 2 | Metodos despues | Ramas despues | Estado frente al 60% |
+| Componente | Lineas antes Fase 2 | Lineas finales | Metodos finales | Ramas finales | Estado frente al 60% |
 |---|---:|---:|---:|---:|---|
-| users | 28.83% | 86.58% | 77.71% | 17.13% | Cumple en lineas |
-| inventory | 33.56% | 76.17% | 62.67% | 12.72% | Cumple en lineas |
-| order | 47.15% | 77.55% | 65.25% | 22.38% | Cumple en lineas |
-| shipping | 51.83% | 70.63% | 63.13% | 9.52% | Cumple en lineas |
-| notification | 54.11% | 72.50% | 55.44% | 10.13% | Cumple en lineas |
+| users | 28.83% | 97.46% | 100.00% | 82.14% | Cumple en lineas |
+| inventory | 33.56% | 87.58% | 84.68% | 67.59% | Cumple en lineas |
+| order | 47.15% | 98.28% | 95.38% | 100.00% | Cumple en lineas |
+| shipping | 51.83% | 82.44% | 75.00% | 75.96% | Cumple en lineas |
+| notification | 54.11% | 90.78% | 82.81% | 100.00% | Cumple en lineas |
 | eureka-server | 0.00% | 66.67% | 50.00% | n/a | Cumple en lineas; infraestructura |
-| api-gateway | 66.67% | 66.67% | 70.59% | 70.00% | Cumple en lineas; sin cambios en Fase 2 |
-| auth | 76.33% | 76.33% | 53.63% | 5.39% | Cumple en lineas; sin cambios en Fase 2 |
-| frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple lineas/funciones; sin cambios en Fase 2 |
+| api-gateway | 66.67% | 87.18% | 100.00% | 70.00% | Cumple en lineas |
+| auth | 76.33% | 82.67% | 93.55% | 42.86% | Cumple en lineas |
+| frontend | 79.77% | 79.77% | 70.68% | 56.07% | Cumple lineas/funciones |
 
 Estas cifras provienen de:
 
@@ -89,7 +89,7 @@ Se agregaron pruebas de bajo riesgo para handlers de errores y seguridad:
 
 ## Observaciones tecnicas
 
-La cobertura de lineas backend queda sobre 60% en todos los servicios medidos. La cobertura de ramas sigue siendo baja en varios servicios porque JaCoCo contabiliza DTOs, configuraciones, builders Lombok y bifurcaciones generadas por frameworks. Para nota maxima, conviene mantener la evidencia HTML y explicar que Fase 2 priorizo lineas globales y comportamiento de negocio observable.
+La cobertura de lineas backend queda sobre 60% en todos los servicios medidos. La cobertura de ramas tambien queda sobre 60% en la mayoria de servicios despues de integrar los tests remotos; `auth` queda bajo 60% en ramas, pero cumple el umbral academico configurado por lineas. Para nota maxima, conviene mantener la evidencia HTML y explicar que Fase 2 priorizo lineas globales y comportamiento de negocio observable.
 
 `eureka-server` es infraestructura de descubrimiento. Su `pom.xml` ya excluia `**/*Application.class` del check JaCoCo antes de esta fase; aun asi, el reporte HTML queda sobre 60% con pruebas de bootstrap. En defensa oral se debe explicar que Eureka no contiene reglas de negocio ni endpoints funcionales del dominio SmartLogix.
 
