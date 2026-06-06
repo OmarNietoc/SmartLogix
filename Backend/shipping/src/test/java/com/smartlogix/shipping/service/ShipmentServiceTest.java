@@ -87,7 +87,7 @@ class ShipmentServiceTest {
     void getShipmentByTrackingNumber_notFound_throws() {
         when(shipmentRepository.findByTrackingNumber("TRK-999")).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> shipmentService.getShipmentByTrackingNumber("TRK-999", COMPANY_ID))
+        assertThatThrownBy(() -> shipmentService.getShipmentByTrackingNumber("TRK-999", "COMPANY_ID"))
                 .isInstanceOf(ShipmentNotFoundException.class)
                 .hasMessageContaining("TRK-999");
     }

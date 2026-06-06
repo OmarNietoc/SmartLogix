@@ -33,7 +33,7 @@ export const demoUsers: DemoUser[] = [
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const normalizeRut = (rut: string) => rut.replace(/[.-]/g, '').trim().toUpperCase();
-
+//
 export const isValidRut = (rut: string) => {
   const normalized = normalizeRut(rut);
   if (!/^\d{7,8}[0-9K]$/.test(normalized)) return false;
