@@ -98,6 +98,25 @@ describe('smartlogixService', () => {
         shipmentIds: ['shipment-1'],
         optimizeRoute: true,
       }),
+      });
+  });
+
+  it('sends warehouse create payload including status when provided', async () => {
+    await smartlogixService.createWarehouse({
+      name: 'Nueva Bodega',
+      locationAddress: 'Av. Demo 123',
+      type: 'WAREHOUSE',
+      status: 'ACTIVE',
+    });
+
+    expect(request).toHaveBeenCalledWith('/smartlogix/inventory/warehouses', {
+      method: 'POST',
+      body: JSON.stringify({
+        name: 'Nueva Bodega',
+        locationAddress: 'Av. Demo 123',
+        type: 'WAREHOUSE',
+        status: 'ACTIVE',
+      }),
     });
   });
 });

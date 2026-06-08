@@ -72,6 +72,7 @@ export interface WarehousePayload {
   name: string;
   locationAddress: string;
   type: string;
+  status?: string;
 }
 
 export interface Inventory {

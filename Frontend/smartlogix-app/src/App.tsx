@@ -123,7 +123,7 @@ export default function App() {
           {view === 'dashboard' && <Dashboard data={data} onCreateOrder={() => setView('create-order')} />}
           {view === 'orders' && <OrdersView orders={data.orders} onCreateOrder={() => setView('create-order')} />}
           {view === 'products' && <ProductManagerView products={data.products} warehouses={data.warehouses} stock={data.stock} onSaved={loadData} />}
-          {view === 'warehouses' && <WarehouseManagerView warehouses={data.warehouses} />}
+          {view === 'warehouses' && <WarehouseManagerView warehouses={data.warehouses} onSaved={loadData} />}
           {view === 'stock' && <StockView stock={data.stock} onSaved={loadData} />}
           {view === 'shipments' && <ShipmentsView shipments={data.shipments} />}
           {view === 'routes' && <RoutesView routes={data.routes} />}
@@ -314,8 +314,19 @@ const ProductManagerView = ({ products, warehouses, stock, onSaved }: { products
   );
 };
 
-const WarehouseManagerView = ({ warehouses }: { warehouses: WarehouseRecord[] }) => {
+const warehouseTypeOptions = [
+  { value: 'WAREHOUSE', label: 'Bodega' },
+  { value: 'RETAIL_STORE', label: 'Tienda / Hub' },
+] as const;
+
+const warehouseStatusOptions = [
+  { value: 'ACTIVE', label: 'Activa' },
+  { value: 'INACTIVE', label: 'Inactiva' },
+] as const;
+
+const WarehouseManagerView = ({ warehouses, onSaved }: { warehouses: WarehouseRecord[]; onSaved: () => Promise<void> }) => {
   const [selected, setSelected] = useState<WarehouseRecord | null>(null);
+  const [creating, setCreating] = useState(false);
 
   return (
     <>
@@ -323,6 +334,7 @@ const WarehouseManagerView = ({ warehouses }: { warehouses: WarehouseRecord[] })
         title="Bodegas"
         searchPlaceholder="Buscar bodega, direccion o tipo"
         rows={warehouses}
+        headerAction={<button className="btn btn-primary" onClick={() => setCreating(true)}><Plus className="ico" /> Nueva bodega</button>}
         onRowClick={(warehouse) => setSelected(warehouse)}
         columns={[
           { header: 'Bodega', render: (warehouse) => <StrongCell title={warehouse.name} subtitle={warehouse.locationAddress} /> },
@@ -338,7 +350,126 @@ const WarehouseManagerView = ({ warehouses }: { warehouses: WarehouseRecord[] })
           onClose={() => setSelected(null)}
         />
       )}
+      {creating && (
+        <WarehouseModal
+          onClose={() => setCreating(false)}
+          onSaved={async () => {
+            await onSaved();
+            setCreating(false);
+          }}
+        />
+      )}
     </>
+  );
+};
+
+const WarehouseModal = ({ onClose, onSaved }: { onClose: () => void; onSaved: () => Promise<void> }) => {
+  const [form, setForm] = useState({
+    name: '',
+    locationAddress: '',
+    type: 'WAREHOUSE',
+    status: 'ACTIVE',
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    const name = form.name.trim();
+    const locationAddress = form.locationAddress.trim();
+    const type = form.type.trim();
+    const status = form.status.trim();
+
+    if (!name) return setError('Ingresa el nombre de la bodega.');
+    if (name.length < 3) return setError('El nombre debe tener al menos 3 caracteres.');
+    if (!locationAddress) return setError('Ingresa la dirección de la bodega.');
+    if (locationAddress.length < 6) return setError('La dirección debe ser más detallada.');
+    if (!warehouseTypeOptions.some((option) => option.value === type)) return setError('Selecciona un tipo de bodega válido.');
+    if (!warehouseStatusOptions.some((option) => option.value === status)) return setError('Selecciona un estado válido.');
+
+    setSaving(true);
+    setError('');
+
+    try {
+      await smartlogixService.createWarehouse({
+        name,
+        locationAddress,
+        type,
+        status,
+      });
+      await onSaved();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'No se pudo crear la bodega');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <EditorModal title="Nueva bodega" onClose={onClose}>
+      <form className="editor-form" onSubmit={submit}>
+        <div className="form-grid two">
+          <div className="field wide">
+            <label>Nombre</label>
+            <input
+              className="input"
+              value={form.name}
+              onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))}
+              placeholder="Bodega Centro"
+              required
+              autoFocus
+            />
+          </div>
+          <div className="field wide">
+            <label>Dirección</label>
+            <input
+              className="input"
+              value={form.locationAddress}
+              onChange={(event) => setForm((current) => ({ ...current, locationAddress: event.target.value }))}
+              placeholder="Av. Demo 1234, Santiago"
+              required
+            />
+          </div>
+          <div className="field">
+            <label>Tipo</label>
+            <select
+              className="select"
+              value={form.type}
+              onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}
+              required
+            >
+              {warehouseTypeOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="field">
+            <label>Estado</label>
+            <select
+              className="select"
+              value={form.status}
+              onChange={(event) => setForm((current) => ({ ...current, status: event.target.value }))}
+              required
+            >
+              {warehouseStatusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        {error && <p className="field-error">{error}</p>}
+        <div className="editor-actions">
+          <button type="button" className="btn" onClick={onClose}>Cancelar</button>
+          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Guardando...' : 'Crear bodega'}</button>
+        </div>
+      </form>
+    </EditorModal>
   );
 };
 
